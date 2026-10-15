@@ -57,6 +57,17 @@ PLAYER = [
     ".....OOOO...OOOO....",
 ]
 
+# The walking frame: the same body (the first 23 rows of PLAYER),
+# but the back leg pushes off the floor and the front foot is lifted.
+# PLAYER[:23] means "rows 0 up to (not including) row 23".
+PLAYER_WALK = PLAYER[:23] + [
+    ".....kkkkkkkkkkkk...",
+    "....kkkkk...kkkkkk..",
+    "...SSs.......SSSOOO.",
+    "..bbb........bbOOO..",
+    ".OOOO...............",
+]
+
 
 def has_coloured_neighbour(surface, x, y):
     # Check the 4 pixels around (x, y): left, right, above and below.
