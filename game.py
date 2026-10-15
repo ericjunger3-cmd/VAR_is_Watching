@@ -116,21 +116,67 @@ def show_ending(story, ending_id):
     print(ending["text"])
 
 
+def ask_yes_no(question):
+    # Keep asking until the player types y or n.
+    # Returns True for yes and False for no.
+    while True:
+        answer = input(question + " (y/n) ").strip().lower()
+        if answer == "y":
+            return True
+        if answer == "n":
+            return False
+        print("Please type y or n.")
+
+
+def start_menu(story):
+    # Decide which progress to play with when the game starts.
+    progress = load_progress()
+
+    # No save file yet: simply start a new game.
+    if progress is None:
+        print("No saved game found. Starting a new game.")
+        progress = new_progress(story)
+        save_progress(progress)
+        return progress
+
+    # There is a save file: let the player choose.
+    while True:
+        print()
+        print("n. New game")
+        print("c. Continue saved game")
+        choice = input("> ").strip().lower()
+        if choice == "c":
+            return progress
+        if choice == "n":
+            # Ask first, because a new game replaces the saved progress.
+            if ask_yes_no("This deletes your saved progress. Are you sure?"):
+                progress = new_progress(story)
+                save_progress(progress)
+                return progress
+            # The player said no: show the menu again, nothing is changed.
+        else:
+            print("Please type n or c.")
+
+
 def after_ending_menu(story, ending_id):
     # After an ending no story actions are possible any more.
-    # The player can only read the ending again or quit.
+    # The player can read the ending again, start over or quit.
+    # Returns "restart" or "quit".
     while True:
         print()
         print("v. View the ending again")
+        print("n. New game")
         print("q. Quit")
         choice = input("> ").strip().lower()
         if choice == "v":
             show_ending(story, ending_id)
+        elif choice == "n":
+            if ask_yes_no("Start a new game?"):
+                return "restart"
         elif choice == "q":
-            print("Thanks for playing!")
-            break
+            return "quit"
         else:
-            print("Please type v or q.")
+            print("Please type v, n or q.")
 
 
 def show_actions(actions):
@@ -141,6 +187,7 @@ def show_actions(actions):
         print(str(number) + ". " + action["label"])
         number = number + 1
     print("i. Inventory")
+    print("r. Restart")
     print("q. Quit")
 
 
@@ -156,21 +203,14 @@ def show_inventory(story, inventory):
             print("- " + story["items"][item_id])
 
 
-def main():
-    story = load_story()
-    print("*** " + story["title"] + " ***")
-
-    # Continue the saved game if there is one, otherwise start a new one.
-    # (Step 8 will ask the player first.)
-    progress = load_progress()
-    if progress is None:
-        progress = new_progress(story)
+def play_game(story, progress):
+    # Play one game until the player quits or wants to restart.
+    # Returns "quit" or "restart".
 
     # If the saved game is already finished, the ending cannot change.
     if progress["ending"] is not None:
         show_ending(story, progress["ending"])
-        after_ending_menu(story, progress["ending"])
-        return
+        return after_ending_menu(story, progress["ending"])
 
     # Short names for the inventory list and the choices dictionary.
     # They point to the same list/dictionary inside progress, so changing
@@ -191,11 +231,16 @@ def main():
         choice = input("> ").strip().lower()
 
         if choice == "q":
-            print("Thanks for playing!")
-            break
+            return "quit"
 
         if choice == "i":
             show_inventory(story, inventory)
+            continue
+
+        if choice == "r":
+            # Only restart if the player confirms. Saying no changes nothing.
+            if ask_yes_no("Restart? Your current progress will be lost."):
+                return "restart"
             continue
 
         # isdigit() is True only if the text contains just digits, e.g. "2".
@@ -231,8 +276,7 @@ def main():
             progress["ending"] = ending_id
             save_progress(progress)
             show_ending(story, ending_id)
-            after_ending_menu(story, ending_id)
-            break
+            return after_ending_menu(story, ending_id)
 
         # Show the result of the action.
         print()
@@ -254,6 +298,26 @@ def main():
 
         # The action was accepted, so save the progress right away.
         save_progress(progress)
+
+
+def main():
+    story = load_story()
+    print("*** " + story["title"] + " ***")
+
+    # Ask the player: new game or continue?
+    progress = start_menu(story)
+
+    # Keep playing games until the player chooses to quit.
+    while True:
+        result = play_game(story, progress)
+        if result == "quit":
+            print("Thanks for playing!")
+            break
+        # The player confirmed a restart: fresh progress, saved right away.
+        progress = new_progress(story)
+        save_progress(progress)
+        print()
+        print("New game started.")
 
 
 # Only start the game when this file is run directly (py game.py).
