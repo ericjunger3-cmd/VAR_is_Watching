@@ -2,6 +2,9 @@
   "title": "VAR Is Watching",
   "start_scene": "booth",
 
+  "action_limit": 40,
+  "time_limit_seconds": 420,
+
   "items": {
     "whistle": "Lucky Whistle",
     "usb": "USB Stick",
@@ -51,7 +54,11 @@
       "text": "Steam, muddy boots and a half-eaten orange. A poster on the wall says \"TRUST THE PROCESS\". The referee left in a hurry. It smells of deep heat and fear.",
       "pundit": "PUNDIT: Snooping in the ref's room on day one. Bold. Pointless, but bold.",
       "actions": [
-        { "label": "Take the Lucky Whistle from the bench", "take_item": "whistle", "x": 224,
+        { "label": "Open the drawer of the kit cabinet", "set_choice": "drawer", "value": "open", "x": 322,
+          "text": "You pull the drawer open. It squeaks. Inside, between spare shoelaces and a half-eaten energy bar, lies a whistle." },
+        { "label": "Take the Lucky Whistle from the drawer", "take_item": "whistle", "x": 322,
+          "needs_choice": "drawer", "hide_if_blocked": true,
+          "blocked_text": "The drawer is closed.",
           "text": "You pick up the Lucky Whistle. Someone has written LUCKY on it in marker pen, so it must be true." },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You hurry back to the booth. The static is still there." }
@@ -63,7 +70,7 @@
       "text": "Feathers everywhere. Pombo, the club's pigeon mascot, sits on a bench in his giant costume, head in his wings. He was standing right next to the corner flag when the goal went in.",
       "pundit": "PUNDIT: The rookie is interviewing a pigeon. I could not have scripted this.",
       "actions": [
-        { "label": "Ask Pombo what he saw", "take_item": "usb", "set_choice": "dave", "value": "talked", "x": 382,
+        { "label": "Ask Pombo what he saw", "take_item": "usb", "set_choice": "dave", "value": "talked", "x": 345,
           "text": "Pombo pulls off his pigeon head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you a USB Stick: \"Filmed the whole thing on my head-cam.\" Then he whispers: \"At 93:30 a guy in a shiny suit ran out of your booth. Smelled of hair gel.\"" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You leave Dave to put his head back on and run back to the booth." }
@@ -155,6 +162,11 @@
       "title": "Justice Served",
       "show_epilogue": true,
       "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you picked a side before the official decision. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. PUNDIT: Fine. Correct AND professional. Absolutely terrible for my ratings."
+    },
+    "time_up": {
+      "title": "The Stadium Went Home",
+      "show_epilogue": true,
+      "text": "You took too long. After all that waiting, the referee shrugs, decides the goal with a coin toss and walks off. Half the stadium has already gone home; the other half is booing you personally. PUNDIT: That long for one decision? Even the pigeon left."
     },
     "var_is_watching": {
       "title": "VAR Is Watching",

@@ -26,6 +26,13 @@ TYPE_SPEED = 2
 # The 2D game saves its progress in its own file (same format as save.json).
 SAVE_FILE = "save_2d.json"
 
+# How many frames an item needs to fly from the room into its slot.
+FLY_FRAMES = 25
+
+# How many frames Dave's reveal (taking off the mask) takes.
+REVEAL_FRAMES = 60
+
+
 
 def move_player(player, keys, player_width):
     # Move the player left or right while an arrow key (or A / D) is held.
@@ -43,8 +50,8 @@ def move_player(player, keys, player_width):
     # Stay inside the room: not past the left or right edge.
     if player["x"] < 0:
         player["x"] = 0
-    if player["x"] > rooms.CANVAS_WIDTH - player_width:
-        player["x"] = rooms.CANVAS_WIDTH - player_width
+    if player["x"] > rooms.ROOM_WIDTH - player_width:
+        player["x"] = rooms.ROOM_WIDTH - player_width
 
     # Count frames while walking; reset when standing still.
     if moving:
@@ -54,15 +61,17 @@ def move_player(player, keys, player_width):
 
 
 def player_picture(player, standing, walking):
-    # Choose which picture to draw: standing, or the walking frame.
-    # While walking, the picture switches every FRAMES_PER_STEP frames:
-    # (walk_timer // FRAMES_PER_STEP) counts 0, 1, 2, 3 ... and
-    # "% 2 == 1" is True for every second count.
-    picture = standing
-    if player["walk_timer"] > 0 and (player["walk_timer"] // FRAMES_PER_STEP) % 2 == 1:
-        picture = walking
+    # Choose which picture to draw. Standing still: the front view.
+    # Walking: one of the four side-view frames in walking (a list).
+    # The frame changes every FRAMES_PER_STEP frames:
+    # (walk_timer // FRAMES_PER_STEP) counts 0, 1, 2, 3, 4 ... and
+    # "% 4" turns that into 0, 1, 2, 3, 0, 1, 2, 3 ...
+    if player["walk_timer"] == 0:
+        return standing
+    frame = (player["walk_timer"] // FRAMES_PER_STEP) % 4
+    picture = walking[frame]
 
-    # The pictures look to the right. Mirror them when walking left.
+    # The side pictures look to the right. Mirror them when walking left.
     # flip(picture, flip left-right?, flip up-down?)
     if player["facing_left"]:
         picture = pygame.transform.flip(picture, True, False)
@@ -109,20 +118,10 @@ def arrival_x(scene, came_from, player_width):
     return 30
 
 
-def draw_e_bubble(canvas, player_x, player_y, player_width):
-    # A little white speech bubble above the player's head.
-    # The letter "E" is added later on the big window.
-    x = player_x + player_width // 2 - 7
-    y = player_y - 18
-    pygame.draw.rect(canvas, sprites.OUTLINE, (x, y, 14, 14))
-    pygame.draw.rect(canvas, (255, 252, 235), (x + 1, y + 1, 12, 12))
-    pygame.draw.rect(canvas, (235, 225, 195), (x + 1, y + 11, 12, 2))
-    pygame.draw.rect(canvas, sprites.OUTLINE, (x + 5, y + 14, 4, 2))
-
-
-def draw_labels(window, font, small_font, scene_id):
+def draw_labels(window, font, small_font, scene_id, offset):
     # Text is drawn on the big window (not the small canvas), so it stays sharp.
-    # The positions are canvas positions, so we multiply them by SCALE.
+    # The positions are room positions: we multiply them by SCALE and
+    # subtract offset (how far the camera has moved, in window pixels).
     for text, x, y, colour, small in rooms.LABELS[scene_id]:
         if small:
             label_font = small_font
@@ -130,10 +129,10 @@ def draw_labels(window, font, small_font, scene_id):
             label_font = font
         # render(text, smooth edges, colour): False gives sharp pixel edges.
         picture = label_font.render(text, False, colour)
-        window.blit(picture, (x * SCALE, y * SCALE))
+        window.blit(picture, (x * SCALE - offset, y * SCALE))
 
 
-def draw_scoreboard_text(window, font, ball):
+def draw_scoreboard_text(window, font, ball, offset):
     # The yellow bar of the scoreboard says "VAR CHECK", or flashes
     # "GOAL?!" while the player's goal is celebrated.
     if ball["celebrate"] > 0:
@@ -142,7 +141,7 @@ def draw_scoreboard_text(window, font, ball):
     else:
         text = "VAR CHECK"
         x = 210
-    window.blit(font.render(text, False, (30, 20, 20)), (x * SCALE, 66 * SCALE))
+    window.blit(font.render(text, False, (30, 20, 20)), (x * SCALE - offset, 66 * SCALE))
 
 
 def room_pages(scene, fonts):
@@ -193,10 +192,15 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
         item_id = action["take_item"]
         if item_id not in inventory:
             inventory.append(item_id)
+            # The item flies from where it was into its slot.
+            screen["flying"] = {"item": item_id, "x": action["x"], "frame": 0}
 
     # Remember a decision (press answer, Dave's statement ...).
     if "set_choice" in action:
         choices[action["set_choice"]] = action["value"]
+        # Talking to Pombo starts Dave's reveal (taking off the mask).
+        if action["set_choice"] == "dave":
+            screen["reveal"] = 0
 
     # A ruling ends the game. The ending screen appears when the text is read.
     if "ruling" in action:
@@ -230,6 +234,9 @@ def handle_dialogue_key(key, screen):
             screen["letters"] = ui.letters_on_page(page)
         else:
             screen["dialogue"].pop(0)
+            # The last page stays in the box, greyed out, until a new text comes.
+            if len(screen["dialogue"]) == 0:
+                screen["last"] = page
             screen["letters"] = 0
 
 
@@ -333,7 +340,7 @@ def handle_walking_key(key, scene, nearby, progress, story, screen, fonts, playe
 
 KICK_SPEED = 6        # how fast the ball starts rolling after a kick (pixels per frame)
 FRICTION = 0.95       # every frame the ball keeps 95 % of its speed
-GOAL_X = 421          # the ball is in the goal when it rolls past this x
+GOAL_X = 394          # the ball is in the goal when it rolls past this x
 CELEBRATION = 90      # how many frames the goal celebration lasts (3 seconds)
 
 
@@ -384,7 +391,7 @@ def update_ball(ball, player, player_width):
 
     # GOAL! The ball stops in the net and the celebration starts.
     if ball["x"] > GOAL_X:
-        ball["x"] = 440.0
+        ball["x"] = 466.0
         ball["speed"] = 0.0
         ball["celebrate"] = CELEBRATION
 
@@ -417,6 +424,9 @@ def make_screen(dialogue):
         "review": None,     # the VAR Review while it is open
         "pause": None,      # the pause menu (Escape) while it is open
         "confirm": None,    # a yes/no question while it is open
+        "last": None,       # the last page read (shown greyed out)
+        "flying": None,     # an item flying into its slot
+        "reveal": None,     # how far Dave's reveal is (in frames)
     }
 
 
@@ -472,7 +482,7 @@ def handle_pause_key(key, screen):
 
 # ---------------------------------------------------------------- drawing
 
-def draw_game(assets, story, progress, screen, player, nearby, ball):
+def draw_game(assets, story, progress, screen, player, nearby, moving):
     # Draw one picture of the game, in layers from the back to the front.
     window = assets["window"]
     canvas = assets["canvas"]
@@ -482,31 +492,53 @@ def draw_game(assets, story, progress, screen, player, nearby, ball):
     player_width = assets["standing"].get_width()
     scene = story["scenes"][progress["scene"]]
     show_ending = ending_is_showing(progress, screen)
+    ball = moving["ball"]
+    tick = moving["tick"]
+    # How far the camera has moved, in WINDOW pixels (not canvas pixels).
+    # Because one canvas pixel is 2 window pixels, this lets the camera
+    # move in smaller, smoother steps.
+    offset = int(round(moving["camera"] * SCALE))
 
-    # 1. The room, the player and the E bubble on the small canvas.
-    rooms.draw_room(canvas, progress["scene"], assets["pictures"], progress, ball)
+    # 1. The room and the player on the (wider) room canvas. The whole room
+    #    is scaled up and placed so that the camera's part is in the window.
+    extras = {"tick": tick, "ball": ball, "reveal": screen["reveal"]}
+    rooms.draw_room(canvas, progress["scene"], assets["pictures"], progress, extras)
     canvas.blit(player_picture(player, assets["standing"], assets["walking"]), (player["x"], player_y))
-    if len(nearby) > 0:
-        draw_e_bubble(canvas, player["x"], player_y, player_width)
-    window.blit(pygame.transform.scale(canvas, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
+    big_room = pygame.transform.scale(canvas, (rooms.ROOM_WIDTH * SCALE, WINDOW_HEIGHT))
+    window.blit(big_room, (-offset, 0))
 
-    # 2. The sharp room labels and the "E" in the bubble.
-    draw_labels(window, fonts["label"], fonts["label_small"], progress["scene"])
+    # 2. The sharp room labels and the breathing "E" bubble.
+    draw_labels(window, fonts["label"], fonts["label_small"], progress["scene"], offset)
     if progress["scene"] == "pitch":
-        draw_scoreboard_text(window, fonts["label"], ball)
+        draw_scoreboard_text(window, fonts["label"], ball, offset)
     if len(nearby) > 0:
-        letter = fonts["bubble"].render("E", False, sprites.OUTLINE)
-        letter_x = player["x"] + player_width // 2 - 3
-        window.blit(letter, (letter_x * SCALE, (player_y - 17) * SCALE))
+        middle_x = (player["x"] + player_width // 2) * SCALE - offset
+        ui.draw_e_bubble(window, middle_x, (player_y - 12) * SCALE, tick, fonts["bubble"])
 
     # 3. The boxes on the see-through overlay. fill((0, 0, 0, 0)) wipes it
     #    clean every frame (the 4th number 0 means fully transparent).
     #    The pundit's TV and the inventory are always there.
     overlay.fill((0, 0, 0, 0))
     ui.draw_pundit_tv(overlay, assets["pundit"])
-    ui.draw_inventory(overlay, progress["inventory"], assets["pictures"], len(story["items"]))
+    flying_item = None
+    if screen["flying"] is not None:
+        flying_item = screen["flying"]["item"]
+    ui.draw_inventory(overlay, progress["inventory"], assets["pictures"], len(story["items"]), tick, flying_item)
+    if flying_item is not None:
+        slot = progress["inventory"].index(flying_item)
+        ui.draw_flying_item(overlay, assets["pictures"][flying_item], screen["flying"]["x"] - offset // SCALE,
+                            160, slot, screen["flying"]["frame"], FLY_FRAMES)
+    ui.draw_timer(overlay, progress["seconds_left"], story["time_limit_seconds"], tick)
+
+    # The text bar: the current page, or (greyed out) the last page read.
+    menu_open = screen["menu"] is not None or screen["pause"] is not None
+    full_screen = screen["closeup"] is not None or screen["review"] is not None or show_ending
+    show_last = (len(screen["dialogue"]) == 0 and not menu_open and not full_screen
+                 and screen["last"] is not None)
     if len(screen["dialogue"]) > 0:
         ui.draw_dialogue_box(overlay, screen["dialogue"][0])
+    elif show_last:
+        ui.draw_dialogue_box(overlay, screen["last"], True)
     if screen["menu"] is not None or screen["pause"] is not None:
         ui.draw_menu_box(overlay)
     if screen["closeup"] is not None:
@@ -520,7 +552,8 @@ def draw_game(assets, story, progress, screen, player, nearby, ball):
     window.blit(pygame.transform.scale(overlay, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
 
     # 4. The text inside the boxes.
-    full_screen = screen["closeup"] is not None or screen["review"] is not None or show_ending
+    if not full_screen:
+        ui.draw_timer_text(window, progress["seconds_left"], fonts, SCALE)
     if not full_screen and screen["confirm"] is None:
         # After a goal with the ball, the pundit comments on that instead.
         if progress["scene"] == "pitch" and ball["celebrate"] > 0:
@@ -530,6 +563,8 @@ def draw_game(assets, story, progress, screen, player, nearby, ball):
         ui.draw_pundit_text(window, pundit_text, fonts, SCALE)
     if len(screen["dialogue"]) > 0:
         ui.draw_dialogue_text(window, screen["dialogue"][0], screen["letters"], fonts, SCALE)
+    elif show_last:
+        ui.draw_dialogue_text(window, screen["last"], 9999, fonts, SCALE, True)
     if screen["menu"] is not None:
         ui.draw_menu_text(window, screen["menu"], fonts, SCALE)
     if screen["pause"] is not None:
@@ -560,6 +595,7 @@ def title_screen(assets, story):
     # Behind the menu we show the pitch with all the players.
     empty_progress = game.new_progress(story)
     still_ball = new_ball()
+    tick = 0
 
     while True:
         has_save = game.load_progress(SAVE_FILE) is not None
@@ -597,8 +633,11 @@ def title_screen(assets, story):
         canvas = assets["canvas"]
         overlay = assets["overlay"]
         window = assets["window"]
-        rooms.draw_room(canvas, "pitch", assets["pictures"], empty_progress, still_ball)
-        window.blit(pygame.transform.scale(canvas, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
+        tick = tick + 1
+        extras = {"tick": tick, "ball": still_ball, "reveal": None}
+        rooms.draw_room(canvas, "pitch", assets["pictures"], empty_progress, extras)
+        view = canvas.subsurface((0, 0, rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT))
+        window.blit(pygame.transform.scale(view, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
         overlay.fill((0, 0, 0, 0))
         ui.draw_title_screen(overlay, len(labels), selected)
         if confirm is not None:
@@ -621,8 +660,10 @@ def play(assets, story, progress, screen, player):
     clock = pygame.time.Clock()
     fonts = assets["fonts"]
     player_width = assets["standing"].get_width()
-    # The ball on the pitch is just for fun: it is not saved.
-    ball = new_ball()
+    # Everything that moves on screen but is not part of the story:
+    # the frame counter (for animations), the ball (just for fun, not
+    # saved) and the camera position.
+    moving = {"tick": 0, "ball": new_ball(), "camera": 0.0}
 
     while True:
         scene = story["scenes"][progress["scene"]]
@@ -662,6 +703,8 @@ def play(assets, story, progress, screen, player):
                 handle_review_key(event.key, progress, story, screen, fonts)
             elif screen["pause"] is not None:
                 if handle_pause_key(event.key, screen) == "title":
+                    # Save the time that is left before leaving.
+                    game.save_progress(progress, SAVE_FILE)
                     return "title"
             elif ending_is_showing(progress, screen):
                 if event.key == pygame.K_n:
@@ -671,6 +714,7 @@ def play(assets, story, progress, screen, player):
                     return "title"
             elif event.key == pygame.K_ESCAPE:
                 screen["pause"] = {"selected": 0}
+                game.save_progress(progress, SAVE_FILE)
             else:
                 handle_walking_key(event.key, scene, nearby, progress, story, screen, fonts, player, player_width)
 
@@ -689,13 +733,47 @@ def play(assets, story, progress, screen, player):
 
         # The ball rolls on the pitch.
         if progress["scene"] == "pitch":
-            update_ball(ball, player, player_width)
+            update_ball(moving["ball"], player, player_width)
+
+        # The stadium is waiting: the time runs, except in the pause menu,
+        # during a yes/no question and after the game has ended.
+        paused = screen["pause"] is not None or screen["confirm"] is not None
+        if progress["ending"] is None and not paused:
+            progress["seconds_left"] = progress["seconds_left"] - 1 / 30
+            if progress["seconds_left"] <= 0:
+                # Time is up: close everything, the ending screen appears.
+                progress["seconds_left"] = 0
+                progress["ending"] = "time_up"
+                screen["menu"] = None
+                screen["closeup"] = None
+                screen["dialogue"] = []
+                if screen["review"] is not None:
+                    close_review(screen)
+                game.save_progress(progress, SAVE_FILE)
+
+        # Animations: the frame counter, the flying item and Dave's reveal.
+        moving["tick"] = moving["tick"] + 1
+        if screen["flying"] is not None:
+            screen["flying"]["frame"] = screen["flying"]["frame"] + 1
+            if screen["flying"]["frame"] >= FLY_FRAMES:
+                screen["flying"] = None
+        if screen["reveal"] is not None:
+            screen["reveal"] = screen["reveal"] + 1
+            if screen["reveal"] >= REVEAL_FRAMES:
+                screen["reveal"] = None
+
+        # The camera follows the player exactly: it keeps the player in the
+        # middle of the window, but never shows anything outside the room.
+        # max(0, ...) and min(..., 20) keep it between 0 and 20 pixels.
+        player_middle = player["x"] + player_width // 2
+        target = player_middle - rooms.CANVAS_WIDTH // 2
+        moving["camera"] = max(0, min(target, rooms.ROOM_WIDTH - rooms.CANVAS_WIDTH))
 
         # The typing effect: a few more letters appear every frame.
         if len(screen["dialogue"]) > 0:
             screen["letters"] = screen["letters"] + TYPE_SPEED
 
-        draw_game(assets, story, progress, screen, player, nearby, ball)
+        draw_game(assets, story, progress, screen, player, nearby, moving)
         pygame.display.flip()
         clock.tick(30)
 
@@ -716,7 +794,8 @@ def main():
         "hand": pygame.font.SysFont("inkfree", 28, bold=True),
         "label": pygame.font.SysFont("consolas", 15, bold=True),
         "label_small": pygame.font.SysFont("consolas", 11, bold=True),
-        "bubble": pygame.font.SysFont("consolas", 22, bold=True),
+        "bubble": pygame.font.SysFont("consolas", 16, bold=True),
+        "tiny": pygame.font.SysFont("consolas", 11, bold=True),
     }
 
     # Everything we need for drawing, kept together in one dictionary,
@@ -726,12 +805,13 @@ def main():
         "window": window,
         # The small canvas for the rooms, and a see-through overlay for the
         # boxes, so room labels never shine through a box.
-        "canvas": pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT)),
+        "canvas": pygame.Surface((rooms.ROOM_WIDTH, rooms.CANVAS_HEIGHT)),
         "overlay": pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT), pygame.SRCALPHA),
         "fonts": fonts,
         "standing": standing,
-        "walking": sprites.make_sprite(sprites.PLAYER_WALK),
-        "pundit": sprites.make_sprite(sprites.PUNDIT),
+        # The four walking pictures (side view), made one by one in a loop.
+        "walking": [],
+        "pundit": sprites.make_sprite(sprites.PUNDIT, sprites.PUNDIT_COLOURS),
         # The feet always touch the floor.
         "player_y": rooms.FLOOR_Y - standing.get_height(),
         # The characters and objects that live in the rooms. Some use the
@@ -748,10 +828,17 @@ def main():
             # Item pictures: the key is the item id from story.json.
             "whistle": sprites.make_sprite(sprites.WHISTLE),
             "usb": sprites.make_sprite(sprites.USB),
+            # Pombo in parts, and Dave's own face, for the reveal.
+            "pombo_head": sprites.make_sprite(sprites.POMBO_HEAD),
+            "pombo_body": sprites.make_sprite(sprites.POMBO_BODY),
+            "dave_head": sprites.make_sprite(sprites.DAVE_HEAD),
             "lanyard": sprites.make_sprite(sprites.LANYARD),
             "slip": sprites.make_sprite(sprites.SLIP),
         },
     }
+
+    for frame in sprites.PLAYER_SIDE:
+        assets["walking"].append(sprites.make_sprite(frame))
 
     # The story from story.json, reused from the terminal game.
     story = game.load_story()
@@ -769,6 +856,9 @@ def main():
         if choice == "exit":
             break
         saved = game.load_progress(SAVE_FILE)
+        if saved is not None:
+            # Older save files may miss some keys (e.g. seconds_left).
+            game.add_missing_keys(saved, story)
         if choice == "play" and saved is not None:
             progress = saved
             screen = continue_game(story, fonts, player, progress, standing.get_width())

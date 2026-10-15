@@ -3,6 +3,7 @@
 # Boxes and pictures are drawn on the small canvas (so they look pixelated);
 # the text is drawn on the big window afterwards (so it stays sharp).
 
+import math
 import pygame
 import game
 from sprites import OUTLINE
@@ -92,13 +93,22 @@ def framed_box(canvas, x, y, width, height, fill, light, dark):
     pygame.draw.rect(canvas, fill, (x + 3, y + 3, width - 6, height - 6))
 
 
-def draw_dialogue_box(canvas, page):
+def draw_dialogue_box(canvas, page, faded=False):
     # The cream dialogue box, plus an orange tab for the title (if there is one).
-    framed_box(canvas, BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT,
-               (255, 245, 220), (255, 255, 245), (220, 190, 140))
+    # faded=True draws it in greyer colours: the text has already been read.
+    if faded:
+        framed_box(canvas, BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT,
+                   (225, 220, 210), (235, 232, 225), (195, 185, 170))
+    else:
+        framed_box(canvas, BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT,
+                   (255, 245, 220), (255, 255, 245), (220, 190, 140))
     if page["title"] != "":
-        framed_box(canvas, BOX_X + 8, BOX_Y - 7, 120, 16,
-                   (230, 120, 60), (255, 160, 100), (190, 90, 40))
+        if faded:
+            framed_box(canvas, BOX_X + 8, BOX_Y - 7, 120, 16,
+                       (175, 150, 135), (195, 175, 160), (150, 125, 110))
+        else:
+            framed_box(canvas, BOX_X + 8, BOX_Y - 7, 120, 16,
+                       (230, 120, 60), (255, 160, 100), (190, 90, 40))
 
 
 def draw_pundit_tv(canvas, pundit_picture):
@@ -165,20 +175,63 @@ def draw_note_closeup(canvas):
     pygame.draw.line(canvas, (150, 90, 40), (x + 24, y + 151), (x + 32, y + 151))
 
 
-def draw_inventory(canvas, inventory, pictures, slot_count):
-    # Item slots in the top-left corner. Every item you carry
-    # is shown in its own slot, in the order you picked them up.
+def slot_position(index):
+    # The top-left corner of inventory slot number index (0, 1, 2 ...).
+    return 6 + index * 26, 6
+
+
+def draw_inventory(canvas, inventory, pictures, slot_count, tick, flying_item):
+    # Item slots in the top-left corner. Every item you carry is shown in
+    # its own slot, in the order you picked them up. The items float gently
+    # up and down (each one a little later than the one before).
+    # flying_item is an item that is still flying to its slot (not drawn here).
     for i in range(slot_count):
-        x = 6 + i * 26
-        y = 6
+        x, y = slot_position(i)
         framed_box(canvas, x, y, 24, 22, (90, 60, 40), (130, 90, 60), (60, 40, 25))
         pygame.draw.rect(canvas, (70, 45, 30), (x + 3, y + 3, 18, 16))
-        if i < len(inventory):
+        if i < len(inventory) and inventory[i] != flying_item:
             icon = pictures[inventory[i]]
-            # Put the icon in the middle of the slot.
+            float_up = ((tick // 15 + i * 2) % 4 == 0)
+            # Put the icon in the middle of the slot (1 pixel higher when floating).
             icon_x = x + (24 - icon.get_width()) // 2
-            icon_y = y + (22 - icon.get_height()) // 2
+            icon_y = y + (22 - icon.get_height()) // 2 - float_up
             canvas.blit(icon, (icon_x, icon_y))
+
+
+def draw_flying_item(canvas, picture, start_x, start_y, slot_index, frame, frames):
+    # An item flying from where it was picked up into its slot, in an arc.
+    # progress_part goes from 0.0 (start) to 1.0 (in the slot).
+    progress_part = frame / frames
+    slot_x, slot_y = slot_position(slot_index)
+    end_x = slot_x + (24 - picture.get_width()) // 2
+    end_y = slot_y + (22 - picture.get_height()) // 2
+    x = start_x + (end_x - start_x) * progress_part
+    y = start_y + (end_y - start_y) * progress_part
+    # The arc: up to 40 pixels higher in the middle of the flight.
+    y = y - 40 * 4 * progress_part * (1 - progress_part)
+    canvas.blit(picture, (int(x), int(y)))
+
+
+TIMER_X = 6
+TIMER_Y = 32
+TIMER_WIDTH = 102
+
+
+def draw_timer(canvas, seconds_left, total_seconds, tick):
+    # The stadium's patience: a bar under the inventory that gets shorter.
+    # Green when there is plenty of time, then yellow, then red.
+    # In the last 30 seconds it blinks.
+    part = max(0, seconds_left) / total_seconds
+    if part > 0.5:
+        colour = (90, 200, 90)
+    elif part > 0.2:
+        colour = (240, 200, 60)
+    else:
+        colour = (230, 70, 60)
+    framed_box(canvas, TIMER_X, TIMER_Y, TIMER_WIDTH, 16, (60, 40, 30), (90, 60, 40), (40, 25, 20))
+    blink_off = seconds_left < 30 and (tick // 10) % 2 == 0
+    if not blink_off:
+        pygame.draw.rect(canvas, colour, (TIMER_X + 3, TIMER_Y + 10, int((TIMER_WIDTH - 6) * part), 3))
 
 
 def draw_menu_box(canvas):
@@ -399,6 +452,30 @@ def draw_review_text(window, review, state, fonts, scale):
         y = y + 11
 
 
+def draw_timer_text(window, seconds_left, fonts, scale):
+    # "STADIUM WAITS 6:42": minutes and seconds left.
+    seconds = max(0, int(seconds_left))
+    minutes = seconds // 60
+    rest = seconds % 60
+    # str(rest).zfill(2) adds a 0 in front of single digits: 7 -> "07".
+    text = "STADIUM WAITS " + str(minutes) + ":" + str(rest).zfill(2)
+    window.blit(fonts["tiny"].render(text, False, CREAM), ((TIMER_X + 4) * scale, (TIMER_Y + 2) * scale))
+
+
+def draw_e_bubble(window, middle_x, top_y, tick, font):
+    # The "E" bubble above things you can use, drawn directly on the big
+    # window. It breathes: its size grows and shrinks a little, following
+    # a sine wave (math.sin goes smoothly from -1 to 1 and back).
+    size = 20 + 2 * math.sin(tick * 0.15)
+    x = middle_x - size / 2
+    y = top_y - size / 2
+    pygame.draw.rect(window, OUTLINE, (x - 2, y - 2, size + 4, size + 4))
+    pygame.draw.rect(window, (255, 252, 235), (x, y, size, size))
+    pygame.draw.rect(window, OUTLINE, (middle_x - 3, y + size + 2, 6, 3))
+    letter = font.render("E", False, OUTLINE)
+    window.blit(letter, (middle_x - letter.get_width() / 2, top_y - letter.get_height() / 2))
+
+
 def draw_ending_text(window, story, ending_id, fonts, scale):
     # The ending: its title, its text, the epilogue (for most endings)
     # and what the player can do now.
@@ -417,9 +494,14 @@ def draw_ending_text(window, story, ending_id, fonts, scale):
     hint = fonts["small"].render("N: new game        Q: quit", False, ORANGE)
     window.blit(hint, (42 * scale, 232 * scale))
 
-def draw_dialogue_text(window, page, letters_shown, fonts, scale):
+def draw_dialogue_text(window, page, letters_shown, fonts, scale, faded=False):
     # Write the title and the lines of the page. Only the first
     # letters_shown letters are written, which makes the typing effect.
+    # faded=True writes everything in grey (the text was already read).
+    if faded:
+        text_colour = (140, 130, 120)
+    else:
+        text_colour = BROWN
     if page["title"] != "":
         title = fonts["title"].render(page["title"].upper(), False, CREAM)
         window.blit(title, ((BOX_X + 14) * scale, (BOX_Y - 5) * scale))
@@ -429,14 +511,14 @@ def draw_dialogue_text(window, page, letters_shown, fonts, scale):
     for line in page["lines"]:
         # line[:letters_left] is the start of the line (up to letters_left letters).
         visible = line[:letters_left]
-        window.blit(fonts["text"].render(visible, False, BROWN), ((BOX_X + 10) * scale, y * scale))
+        window.blit(fonts["text"].render(visible, False, text_colour), ((BOX_X + 10) * scale, y * scale))
         letters_left = letters_left - len(line)
         if letters_left <= 0:
             break
         y = y + 11
 
     # When the whole page is shown, a small "SPACE >" tells the player to continue.
-    if letters_shown >= letters_on_page(page):
+    if letters_shown >= letters_on_page(page) and not faded:
         hint = fonts["small"].render("SPACE >", False, ORANGE)
         window.blit(hint, ((BOX_X + BOX_WIDTH - 46) * scale, (BOX_Y + BOX_HEIGHT - 12) * scale))
 

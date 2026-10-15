@@ -60,12 +60,15 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
   answer to the press ("Clearly a goal!", "No comment", or exposing Rex, which
   needs the lanyard, the slip and Dave's statement). The referee only takes
   your call after you have spoken to the press.
-- **5 endings:**
+- **The stadium is waiting:** you have 40 actions (terminal) or 7 minutes
+  (2D version). Run out and you get a sixth ending.
+- **5 endings + 1:**
   - *Daylight Robbery*: you rule OFFSIDE
   - *Clip of the Year*: GOAL without doing the review
   - *Right Call, Wrong Mouth*: GOAL after the review + "Clearly a goal!"
   - *Justice Served*: GOAL after the review + "No comment"
   - *VAR Is Watching*: GOAL after the review + you exposed Rex
+  - *The Stadium Went Home*: you ran out of time
 
 ## Acceptance test checklist (A1-A6)
 
@@ -82,8 +85,8 @@ in the start menu. Type the inputs one at a time, pressing Enter after each one.
 | Test | Inputs | Expected result |
 |---|---|---|
 | **A1 Locked route** | `2`, then `i` | "The door is locked..." You stay in the VAR Booth and your pockets are empty. |
-| **A2 Unlocked route** | `1`, `1` (take whistle), `1` (back), `2`, then `i` | The door opens and you are in the Mascot Changing Room. The inventory still shows the Lucky Whistle. |
-| **A3 No duplicate** | `1`, `1` (take whistle), `1` (back), `1` (Dressing Room again), then `i` | After taking it, the "Take the Lucky Whistle" action is gone, also on the second visit. The inventory shows the Lucky Whistle only once. |
-| **A4 Resume** | `1`, `1`, `1`, `2`, `1` (USB), `1`, `3`, `2` (No comment), `q`. Then run `py game.py` again and type `c`, `i`, `2` (back), `4` | You continue in the Press Room without the answer options. The inventory shows both items. The Pitch is open. |
-| **A5 Two outcomes** | Game 1: `3`, `1`, `2`, `4`, `1` gives **Clip of the Year**. Type `n`, `y`. Game 2: `1`, `1`, `1`, `2`, `1`, `1`, `7` (review), `1.2`, `l`, `21.5`, `3`, `2`, `2`, `4`, `1` gives **Justice Served**. Type `q`, run again, `c` | Two different endings. Reopening a finished game shows the same ending, with only `v`, `n` and `q`. |
-| **A6 Restart safely** | `1`, `1` (take whistle), then `r`, `n`, `i`. Then `r`, `y`, `i`, `3` | After `n`: you are still in the Dressing Room with the whistle. After `y`: you are back in the VAR Booth, your pockets are empty, and the Press Room shows both answers again. |
+| **A2 Unlocked route** | `1`, `1` (open drawer), `1` (take whistle), `1` (back), `2`, then `i` | The door opens and you are in the Mascot Changing Room. The inventory still shows the Lucky Whistle. |
+| **A3 No duplicate** | `1`, `1` (open drawer), `1` (take whistle), `1` (back), `1` (Dressing Room again), then `i` | After taking it, the "Take the Lucky Whistle" action is gone, also on the second visit. The inventory shows the Lucky Whistle only once. |
+| **A4 Resume** | `1`, `1`, `1`, `1`, `2`, `1` (USB), `1`, `3`, `2` (No comment), `q`. Then run `py game.py` again and type `c`, `i`, `2` (back), `4` | You continue in the Press Room without the answer options. The inventory shows both items. The Pitch is open. |
+| **A5 Two outcomes** | Game 1: `3`, `1`, `2`, `4`, `1` gives **Clip of the Year**. Type `n`, `y`. Game 2: `1`, `1`, `1`, `1`, `2`, `1`, `1`, `7` (review), `1.2`, `l`, `21.5`, `3`, `2`, `2`, `4`, `1` gives **Justice Served**. Type `q`, run again, `c` | Two different endings. Reopening a finished game shows the same ending, with only `v`, `n` and `q`. |
+| **A6 Restart safely** | `1`, `1` (open drawer), `1` (take whistle), then `r`, `n`, `i`. Then `r`, `y`, `i`, `3` | After `n`: you are still in the Dressing Room with the whistle. After `y`: you are back in the VAR Booth, your pockets are empty, and the Press Room shows both answers again. |

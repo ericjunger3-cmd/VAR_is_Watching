@@ -21,9 +21,22 @@ def new_progress(story):
         "inventory": [],                 # item ids, e.g. ["whistle"]
         "choices": {},                   # decisions, e.g. {"press_answer": "goal"}
         "visited": [],                   # scene ids already seen, e.g. ["booth"]
-        "ending": None                   # ending id once the game is over
+        "ending": None,                  # ending id once the game is over
+        # The stadium is waiting: the terminal game counts actions,
+        # the 2D game counts seconds.
+        "actions_left": story["action_limit"],
+        "seconds_left": story["time_limit_seconds"]
     }
     return progress
+
+
+def add_missing_keys(progress, story):
+    # Save files from older versions of the game miss some keys.
+    # We add them with their starting values, so old saves still work.
+    fresh = new_progress(story)
+    for key in fresh:
+        if key not in progress:
+            progress[key] = fresh[key]
 
 
 def save_progress(progress, file_name="save.json"):
@@ -92,6 +105,10 @@ def is_hidden(action, inventory, choices):
     # An answer option disappears once that question has been answered.
     # This way a decision can only be made once.
     if "set_choice" in action and action["set_choice"] in choices:
+        return True
+    # Some actions stay hidden until they can be done (e.g. taking the
+    # whistle only appears once the drawer is open).
+    if "hide_if_blocked" in action and blocked_reason(action, inventory, choices) is not None:
         return True
     return False
 
@@ -280,6 +297,9 @@ def start_menu(story):
         save_progress(progress)
         return progress
 
+    # Older save files may miss some keys (e.g. actions_left).
+    add_missing_keys(progress, story)
+
     # There is a save file: let the player choose.
     while True:
         print()
@@ -370,6 +390,7 @@ def play_game(story, progress):
 
         # Only the visible actions get a number in the menu.
         actions = get_visible_actions(scene, inventory, choices)
+        print("(The stadium is waiting: " + str(progress["actions_left"]) + " actions left)")
         show_actions(actions)
 
         # strip() removes spaces, lower() turns "Q" into "q".
@@ -440,6 +461,14 @@ def play_game(story, progress):
         # If the action leads somewhere, move to that scene.
         if "go_to" in action:
             progress["scene"] = action["go_to"]
+
+        # Every accepted action uses up some of the stadium's patience.
+        progress["actions_left"] = progress["actions_left"] - 1
+        if progress["actions_left"] <= 0:
+            progress["ending"] = "time_up"
+            save_progress(progress)
+            show_ending(story, "time_up")
+            return after_ending_menu(story, "time_up")
 
         # The action was accepted, so save the progress right away.
         save_progress(progress)

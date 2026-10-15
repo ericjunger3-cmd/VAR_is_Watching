@@ -9,6 +9,10 @@ from sprites import OUTLINE
 CANVAS_WIDTH = 480
 CANVAS_HEIGHT = 270
 
+# The rooms are a bit wider than the window, so the view can slide
+# after the player (camera follow).
+ROOM_WIDTH = CANVAS_WIDTH + 20
+
 # The y position of the floor: characters stand on this line.
 FLOOR_Y = 200
 
@@ -27,19 +31,26 @@ NOTE_YELLOW = (255, 225, 70)
 
 # ---------------------------------------------------------------- shared parts
 
+def bob(tick, phase):
+    # Returns 0 or 1: characters move up by one pixel half of the time,
+    # which looks like breathing. tick counts the frames; phase makes not
+    # everybody breathe at the same moment.
+    return ((tick + phase) // 20) % 2
+
+
 def draw_wall(canvas):
     # Cream wallpaper with soft stripes and a darker strip at the top.
     canvas.fill((246, 224, 180))
-    pygame.draw.rect(canvas, (232, 205, 160), (0, 0, CANVAS_WIDTH, 10))
-    pygame.draw.rect(canvas, OUTLINE, (0, 10, CANVAS_WIDTH, 1))
-    for x in range(0, CANVAS_WIDTH, 24):
+    pygame.draw.rect(canvas, (232, 205, 160), (0, 0, ROOM_WIDTH, 10))
+    pygame.draw.rect(canvas, OUTLINE, (0, 10, ROOM_WIDTH, 1))
+    for x in range(0, ROOM_WIDTH, 24):
         pygame.draw.rect(canvas, (240, 216, 170), (x, 11, 12, 140))
 
     # Wood panelling on the lower part of the wall.
-    pygame.draw.rect(canvas, OUTLINE, (0, 147, CANVAS_WIDTH, 1))
-    pygame.draw.rect(canvas, (140, 80, 40), (0, 148, CANVAS_WIDTH, 3))
-    pygame.draw.rect(canvas, (180, 110, 60), (0, 151, CANVAS_WIDTH, 49))
-    for x in range(0, CANVAS_WIDTH, 20):
+    pygame.draw.rect(canvas, OUTLINE, (0, 147, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (140, 80, 40), (0, 148, ROOM_WIDTH, 3))
+    pygame.draw.rect(canvas, (180, 110, 60), (0, 151, ROOM_WIDTH, 49))
+    for x in range(0, ROOM_WIDTH, 20):
         pygame.draw.rect(canvas, (205, 135, 75), (x + 1, 152, 17, 46))   # plank
         pygame.draw.rect(canvas, (225, 160, 95), (x + 1, 152, 17, 2))    # light top
         pygame.draw.rect(canvas, (150, 88, 48), (x + 1, 196, 17, 2))     # dark bottom
@@ -47,24 +58,24 @@ def draw_wall(canvas):
 
 def draw_floor(canvas):
     # A strip of grass on top of warm bricks, like in old 2D games.
-    pygame.draw.rect(canvas, (95, 200, 80), (0, FLOOR_Y, CANVAS_WIDTH, 6))
-    for x in range(0, CANVAS_WIDTH, 2):
+    pygame.draw.rect(canvas, (95, 200, 80), (0, FLOOR_Y, ROOM_WIDTH, 6))
+    for x in range(0, ROOM_WIDTH, 2):
         # Little grass blades of different heights (0, 1 or 2 pixels).
         blade = (x * 7) % 3
         pygame.draw.line(canvas, (95, 200, 80), (x, FLOOR_Y), (x, FLOOR_Y - 1 - blade))
         if x % 6 == 0:
             canvas.set_at((x, FLOOR_Y - 2 - blade), (160, 235, 120))
-    pygame.draw.rect(canvas, (60, 150, 60), (0, FLOOR_Y + 5, CANVAS_WIDTH, 2))
+    pygame.draw.rect(canvas, (60, 150, 60), (0, FLOOR_Y + 5, ROOM_WIDTH, 2))
 
     # Bricks: every second row is shifted by half a brick.
-    pygame.draw.rect(canvas, (165, 105, 70), (0, FLOOR_Y + 7, CANVAS_WIDTH, 63))
+    pygame.draw.rect(canvas, (165, 105, 70), (0, FLOOR_Y + 7, ROOM_WIDTH, 63))
     row = 0
     for y in range(FLOOR_Y + 7, CANVAS_HEIGHT, 12):
         if row % 2 == 0:
             shift = 0
         else:
             shift = 12
-        for x in range(-24 + shift, CANVAS_WIDTH, 24):
+        for x in range(-24 + shift, ROOM_WIDTH, 24):
             pygame.draw.rect(canvas, (125, 75, 50), (x, y, 24, 12))      # gap
             pygame.draw.rect(canvas, (185, 122, 82), (x + 1, y + 1, 22, 10))
             pygame.draw.rect(canvas, (210, 150, 105), (x + 1, y + 1, 22, 2))
@@ -383,7 +394,7 @@ def draw_tunnel(canvas):
     pygame.draw.rect(canvas, (120, 210, 110), (x + 14, 176, 34, 24))
 
 
-def draw_booth(canvas, pictures, progress):
+def draw_booth(canvas, pictures, progress, tick):
     # Draw the whole VAR Booth, from the back to the front.
     draw_wall(canvas)
     draw_window(canvas)
@@ -418,7 +429,7 @@ def draw_booth(canvas, pictures, progress):
 
     # The steward stands next to the tunnel to the pitch.
     steward = pictures["steward"]
-    canvas.blit(steward, (452, FLOOR_Y - steward.get_height()))
+    canvas.blit(steward, (452, FLOOR_Y - steward.get_height() - bob(tick, 7)))
 
 
 
@@ -466,15 +477,15 @@ def draw_feather(canvas, x, y):
 
 def draw_tile_floor(canvas):
     # Wet white tiles for the dressing room, with a puddle by the shower.
-    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, CANVAS_WIDTH, 1))
-    pygame.draw.rect(canvas, (150, 165, 180), (0, FLOOR_Y, CANVAS_WIDTH, CANVAS_HEIGHT - FLOOR_Y))
+    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (150, 165, 180), (0, FLOOR_Y, ROOM_WIDTH, CANVAS_HEIGHT - FLOOR_Y))
     row = 0
     for y in range(FLOOR_Y, CANVAS_HEIGHT, 10):
         if row % 2 == 0:
             shift = 0
         else:
             shift = 10
-        for x in range(-20 + shift, CANVAS_WIDTH, 20):
+        for x in range(-20 + shift, ROOM_WIDTH, 20):
             pygame.draw.rect(canvas, (215, 225, 235), (x + 1, y + 1, 19, 9))
             pygame.draw.rect(canvas, (240, 245, 250), (x + 1, y + 1, 19, 2))
         row = row + 1
@@ -485,33 +496,33 @@ def draw_tile_floor(canvas):
 
 def draw_carpet(canvas, colour, light, dark):
     # A wooden skirting board and a carpet with a dotted pattern.
-    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, CANVAS_WIDTH, 1))
-    pygame.draw.rect(canvas, (150, 95, 55), (0, FLOOR_Y, CANVAS_WIDTH, 4))
-    pygame.draw.rect(canvas, (190, 130, 80), (0, FLOOR_Y, CANVAS_WIDTH, 1))
-    pygame.draw.rect(canvas, colour, (0, FLOOR_Y + 4, CANVAS_WIDTH, CANVAS_HEIGHT - FLOOR_Y))
-    pygame.draw.rect(canvas, dark, (0, FLOOR_Y + 4, CANVAS_WIDTH, 2))
+    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (150, 95, 55), (0, FLOOR_Y, ROOM_WIDTH, 4))
+    pygame.draw.rect(canvas, (190, 130, 80), (0, FLOOR_Y, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, colour, (0, FLOOR_Y + 4, ROOM_WIDTH, CANVAS_HEIGHT - FLOOR_Y))
+    pygame.draw.rect(canvas, dark, (0, FLOOR_Y + 4, ROOM_WIDTH, 2))
     for y in range(FLOOR_Y + 10, CANVAS_HEIGHT, 8):
-        for x in range(4 + (y // 8) % 2 * 4, CANVAS_WIDTH, 8):
+        for x in range(4 + (y // 8) % 2 * 4, ROOM_WIDTH, 8):
             canvas.set_at((x, y), light)
 
 
 # ---------------------------------------------------------------- Referee's Dressing Room
 
-def draw_dressing_room(canvas, pictures, progress):
+def draw_dressing_room(canvas, pictures, progress, tick):
     # Tiled walls: light tiles on top, darker tiles below, a white strip between.
     canvas.fill((120, 170, 185))
     for y in range(0, FLOOR_Y, 14):
-        for x in range(0, CANVAS_WIDTH, 14):
+        for x in range(0, ROOM_WIDTH, 14):
             if y >= 120:
                 tile, shine = (95, 165, 185), (125, 190, 205)
             else:
                 tile, shine = (175, 225, 235), (210, 242, 248)
             pygame.draw.rect(canvas, tile, (x + 1, y + 1, 13, 13))
             pygame.draw.rect(canvas, shine, (x + 1, y + 1, 13, 2))
-    pygame.draw.rect(canvas, (235, 245, 250), (0, 117, CANVAS_WIDTH, 2))
-    pygame.draw.rect(canvas, OUTLINE, (0, 119, CANVAS_WIDTH, 2))
-    pygame.draw.rect(canvas, (215, 225, 235), (0, 0, CANVAS_WIDTH, 6))
-    pygame.draw.rect(canvas, OUTLINE, (0, 6, CANVAS_WIDTH, 1))
+    pygame.draw.rect(canvas, (235, 245, 250), (0, 117, ROOM_WIDTH, 2))
+    pygame.draw.rect(canvas, OUTLINE, (0, 119, ROOM_WIDTH, 2))
+    pygame.draw.rect(canvas, (215, 225, 235), (0, 0, ROOM_WIDTH, 6))
+    pygame.draw.rect(canvas, OUTLINE, (0, 6, ROOM_WIDTH, 1))
     draw_ceiling_lamps(canvas, [90, 230, 370])
 
     draw_door(canvas, 20, (250, 250, 250), (200, 200, 210))     # back to the booth
@@ -586,9 +597,7 @@ def draw_dressing_room(canvas, pictures, progress):
     pygame.draw.rect(canvas, (250, 150, 40), (266, 169, 4, 2))                 # peel
     pygame.draw.rect(canvas, (250, 150, 40), (240, 170, 3, 2))
 
-    # The Lucky Whistle lies on the bench until you take it.
-    if "whistle" not in progress["inventory"]:
-        canvas.blit(pictures["whistle"], (215, 162))
+    draw_kit_cabinet(canvas, pictures, progress)
 
     # Under the bench: muddy boots and a kit bag.
     for boot_x in [175, 191]:
@@ -603,7 +612,7 @@ def draw_dressing_room(canvas, pictures, progress):
     outlined_box(canvas, WHITE, 352, 175, 5, 6)
     outlined_box(canvas, WHITE, 360, 177, 5, 4)
 
-    draw_shower(canvas)
+    draw_shower(canvas, tick)
     draw_tile_floor(canvas)
 
 
@@ -622,7 +631,26 @@ def draw_open_locker(canvas, x, y):
     pygame.draw.polygon(canvas, (110, 160, 225), [(x + 29, y + 1), (x + 39, y + 5), (x + 39, y + 73), (x + 29, y + 77)])
 
 
-def draw_shower(canvas):
+def draw_kit_cabinet(canvas, pictures, progress):
+    # A small wooden cabinet with a drawer. Once the drawer is opened it
+    # sticks out, and the Lucky Whistle lies in it until you take it.
+    shaded_box(canvas, (190, 125, 70), (225, 160, 100), (150, 95, 55), 300, 160, 44, 40)
+    if "drawer" in progress["choices"]:
+        # The open drawer: the dark inside and the front pulled down a bit.
+        outlined_box(canvas, (60, 40, 30), 303, 164, 38, 10)
+        if "whistle" not in progress["inventory"]:
+            canvas.blit(pictures["whistle"], (306, 162))
+        shaded_box(canvas, (210, 145, 85), (240, 180, 120), (165, 105, 60), 302, 174, 40, 12)
+        pygame.draw.rect(canvas, OUTLINE, (318, 179, 8, 2))
+    else:
+        # The closed drawer with its handle.
+        shaded_box(canvas, (210, 145, 85), (240, 180, 120), (165, 105, 60), 304, 166, 36, 12)
+        pygame.draw.rect(canvas, OUTLINE, (318, 171, 8, 2))
+    # A second, closed drawer below.
+    shaded_box(canvas, (210, 145, 85), (240, 180, 120), (165, 105, 60), 304, 186, 36, 11)
+
+
+def draw_shower(canvas, tick):
     # The shower corner: tiles, a striped curtain, water drops and steam.
     outlined_box(canvas, (150, 200, 215), 392, 22, 84, 178)
     for y in range(22, 200, 12):
@@ -640,23 +668,27 @@ def draw_shower(canvas):
     for drop_x, drop_y in [(450, 50), (456, 62), (452, 78), (459, 92), (449, 105)]:
         pygame.draw.rect(canvas, (90, 160, 230), (drop_x, drop_y, 1, 3))
 
-    # See-through steam clouds (transparency 120 out of 255).
-    steam = pygame.Surface((CANVAS_WIDTH, CANVAS_HEIGHT), pygame.SRCALPHA)
-    for steam_x, steam_y, size in [(430, 60, 14), (455, 45, 12), (470, 75, 10), (440, 95, 13), (400, 50, 9)]:
-        pygame.draw.circle(steam, (255, 255, 255, 120), (steam_x, steam_y), size)
+    # See-through steam clouds (transparency 120 out of 255). Each cloud
+    # slowly rises 60 pixels and then starts again at the bottom:
+    # % 60 makes the number go 0, 1, 2 ... 59, 0, 1, 2 ...
+    steam = pygame.Surface((ROOM_WIDTH, CANVAS_HEIGHT), pygame.SRCALPHA)
+    clouds = [(430, 110, 14, 0), (455, 110, 12, 20), (470, 120, 10, 40), (440, 125, 13, 10), (405, 115, 9, 30)]
+    for steam_x, start_y, size, offset in clouds:
+        rise = (tick // 3 + offset) % 60
+        pygame.draw.circle(steam, (255, 255, 255, 120), (steam_x, start_y - rise), size)
     canvas.blit(steam, (0, 0))
 
 
 # ---------------------------------------------------------------- Mascot Changing Room
 
-def draw_mascot_room(canvas, pombo_picture):
+def draw_mascot_room(canvas, pictures, progress, tick, reveal):
     # Purple striped wallpaper with darker wooden panels below.
     canvas.fill((215, 180, 230))
-    for x in range(0, CANVAS_WIDTH, 24):
+    for x in range(0, ROOM_WIDTH, 24):
         pygame.draw.rect(canvas, (205, 168, 222), (x, 0, 12, FLOOR_Y))
-    pygame.draw.rect(canvas, OUTLINE, (0, 139, CANVAS_WIDTH, 1))
-    pygame.draw.rect(canvas, (150, 100, 170), (0, 140, CANVAS_WIDTH, 60))
-    for x in range(0, CANVAS_WIDTH, 20):
+    pygame.draw.rect(canvas, OUTLINE, (0, 139, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (150, 100, 170), (0, 140, ROOM_WIDTH, 60))
+    for x in range(0, ROOM_WIDTH, 20):
         pygame.draw.rect(canvas, (170, 120, 190), (x + 1, 142, 17, 56))
         pygame.draw.rect(canvas, (190, 145, 210), (x + 1, 142, 17, 2))
     draw_ceiling_lamps(canvas, [120, 330])
@@ -679,8 +711,8 @@ def draw_mascot_room(canvas, pombo_picture):
     draw_mirror_table(canvas)
 
     # A bag of bird seed and a laundry basket full of feathers.
-    outlined_box(canvas, (220, 190, 140), 432, 168, 24, 32)
-    pygame.draw.rect(canvas, (190, 155, 100), (432, 168, 24, 4))
+    outlined_box(canvas, (220, 190, 140), 456, 168, 24, 32)
+    pygame.draw.rect(canvas, (190, 155, 100), (456, 168, 24, 4))
     outlined_box(canvas, (200, 140, 80), 92, 180, 30, 20)
     for i in range(0, 30, 4):
         pygame.draw.rect(canvas, (170, 110, 55), (92 + i, 181, 2, 19))
@@ -689,18 +721,64 @@ def draw_mascot_room(canvas, pombo_picture):
         pygame.draw.circle(canvas, (200, 205, 220), (feather_x, 179), 3)
 
     # Pombo's bench, and Pombo himself.
-    shaded_box(canvas, (215, 150, 80), (245, 185, 110), (170, 110, 60), 336, 178, 92, 6)
-    for leg_x in [342, 418]:
+    shaded_box(canvas, (215, 150, 80), (245, 185, 110), (170, 110, 60), 336, 178, 116, 6)
+    for leg_x in [342, 442]:
         outlined_box(canvas, (160, 100, 55), leg_x, 185, 5, 15)
-    canvas.blit(pombo_picture, (362, FLOOR_Y - pombo_picture.get_height()))
+    draw_pombo(canvas, pictures, progress, tick, reveal)
 
     draw_carpet(canvas, (130, 70, 150), (160, 100, 180), (100, 50, 120))
 
-    # Feathers on the floor and floating in the air.
+    # Feathers on the floor.
     for feather_x, feather_y in [(90, FLOOR_Y + 8), (165, FLOOR_Y + 14), (262, FLOOR_Y + 9),
-                                 (325, FLOOR_Y + 20), (455, FLOOR_Y + 12),
-                                 (270, 120), (420, 90), (190, 70)]:
+                                 (325, FLOOR_Y + 20), (455, FLOOR_Y + 12)]:
         draw_feather(canvas, feather_x, feather_y)
+
+    # Feathers slowly falling through the air, swaying left and right.
+    # When a feather reaches the floor it starts again at the top.
+    for start_x, offset in [(270, 0), (420, 60), (190, 120), (110, 30)]:
+        fall = (tick // 2 + offset) % 180
+        sway = ((tick // 15 + offset) % 3) - 1
+        draw_feather(canvas, start_x + sway * 2, 15 + fall)
+
+
+def draw_pombo(canvas, pictures, progress, tick, reveal):
+    # Pombo on his bench. Before you talk to him he is the pigeon mascot.
+    # After that he is Dave: his own head on the pigeon body, and the
+    # pigeon head (the mask) lies on the bench next to him.
+    breathe = bob(tick, 0)
+    if "dave" not in progress["choices"]:
+        pombo = pictures["pombo"]
+        canvas.blit(pombo, (362, FLOOR_Y - pombo.get_height() - breathe))
+        return
+
+    body = pictures["pombo_body"]
+    body_y = FLOOR_Y - body.get_height() - breathe
+    canvas.blit(body, (362, body_y))
+    dave = pictures["dave_head"]
+    canvas.blit(dave, (362 + (body.get_width() - dave.get_width()) // 2, body_y - dave.get_height() + 4))
+
+    # Where the mask is: during the reveal it moves in three parts
+    # (lift it up, move it to the right, put it down), afterwards it lies
+    # on the bench. reveal is None when there is no reveal going on.
+    mask = pictures["pombo_head"]
+    start_x = 362
+    start_y = body_y - mask.get_height() + 2
+    end_x = 406
+    end_y = 178 - mask.get_height()
+    top_y = start_y - 12
+    if reveal is None or reveal >= 55:
+        mask_x = end_x
+        mask_y = end_y
+    elif reveal < 15:
+        mask_x = start_x
+        mask_y = start_y + (top_y - start_y) * reveal // 15
+    elif reveal < 40:
+        mask_x = start_x + (end_x - start_x) * (reveal - 15) // 25
+        mask_y = top_y
+    else:
+        mask_x = end_x
+        mask_y = top_y + (end_y - top_y) * (reveal - 40) // 15
+    canvas.blit(mask, (mask_x, mask_y))
 
 
 def draw_mascot_heads(canvas):
@@ -814,7 +892,7 @@ def draw_reporter(canvas, x, hair, hair_light, style, shirt, shirt_light):
     pygame.draw.rect(canvas, SKIN, (x + 21, 141, 2, 3))
 
 
-def draw_press_room(canvas, progress):
+def draw_press_room(canvas, progress, tick):
     canvas.fill((45, 60, 110))
     draw_ceiling_lamps(canvas, [80, 200, 320, 430])
     draw_door(canvas, 20, (110, 170, 255), (70, 120, 210))     # back to the booth
@@ -844,11 +922,17 @@ def draw_press_room(canvas, progress):
     outlined_box(canvas, (50, 50, 60), 213, 114, 18, 12)
     pygame.draw.circle(canvas, (150, 200, 255), (222, 120), 4)
     pygame.draw.rect(canvas, SKIN, (218, 126, 4, 10))
-    flash = pygame.Surface((40, 40), pygame.SRCALPHA)
-    pygame.draw.circle(flash, (255, 255, 255, 110), (20, 20), 18)
-    canvas.blit(flash, (202, 100))
-    for dx, dy in [(-10, 0), (10, 0), (0, -10), (0, 10)]:
-        pygame.draw.line(canvas, WHITE, (222, 120), (222 + dx, 120 + dy), 2)
+    # Camera flashes: every 50 frames another reporter's camera flashes
+    # for 5 frames. (tick // 50) % 6 picks the reporter: 0, 1, 2 ... 5, 0 ...
+    if tick % 50 < 5:
+        reporter = (tick // 50) % 6
+        flash_x = 84 + reporter * 30 + 13
+        flash_y = 122
+        flash = pygame.Surface((40, 40), pygame.SRCALPHA)
+        pygame.draw.circle(flash, (255, 255, 255, 110), (20, 20), 18)
+        canvas.blit(flash, (flash_x - 20, flash_y - 20))
+        for dx, dy in [(-10, 0), (10, 0), (0, -10), (0, 10)]:
+            pygame.draw.line(canvas, WHITE, (flash_x, flash_y), (flash_x + dx, flash_y + dy), 2)
 
     draw_carpet(canvas, (40, 70, 150), (70, 100, 180), (25, 45, 110))
 
@@ -937,29 +1021,29 @@ REFEREE_X = 296
 CAPTAIN_X = 322
 
 
-def draw_pitch(canvas, pictures, ball):
+def draw_pitch(canvas, pictures, ball, tick):
     # During a goal celebration the scoreboard flashes (on for 8 frames,
     # off for 8 frames ...).
     flashing = ball["celebrate"] > 0 and (ball["celebrate"] // 8) % 2 == 0
-    draw_stadium(canvas, flashing)
+    draw_stadium(canvas, flashing, tick)
 
     # Advertising boards along the side of the pitch.
     boards = [(YELLOW, OUTLINE), ((70, 110, 230), WHITE), (WHITE, HOME_RED), ((90, 180, 110), WHITE)]
-    for i in range(8):
+    for i in range(9):
         background, writing = boards[i % 4]
         outlined_box(canvas, background, i * 60 + 1, 149, 58, 15)
         pygame.draw.rect(canvas, writing, (i * 60 + 12, 154, 34, 4))
         pygame.draw.rect(canvas, writing, (i * 60 + 6, 154, 4, 4))
 
     # The grass with mowing stripes, all the way down, and the white lines.
-    for i in range(0, CANVAS_WIDTH, 30):
+    for i in range(0, ROOM_WIDTH, 30):
         if (i // 30) % 2 == 0:
             colour = (80, 190, 80)
         else:
             colour = (100, 210, 95)
         pygame.draw.rect(canvas, colour, (i, 165, 30, CANVAS_HEIGHT - 165))
-    pygame.draw.rect(canvas, WHITE, (0, 172, CANVAS_WIDTH, 1))
-    pygame.draw.rect(canvas, WHITE, (0, FLOOR_Y + 2, CANVAS_WIDTH, 2))
+    pygame.draw.rect(canvas, WHITE, (0, 172, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, WHITE, (0, FLOOR_Y + 2, ROOM_WIDTH, 2))
 
     # The tunnel back inside.
     outlined_box(canvas, (140, 140, 155), 8, 130, 64, 70)
@@ -973,22 +1057,26 @@ def draw_pitch(canvas, pictures, ball):
     draw_goal(canvas)
 
     # The people: linesman, striker, referee and the away captain.
-    for name, x in [("linesman", LINESMAN_X), ("striker", STRIKER_X),
-                    ("referee", REFEREE_X), ("captain", CAPTAIN_X)]:
+    # They breathe (one pixel up and down); the angry captain jumps.
+    for name, x, phase in [("linesman", LINESMAN_X, 3), ("striker", STRIKER_X, 11),
+                           ("referee", REFEREE_X, 5)]:
         picture = pictures[name]
-        canvas.blit(picture, (x, FLOOR_Y - picture.get_height()))
+        canvas.blit(picture, (x, FLOOR_Y - picture.get_height() - bob(tick, phase)))
+    captain = pictures["captain"]
+    jump = ((tick // 6) % 2) * 2
+    canvas.blit(captain, (CAPTAIN_X, FLOOR_Y - captain.get_height() - jump))
 
     # The linesman's flag, held up in his hand.
-    flag_x = LINESMAN_X + 26
-    pygame.draw.rect(canvas, OUTLINE, (flag_x, 150, 1, 30))
-    pygame.draw.rect(canvas, OUTLINE, (flag_x, 149, 11, 9))
-    pygame.draw.rect(canvas, YELLOW, (flag_x + 1, 150, 9, 7))
-    pygame.draw.rect(canvas, HOME_RED, (flag_x + 1, 150, 4, 3))
-    pygame.draw.rect(canvas, HOME_RED, (flag_x + 5, 153, 5, 4))
+    flag_x = LINESMAN_X + 27
+    pygame.draw.rect(canvas, OUTLINE, (flag_x, 140, 1, 42))
+    pygame.draw.rect(canvas, OUTLINE, (flag_x, 139, 11, 9))
+    pygame.draw.rect(canvas, YELLOW, (flag_x + 1, 140, 9, 7))
+    pygame.draw.rect(canvas, HOME_RED, (flag_x + 1, 140, 4, 3))
+    pygame.draw.rect(canvas, HOME_RED, (flag_x + 5, 143, 5, 4))
 
     # A speech bubble over the captain ("OFFSIDE!" is added as text).
-    outlined_box(canvas, WHITE, CAPTAIN_X - 8, 140, 34, 12)
-    pygame.draw.polygon(canvas, OUTLINE, [(CAPTAIN_X + 4, 152), (CAPTAIN_X + 2, 158), (CAPTAIN_X + 10, 152)])
+    outlined_box(canvas, WHITE, CAPTAIN_X - 14, 126, 34, 12)
+    pygame.draw.polygon(canvas, OUTLINE, [(CAPTAIN_X - 2, 138), (CAPTAIN_X + 2, 144), (CAPTAIN_X + 4, 138)])
 
     # The ball, with a little shadow. ball["x"] is where it is now.
     # While it rolls, the picture is turned in steps of 90 degrees
@@ -1000,25 +1088,25 @@ def draw_pitch(canvas, pictures, ball):
     canvas.blit(ball_picture, (ball_x, FLOOR_Y - ball_picture.get_height() + 1))
 
 
-def draw_stadium(canvas, celebrating=False):
+def draw_stadium(canvas, celebrating, tick):
     # Sky, roof, two tiers of fans with the scoreboard, and floodlights.
-    pygame.draw.rect(canvas, (110, 190, 250), (0, 0, CANVAS_WIDTH, 20))
-    pygame.draw.rect(canvas, (140, 205, 255), (0, 20, CANVAS_WIDTH, 14))
+    pygame.draw.rect(canvas, (110, 190, 250), (0, 0, ROOM_WIDTH, 20))
+    pygame.draw.rect(canvas, (140, 205, 255), (0, 20, ROOM_WIDTH, 14))
     draw_cloud(canvas, 40, 6)
     draw_cloud(canvas, 250, 3)
 
     # The roof.
-    pygame.draw.rect(canvas, OUTLINE, (0, 33, CANVAS_WIDTH, 9))
-    pygame.draw.rect(canvas, (200, 205, 215), (0, 34, CANVAS_WIDTH, 7))
-    for x in range(0, CANVAS_WIDTH, 16):
+    pygame.draw.rect(canvas, OUTLINE, (0, 33, ROOM_WIDTH, 9))
+    pygame.draw.rect(canvas, (200, 205, 215), (0, 34, ROOM_WIDTH, 7))
+    for x in range(0, ROOM_WIDTH, 16):
         pygame.draw.line(canvas, (150, 155, 170), (x, 34), (x + 8, 40))
 
     # Upper tier: small fans. The colour of each fan comes from a calculation,
     # so the crowd looks mixed but always the same.
     fan_colours = [WHITE, YELLOW, (255, 120, 120), SKIN, AWAY_BLUE, (235, 70, 70)]
-    pygame.draw.rect(canvas, (60, 60, 80), (0, 42, CANVAS_WIDTH, 50))
+    pygame.draw.rect(canvas, (60, 60, 80), (0, 42, ROOM_WIDTH, 50))
     for fan_y in range(44, 90, 4):
-        for fan_x in range(1 + (fan_y // 4) % 2 * 2, CANVAS_WIDTH, 4):
+        for fan_x in range(1 + (fan_y // 4) % 2 * 2, ROOM_WIDTH, 4):
             colour = fan_colours[(fan_x * 7 + fan_y * 3) % 6]
             pygame.draw.rect(canvas, colour, (fan_x, fan_y, 2, 2))
 
@@ -1031,26 +1119,31 @@ def draw_stadium(canvas, celebrating=False):
         pygame.draw.rect(canvas, (230, 60, 60), (194, 66, 92, 10))
 
     # A red banner between the tiers.
-    pygame.draw.rect(canvas, OUTLINE, (0, 92, CANVAS_WIDTH, 3))
-    pygame.draw.rect(canvas, HOME_RED, (0, 95, CANVAS_WIDTH, 7))
-    for x in range(0, CANVAS_WIDTH, 40):
+    pygame.draw.rect(canvas, OUTLINE, (0, 92, ROOM_WIDTH, 3))
+    pygame.draw.rect(canvas, HOME_RED, (0, 95, ROOM_WIDTH, 7))
+    for x in range(0, ROOM_WIDTH, 40):
         pygame.draw.rect(canvas, WHITE, (x + 6, 97, 22, 3))
 
     # Lower tier: bigger fans, some with their arms up.
-    pygame.draw.rect(canvas, (70, 70, 95), (0, 102, CANVAS_WIDTH, 46))
+    pygame.draw.rect(canvas, (70, 70, 95), (0, 102, ROOM_WIDTH, 46))
     for fan_y in range(105, 146, 7):
-        for fan_x in range(2 + (fan_y // 7) % 2 * 4, CANVAS_WIDTH, 8):
+        for fan_x in range(2 + (fan_y // 7) % 2 * 4, ROOM_WIDTH, 8):
             colour = fan_colours[(fan_x * 3 + fan_y) % 6]
             pygame.draw.rect(canvas, SKIN, (fan_x + 1, fan_y, 3, 3))
             pygame.draw.rect(canvas, colour, (fan_x, fan_y + 3, 5, 3))
             if (fan_x + fan_y) % 3 == 0:
-                pygame.draw.rect(canvas, SKIN, (fan_x - 1, fan_y - 2, 1, 3))
-                pygame.draw.rect(canvas, SKIN, (fan_x + 5, fan_y - 2, 1, 3))
+                # Fans with their arms up jump: half of them up, half down,
+                # changing every 8 frames.
+                jump = (fan_x // 8 + tick // 8) % 2
+                pygame.draw.rect(canvas, SKIN, (fan_x - 1, fan_y - 2 - jump, 1, 3))
+                pygame.draw.rect(canvas, SKIN, (fan_x + 5, fan_y - 2 - jump, 1, 3))
 
     # A fan waving a red and white flag.
+    # The tip of the flag moves up and down to make it wave.
+    wave = ((tick // 8) % 3) * 2
     pygame.draw.rect(canvas, OUTLINE, (150, 98, 1, 20))
-    pygame.draw.polygon(canvas, HOME_RED, [(151, 98), (166, 101), (151, 106)])
-    pygame.draw.polygon(canvas, WHITE, [(151, 102), (166, 101), (151, 106)])
+    pygame.draw.polygon(canvas, HOME_RED, [(151, 98), (166, 99 + wave), (151, 106)])
+    pygame.draw.polygon(canvas, WHITE, [(151, 102), (166, 99 + wave), (151, 106)])
 
     # Two floodlights.
     for light_x in [60, 420]:
@@ -1060,20 +1153,31 @@ def draw_stadium(canvas, celebrating=False):
 
 
 def draw_goal(canvas):
-    # The goal on the right: a shadow, the net and the white posts.
-    shadow = pygame.Surface((70, 10), pygame.SRCALPHA)
-    pygame.draw.ellipse(shadow, (0, 60, 0, 70), (0, 0, 70, 10))
-    canvas.blit(shadow, (410, 196))
-    pygame.draw.rect(canvas, (235, 240, 250), (420, 140, 55, 60))
-    for net_x in range(420, 475, 4):
-        pygame.draw.line(canvas, (195, 200, 215), (net_x, 140), (net_x + 6, 199))
-    for net_y in range(140, 200, 4):
-        pygame.draw.line(canvas, (195, 200, 215), (420, net_y), (474, net_y))
-    outlined_box(canvas, WHITE, 414, 134, 62, 5)
-    outlined_box(canvas, WHITE, 414, 134, 5, 66)
+    # The goal seen from the side: a shadow, the net inside the frame,
+    # the back post and ground bar (light grey, because they are further
+    # away), then the white front post and crossbar.
+    # It is about 1.5 times as high as a player, like a real goal.
+    shadow = pygame.Surface((112, 10), pygame.SRCALPHA)
+    pygame.draw.ellipse(shadow, (0, 60, 0, 70), (0, 0, 112, 10))
+    canvas.blit(shadow, (384, 196))
 
-    # Two photographers kneeling next to the goal.
-    for photographer_x in [372, 392]:
+    # The net: a light area with a grid, only between the posts.
+    pygame.draw.rect(canvas, (235, 240, 250), (393, 125, 98, 74))
+    for net_x in range(395, 491, 4):
+        pygame.draw.line(canvas, (195, 200, 215), (net_x, 125), (net_x, 198))
+    for net_y in range(127, 199, 4):
+        pygame.draw.line(canvas, (195, 200, 215), (393, net_y), (490, net_y))
+
+    # The back post and the bar on the ground at the back of the goal.
+    outlined_box(canvas, (200, 205, 215), 490, 122, 4, 78)
+    outlined_box(canvas, (200, 205, 215), 393, 197, 101, 3)
+
+    # The white front post and the crossbar.
+    outlined_box(canvas, WHITE, 388, 120, 106, 5)
+    outlined_box(canvas, WHITE, 388, 120, 5, 80)
+
+    # A photographer kneeling next to the goal.
+    for photographer_x in [368]:
         pygame.draw.rect(canvas, OUTLINE, (photographer_x, 186, 14, 14))
         pygame.draw.rect(canvas, (60, 60, 80), (photographer_x + 1, 187, 12, 13))
         pygame.draw.circle(canvas, OUTLINE, (photographer_x + 7, 182), 5)
@@ -1084,21 +1188,23 @@ def draw_goal(canvas):
 
 # ---------------------------------------------------------------- choosing a room
 
-def draw_room(canvas, scene_id, pictures, progress, ball):
+def draw_room(canvas, scene_id, pictures, progress, extras):
     # Draw the room that belongs to a scene id from story.json.
     # pictures holds the characters and objects that live in the rooms.
-    # progress is needed for things that change (padlock, whistle, slip ...),
-    # ball says where the ball on the pitch is.
+    # progress is needed for things that change (padlock, whistle, slip ...).
+    # extras holds what moves: "tick" (the frame counter for animations),
+    # "ball" (the ball on the pitch) and "reveal" (Dave's reveal animation).
+    tick = extras["tick"]
     if scene_id == "booth":
-        draw_booth(canvas, pictures, progress)
+        draw_booth(canvas, pictures, progress, tick)
     elif scene_id == "dressing_room":
-        draw_dressing_room(canvas, pictures, progress)
+        draw_dressing_room(canvas, pictures, progress, tick)
     elif scene_id == "mascot_room":
-        draw_mascot_room(canvas, pictures["pombo"])
+        draw_mascot_room(canvas, pictures, progress, tick, extras["reveal"])
     elif scene_id == "press_room":
-        draw_press_room(canvas, progress)
+        draw_press_room(canvas, progress, tick)
     elif scene_id == "pitch":
-        draw_pitch(canvas, pictures, ball)
+        draw_pitch(canvas, pictures, extras["ball"], tick)
 
 
 # Text labels for each room: (text, x, y, colour, small?) in canvas positions.
@@ -1118,7 +1224,7 @@ LABELS = {
     "mascot_room": [
         ("BOOTH", 28, 110, (90, 60, 10), False),
         ("EMPLOYEE", 83, 79, (120, 60, 20), True),
-        ("SEEDS", 433, 180, (120, 80, 30), True),
+        ("SEEDS", 457, 180, (120, 80, 30), True),
     ],
     "press_room": [
         ("BOOTH", 28, 110, (255, 255, 255), False),
@@ -1129,6 +1235,6 @@ LABELS = {
         ("HOME", 195, 50, (255, 255, 255), False),
         ("1 - 0", 229, 50, (255, 255, 255), False),
         ("AWAY", 258, 50, (255, 255, 255), False),
-        ("OFFSIDE!", CAPTAIN_X - 6, 141, (230, 40, 40), True),
+        ("OFFSIDE!", CAPTAIN_X - 12, 127, (230, 40, 40), True),
     ],
 }
