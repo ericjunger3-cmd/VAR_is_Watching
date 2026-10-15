@@ -36,7 +36,7 @@
       "text": "Steam, muddy boots and a half-eaten orange. A poster on the wall says \"TRUST THE PROCESS\". The referee left in a hurry. It smells of deep heat and fear.",
       "pundit": "PUNDIT: Snooping in the ref's room on day one. Bold. Pointless, but bold.",
       "actions": [
-        { "label": "Take the Lucky Whistle from the bench", "take_item": "whistle",
+        { "label": "Take the Lucky Whistle from the bench", "take_item": "whistle", "x": 224,
           "text": "You pick up the Lucky Whistle. Someone has written LUCKY on it in marker pen, so it must be true." },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You hurry back to the booth. The static is still there." }
@@ -48,7 +48,7 @@
       "text": "Feathers everywhere. Pombo, the club's pigeon mascot, sits on a bench in his giant costume, head in his wings. He was standing right next to the corner flag when the goal went in.",
       "pundit": "PUNDIT: The rookie is interviewing a pigeon. I could not have scripted this.",
       "actions": [
-        { "label": "Ask Pombo what he saw", "take_item": "usb",
+        { "label": "Ask Pombo what he saw", "take_item": "usb", "x": 382,
           "text": "Pombo coos nervously and hands you a USB Stick. \"Filmed it on my head-cam,\" he whispers. \"For TikTok.\" The missing angle!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You leave Pombo to his crisis and run back to the booth." }

@@ -393,6 +393,40 @@ PLAYER_WALK = PLAYER[:33] + [
     "..OxxOOO..........OxxOOOO.",
 ]
 
+# The Lucky Whistle: silver, with a red cord.
+WHISTLE = [
+    "..RRR...........",
+    ".R...R..........",
+    "R.....R.........",
+    "R....cccccccc...",
+    ".R..cWWWccccccxx",
+    "..RcWWccccccccxx",
+    "...ccccccccccx..",
+    "....cccxxxxx....",
+]
+
+# The USB Stick: a silver plug, a blue body and a red light.
+USB = [
+    "xxxx..........",
+    "ccccuuuuuuuuuu",
+    "cWWcuUUUUUUUUu",
+    "cWWcuUUUUUURUu",
+    "ccccuuuuuuuuuu",
+    "xxxx..........",
+]
+
+# The gold padlock on the Mascot Changing Room door.
+PADLOCK = [
+    "..xxxxx..",
+    ".x.....x.",
+    ".x.....x.",
+    "YYYYYYYYY",
+    "YqqYYYYYY",
+    "YYYYkYYYY",
+    "YYYYkYYYY",
+    "YYYYYYYYY",
+]
+
 # The football.
 BALL = [
     "..WWW..",

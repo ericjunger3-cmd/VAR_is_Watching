@@ -70,11 +70,13 @@ def player_picture(player, standing, walking):
 REACH = 14
 
 
-def find_nearby_action(scene, player_x, player_width):
+def find_nearby_action(scene, progress, player_x, player_width):
     # Look for an action in this scene whose "x" is close to the player.
     # Returns that action, or None if nothing is in reach.
+    # get_visible_actions (from game.py) leaves out items we already have.
     player_middle = player_x + player_width // 2
-    for action in scene["actions"]:
+    actions = game.get_visible_actions(scene, progress["inventory"], progress["choices"])
+    for action in actions:
         # abs() turns a negative distance into a positive one.
         if "x" in action and abs(action["x"] - player_middle) <= REACH:
             return action
@@ -120,6 +122,45 @@ def room_pages(scene, fonts):
     return ui.make_pages(scene["name"], scene["text"], fonts["text"], SCALE)
 
 
+def use_action(action, progress, story, fonts, player, player_width):
+    # Do what an action from story.json says, when the player presses E.
+    # It returns two things: the dialogue pages to show, and the lines of a
+    # close-up (or None when there is no close-up).
+    inventory = progress["inventory"]
+    choices = progress["choices"]
+
+    # 1. Blocked (locked door, steward ...): only show the reason, change nothing.
+    reason = game.blocked_reason(action, inventory, choices)
+    if reason is not None:
+        return ui.make_pages("", reason, fonts["text"], SCALE), None
+
+    # 2. The sticky note opens as a close-up.
+    if "closeup" in action:
+        return [], action["closeup"]
+
+    # 3. Everything else shows the action's text first.
+    pages = ui.make_pages("", action["text"], fonts["text"], SCALE)
+
+    # Pick up an item (but never a second copy).
+    if "take_item" in action:
+        item_id = action["take_item"]
+        if item_id not in inventory:
+            inventory.append(item_id)
+
+    # Walk through a door into another room.
+    if "go_to" in action:
+        came_from = progress["scene"]
+        progress["scene"] = action["go_to"]
+        new_scene = story["scenes"][progress["scene"]]
+        player["x"] = arrival_x(new_scene, came_from, player_width)
+        # The room's description only on the first visit.
+        if progress["scene"] not in progress["visited"]:
+            progress["visited"].append(progress["scene"])
+            pages = pages + room_pages(new_scene, fonts)
+
+    return pages, None
+
+
 def main():
     pygame.init()
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -141,7 +182,11 @@ def main():
 
     # The story from story.json, reused from the terminal game.
     story = game.load_story()
-    scene_id = story["start_scene"]
+
+    # Everything that changes in the story (scene, items, choices, visited
+    # rooms) is kept in one dictionary, exactly like in game.py.
+    progress = game.new_progress(story)
+    progress["visited"].append(progress["scene"])
 
     # The small canvas we draw the room on.
     canvas = pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT))
@@ -165,6 +210,11 @@ def main():
         "captain": sprites.make_sprite(sprites.CAPTAIN, sprites.CAPTAIN_COLOURS),
         "linesman": sprites.make_sprite(sprites.LINESMAN, sprites.LINESMAN_COLOURS),
         "ball": sprites.make_sprite(sprites.BALL),
+        "steward": sprites.make_sprite(sprites.STEWARD),
+        "padlock": sprites.make_sprite(sprites.PADLOCK),
+        # Item pictures: the key is the item id from story.json.
+        "whistle": sprites.make_sprite(sprites.WHISTLE),
+        "usb": sprites.make_sprite(sprites.USB),
     }
 
     # Everything about the player in one dictionary.
@@ -179,19 +229,15 @@ def main():
 
     # The dialogue: a list of pages still to show (empty list = no dialogue).
     # The game starts with the description of the first room.
-    dialogue = room_pages(story["scenes"][scene_id], fonts)
+    dialogue = room_pages(story["scenes"][progress["scene"]], fonts)
     letters_shown = 0
-
-    # The rooms we have already seen. A room's description is only shown
-    # on the first visit.
-    visited = [scene_id]
 
     # The close-up of the sticky note: its lines while it is open, None when closed.
     closeup = None
 
     running = True
     while running:
-        scene = story["scenes"][scene_id]
+        scene = story["scenes"][progress["scene"]]
 
         # The player can only walk around when no box is open.
         free_to_walk = len(dialogue) == 0 and closeup is None
@@ -199,7 +245,7 @@ def main():
         # Is there a door or an object right next to the player?
         nearby = None
         if free_to_walk:
-            nearby = find_nearby_action(scene, player["x"], player_width)
+            nearby = find_nearby_action(scene, progress, player["x"], player_width)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -226,21 +272,9 @@ def main():
                     closeup = None
 
             elif event.key == pygame.K_e and nearby is not None:
-                if "go_to" in nearby:
-                    # Walk through the door. (Locked doors come in step P5.)
-                    came_from = scene_id
-                    scene_id = nearby["go_to"]
-                    new_scene = story["scenes"][scene_id]
-                    player["x"] = arrival_x(new_scene, came_from, player_width)
-                    # First the text of the action, then (only on the first
-                    # visit) the new room's description.
-                    dialogue = ui.make_pages("", nearby["text"], fonts["text"], SCALE)
-                    if scene_id not in visited:
-                        visited.append(scene_id)
-                        dialogue = dialogue + room_pages(new_scene, fonts)
-                    letters_shown = 0
-                elif "closeup" in nearby:
-                    closeup = nearby["closeup"]
+                # Do the action and show what happened.
+                dialogue, closeup = use_action(nearby, progress, story, fonts, player, player_width)
+                letters_shown = 0
 
         # Walking (only when no box is open).
         if free_to_walk:
@@ -255,7 +289,7 @@ def main():
 
         # The picture is built in layers, from the back to the front:
         # 1. The room, the player and the E bubble on the small canvas.
-        rooms.draw_room(canvas, scene_id, pictures)
+        rooms.draw_room(canvas, progress["scene"], pictures, progress)
         canvas.blit(player_picture(player, standing, walking), (player["x"], player_y))
         if nearby is not None:
             draw_e_bubble(canvas, player["x"], player_y, player_width)
@@ -263,7 +297,7 @@ def main():
         window.blit(big_picture, (0, 0))
 
         # 2. The sharp room labels and the "E" in the bubble.
-        draw_labels(window, label_font, small_label_font, scene_id)
+        draw_labels(window, label_font, small_label_font, progress["scene"])
         if nearby is not None:
             letter = bubble_font.render("E", False, sprites.OUTLINE)
             letter_x = player["x"] + player_width // 2 - 3
@@ -274,6 +308,7 @@ def main():
         #    The pundit's TV is always there; the other boxes only when open.
         overlay.fill((0, 0, 0, 0))
         ui.draw_pundit_tv(overlay, pundit_picture)
+        ui.draw_inventory(overlay, progress["inventory"], pictures, len(story["items"]))
         if len(dialogue) > 0:
             ui.draw_dialogue_box(overlay, dialogue[0])
         if closeup is not None:

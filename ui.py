@@ -164,6 +164,22 @@ def draw_note_closeup(canvas):
     pygame.draw.line(canvas, (150, 90, 40), (x + 24, y + 151), (x + 32, y + 151))
 
 
+def draw_inventory(canvas, inventory, pictures, slot_count):
+    # Item slots in the top-left corner. Every item you carry
+    # is shown in its own slot, in the order you picked them up.
+    for i in range(slot_count):
+        x = 6 + i * 26
+        y = 6
+        framed_box(canvas, x, y, 24, 22, (90, 60, 40), (130, 90, 60), (60, 40, 25))
+        pygame.draw.rect(canvas, (70, 45, 30), (x + 3, y + 3, 18, 16))
+        if i < len(inventory):
+            icon = pictures[inventory[i]]
+            # Put the icon in the middle of the slot.
+            icon_x = x + (24 - icon.get_width()) // 2
+            icon_y = y + (22 - icon.get_height()) // 2
+            canvas.blit(icon, (icon_x, icon_y))
+
+
 # ---------------------------------------------------------------- text (drawn on the window)
 
 def draw_dialogue_text(window, page, letters_shown, fonts, scale):

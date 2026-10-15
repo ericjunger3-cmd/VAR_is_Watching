@@ -383,7 +383,7 @@ def draw_tunnel(canvas):
     pygame.draw.rect(canvas, (120, 210, 110), (x + 14, 176, 34, 24))
 
 
-def draw_booth(canvas):
+def draw_booth(canvas, pictures, progress):
     # Draw the whole VAR Booth, from the back to the front.
     draw_wall(canvas)
     draw_window(canvas)
@@ -394,6 +394,19 @@ def draw_booth(canvas):
     draw_door(canvas, 354, (110, 170, 255), (70, 120, 210))    # Press room
     draw_tunnel(canvas)
     draw_floor(canvas)
+
+    # The padlock hangs on the Mascot door until you have the whistle.
+    if "whistle" not in progress["inventory"]:
+        canvas.blit(pictures["padlock"], (310, 152))
+
+    # The steward blocks the tunnel until you have spoken to the press.
+    # After that he steps aside.
+    steward = pictures["steward"]
+    if "press_answer" in progress["choices"]:
+        steward_x = 452
+    else:
+        steward_x = 429
+    canvas.blit(steward, (steward_x, FLOOR_Y - steward.get_height()))
 
 
 
@@ -472,7 +485,7 @@ def draw_carpet(canvas, colour, light, dark):
 
 # ---------------------------------------------------------------- Referee's Dressing Room
 
-def draw_dressing_room(canvas):
+def draw_dressing_room(canvas, pictures, progress):
     # Tiled walls: light tiles on top, darker tiles below, a white strip between.
     canvas.fill((120, 170, 185))
     for y in range(0, FLOOR_Y, 14):
@@ -560,6 +573,10 @@ def draw_dressing_room(canvas):
     pygame.draw.rect(canvas, (255, 230, 170), (250, 162, 5, 6))                # the bite
     pygame.draw.rect(canvas, (250, 150, 40), (266, 169, 4, 2))                 # peel
     pygame.draw.rect(canvas, (250, 150, 40), (240, 170, 3, 2))
+
+    # The Lucky Whistle lies on the bench until you take it.
+    if "whistle" not in progress["inventory"]:
+        canvas.blit(pictures["whistle"], (215, 162))
 
     # Under the bench: muddy boots and a kit bag.
     for boot_x in [175, 191]:
@@ -1038,13 +1055,14 @@ def draw_goal(canvas):
 
 # ---------------------------------------------------------------- choosing a room
 
-def draw_room(canvas, scene_id, pictures):
+def draw_room(canvas, scene_id, pictures, progress):
     # Draw the room that belongs to a scene id from story.json.
     # pictures holds the characters and objects that live in the rooms.
+    # progress is needed for things that change (padlock, whistle, steward).
     if scene_id == "booth":
-        draw_booth(canvas)
+        draw_booth(canvas, pictures, progress)
     elif scene_id == "dressing_room":
-        draw_dressing_room(canvas)
+        draw_dressing_room(canvas, pictures, progress)
     elif scene_id == "mascot_room":
         draw_mascot_room(canvas, pictures["pombo"])
     elif scene_id == "press_room":
