@@ -10,7 +10,7 @@
   "scenes": {
     "booth": {
       "name": "VAR Booth",
-      "text": "94th minute of the cup final. The home side has just scored and the stadium is shaking. The away captain is screaming \"OFFSIDE!\" at the linesman, a ball boy and the sky. You sit in the VAR Booth in front of twelve screens. Eleven work. The one with the key angle shows only static and a sticky note: \"Back in 5 min - Dave\". It is your first day.",
+      "text": "94th minute of the cup final. The home side has just scored and the stadium is shaking. The away captain is screaming \"OFFSIDE!\" at the linesman, a ball boy and the sky. You sit in the VAR Booth in front of twelve screens. Eleven work. The one with the key angle shows only static. It is your first day.",
       "pundit": "PUNDIT: Day one, a missing camera angle and sixty thousand people waiting. Honestly? Best night of my career.",
       "actions": [
         { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258,
@@ -24,7 +24,10 @@
         { "label": "Go to the Pitch", "go_to": "pitch", "x": 443,
           "needs_choice": "press_answer",
           "blocked_text": "A steward blocks the tunnel: \"Press conference first, mate. Rules are rules.\"",
-          "text": "You walk out under the floodlights. Sixty thousand heads turn. Your knees suddenly remember they are knees." }
+          "text": "You walk out under the floodlights. Sixty thousand heads turn. Your knees suddenly remember they are knees." },
+        { "label": "Look at the sticky note", "x": 185,
+          "text": "Dave's note says: \"Back in 5 min - Dave. P.S. If the angle cuts out, ask Pombo. He films EVERYTHING.\"",
+          "closeup": ["Back in 5 min", "- Dave", "P.S. If the angle", "cuts out, ask Pombo.", "He films EVERYTHING."] }
       ]
     },
 
@@ -36,7 +39,7 @@
         { "label": "Take the Lucky Whistle from the bench", "take_item": "whistle",
           "text": "You pick up the Lucky Whistle. Someone has written LUCKY on it in marker pen, so it must be true." },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
-          "text": "You hurry back to the booth. The static is still there. So is Dave's note." }
+          "text": "You hurry back to the booth. The static is still there." }
       ]
     },
 

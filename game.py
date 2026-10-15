@@ -20,6 +20,7 @@ def new_progress(story):
         "scene": story["start_scene"],   # where the player is
         "inventory": [],                 # item ids, e.g. ["whistle"]
         "choices": {},                   # decisions, e.g. {"press_answer": "goal"}
+        "visited": [],                   # scene ids already seen, e.g. ["booth"]
         "ending": None                   # ending id once the game is over
     }
     return progress
@@ -38,18 +39,23 @@ def load_progress():
         return None
     with open("save.json", "r", encoding="utf-8") as file:
         progress = json.load(file)
+    # Save files from before "visited" existed do not have it yet.
+    if "visited" not in progress:
+        progress["visited"] = []
     return progress
 
 
-def show_scene(story, scene_id):
+def show_scene(story, scene_id, first_visit):
     # Look up the scene dictionary by its id, e.g. "booth".
     scene = story["scenes"][scene_id]
 
-    # Print the scene name, the description and the pundit's comment.
+    # Print the scene name, the description (only on the first visit)
+    # and the pundit's comment.
     print()
     print("=== " + scene["name"] + " ===")
-    print(scene["text"])
-    print()
+    if first_visit:
+        print(scene["text"])
+        print()
     print(scene["pundit"])
 
 
@@ -220,7 +226,11 @@ def play_game(story, progress):
 
     # The game loop: show the scene, ask for a choice, react, repeat.
     while True:
-        show_scene(story, progress["scene"])
+        # The full description is only shown the first time we see a scene.
+        first_visit = progress["scene"] not in progress["visited"]
+        if first_visit:
+            progress["visited"].append(progress["scene"])
+        show_scene(story, progress["scene"], first_visit)
         scene = story["scenes"][progress["scene"]]
 
         # Only the visible actions get a number in the menu.
