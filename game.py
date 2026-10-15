@@ -41,6 +41,14 @@ def get_visible_actions(scene, inventory):
     return visible
 
 
+def blocked_reason(action, inventory):
+    # If the action needs an item the player does not have, return the
+    # explanation text. Otherwise return None, which means "not blocked".
+    if "needs_item" in action and action["needs_item"] not in inventory:
+        return action["blocked_text"]
+    return None
+
+
 def show_actions(actions):
     # Print every action with a number in front, starting at 1.
     print()
@@ -106,6 +114,14 @@ def main():
 
         # The list starts at index 0, but our menu starts at 1, so subtract 1.
         action = actions[number - 1]
+
+        # A blocked action only shows the reason and changes nothing:
+        # the player stays in the same scene with the same inventory.
+        reason = blocked_reason(action, inventory)
+        if reason is not None:
+            print()
+            print(reason)
+            continue
 
         # Show the result of the action.
         print()
