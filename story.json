@@ -71,9 +71,27 @@
       "text": "(placeholder) 60,000 fans are waiting. The referee looks at you.",
       "pundit": "PUNDIT: Here we go. Decision time for the rookie.",
       "actions": [
+        { "label": "Rule: GOAL", "ruling": "goal" },
+        { "label": "Rule: OFFSIDE", "ruling": "offside",
+          "wrong_call_text": "You plug in the USB Stick. The missing angle shows he was onside by a mile. PUNDIT: Ooh, the evidence disagrees with you, rookie. Try again." },
         { "label": "Back to the VAR Booth", "go_to": "booth",
           "text": "You walk back inside. The crowd boos." }
       ]
+    }
+  },
+
+  "endings": {
+    "justice_served": {
+      "title": "Justice Served",
+      "text": "(placeholder) The USB Stick shows the missing angle: onside. Goal given. You said nothing to the press, so nobody can twist your words. PUNDIT: Fine. Correct AND boring. I hate it."
+    },
+    "clip_of_the_year": {
+      "title": "Clip of the Year",
+      "text": "(placeholder) No footage, no evidence, just vibes. Your face as you make the call is replayed 40 million times. PUNDIT: Absolute cinema. Frame it."
+    },
+    "right_call_wrong_mouth": {
+      "title": "Right Call, Wrong Mouth",
+      "text": "(placeholder) The USB Stick proves it was a goal. But you told the press 'Clearly a goal!' before checking, and now everyone thinks you were biased. PUNDIT: Right answer, wrong order. Classic."
     }
   }
 }

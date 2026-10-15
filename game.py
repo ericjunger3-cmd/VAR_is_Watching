@@ -56,6 +56,54 @@ def blocked_reason(action, inventory, choices):
     return None
 
 
+def choose_ending(ruling, inventory, choices):
+    # Decide the ending from the ruling, the inventory and the press answer.
+    # Returns the id of an ending, or None if the ruling is refused.
+
+    # Without the USB Stick there is no evidence: either ruling goes viral.
+    if "usb" not in inventory:
+        return "clip_of_the_year"
+
+    # With the USB Stick the footage shows it was a goal,
+    # so ruling offside is refused.
+    if ruling == "offside":
+        return None
+
+    # The ruling is GOAL. Now the press answer decides the ending.
+    # (The Pitch is locked until the press question is answered,
+    # so "press_answer" is always in choices here.)
+    if choices["press_answer"] == "no_comment":
+        return "justice_served"
+    return "right_call_wrong_mouth"
+
+
+def show_ending(story, ending_id):
+    # Print the ending with a clear label, so the player knows the game is over.
+    ending = story["endings"][ending_id]
+    print()
+    print("*****************************************")
+    print("ENDING: " + ending["title"])
+    print("*****************************************")
+    print(ending["text"])
+
+
+def after_ending_menu(story, ending_id):
+    # After an ending no story actions are possible any more.
+    # The player can only read the ending again or quit.
+    while True:
+        print()
+        print("v. View the ending again")
+        print("q. Quit")
+        choice = input("> ").strip().lower()
+        if choice == "v":
+            show_ending(story, ending_id)
+        elif choice == "q":
+            print("Thanks for playing!")
+            break
+        else:
+            print("Please type v or q.")
+
+
 def show_actions(actions):
     # Print every action with a number in front, starting at 1.
     print()
@@ -132,6 +180,18 @@ def main():
             print()
             print(reason)
             continue
+
+        # A ruling on the Pitch can end the game.
+        if "ruling" in action:
+            ending_id = choose_ending(action["ruling"], inventory, choices)
+            if ending_id is None:
+                # The ruling was refused: show why and change nothing.
+                print()
+                print(action["wrong_call_text"])
+                continue
+            show_ending(story, ending_id)
+            after_ending_menu(story, ending_id)
+            break
 
         # Show the result of the action.
         print()
