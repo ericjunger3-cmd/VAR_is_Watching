@@ -1,0 +1,12 @@
+{
+  "title": "VAR Is Watching",
+  "start_scene": "booth",
+
+  "scenes": {
+    "booth": {
+      "name": "VAR Booth",
+      "text": "94th minute of the cup final. The home side has just scored. The away side is screaming offside. Twelve screens in front of you. Eleven work. The one with the key angle shows only static.",
+      "pundit": "PUNDIT: Day one on the job and the footage is already missing. You love to see it."
+    }
+  }
+}
