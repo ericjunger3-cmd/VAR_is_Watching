@@ -395,18 +395,30 @@ def draw_booth(canvas, pictures, progress):
     draw_tunnel(canvas)
     draw_floor(canvas)
 
+    # The yanked-out camera cable: a socket on the wall, the plug hanging down.
+    pygame.draw.rect(canvas, OUTLINE, (17, 135, 10, 9))
+    pygame.draw.rect(canvas, (235, 235, 240), (18, 136, 8, 7))
+    canvas.set_at((20, 139), OUTLINE)
+    canvas.set_at((23, 139), OUTLINE)
+    pygame.draw.line(canvas, OUTLINE, (22, 144), (34, 156), 2)
+    pygame.draw.rect(canvas, OUTLINE, (32, 155, 6, 6))
+    pygame.draw.rect(canvas, (90, 90, 100), (33, 156, 4, 4))
+
+    # The lanyard hangs over the back of the desk until you take it.
+    if "lanyard" not in progress["inventory"]:
+        pygame.draw.line(canvas, YELLOW, (24, 150), (28, 162), 2)
+        pygame.draw.line(canvas, YELLOW, (36, 150), (32, 162), 2)
+        pygame.draw.rect(canvas, OUTLINE, (25, 157, 11, 8))
+        pygame.draw.rect(canvas, WHITE, (26, 158, 9, 6))
+        pygame.draw.rect(canvas, (230, 60, 60), (26, 158, 9, 2))
+
     # The padlock hangs on the Mascot door until you have the whistle.
     if "whistle" not in progress["inventory"]:
         canvas.blit(pictures["padlock"], (310, 152))
 
-    # The steward blocks the tunnel until you have spoken to the press.
-    # After that he steps aside.
+    # The steward stands next to the tunnel to the pitch.
     steward = pictures["steward"]
-    if "press_answer" in progress["choices"]:
-        steward_x = 452
-    else:
-        steward_x = 429
-    canvas.blit(steward, (steward_x, FLOOR_Y - steward.get_height()))
+    canvas.blit(steward, (452, FLOOR_Y - steward.get_height()))
 
 
 
@@ -802,7 +814,7 @@ def draw_reporter(canvas, x, hair, hair_light, style, shirt, shirt_light):
     pygame.draw.rect(canvas, SKIN, (x + 21, 141, 2, 3))
 
 
-def draw_press_room(canvas):
+def draw_press_room(canvas, progress):
     canvas.fill((45, 60, 110))
     draw_ceiling_lamps(canvas, [80, 200, 320, 430])
     draw_door(canvas, 20, (110, 170, 255), (70, 120, 210))     # back to the booth
@@ -839,6 +851,14 @@ def draw_press_room(canvas):
         pygame.draw.line(canvas, WHITE, (222, 120), (222 + dx, 120 + dy), 2)
 
     draw_carpet(canvas, (40, 70, 150), (70, 100, 180), (25, 45, 110))
+
+    # A crumpled piece of paper (the betting slip) by the TV camera,
+    # until you pick it up.
+    if "slip" not in progress["inventory"]:
+        pygame.draw.circle(canvas, OUTLINE, (430, 197), 5)
+        pygame.draw.circle(canvas, (245, 245, 235), (430, 197), 4)
+        pygame.draw.line(canvas, (190, 190, 180), (427, 195), (432, 199))
+        pygame.draw.line(canvas, (190, 190, 180), (431, 194), (428, 198))
 
 
 def draw_sponsor_wall(canvas):
@@ -1066,7 +1086,7 @@ def draw_room(canvas, scene_id, pictures, progress):
     elif scene_id == "mascot_room":
         draw_mascot_room(canvas, pictures["pombo"])
     elif scene_id == "press_room":
-        draw_press_room(canvas)
+        draw_press_room(canvas, progress)
     elif scene_id == "pitch":
         draw_pitch(canvas, pictures)
 

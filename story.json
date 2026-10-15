@@ -32,8 +32,6 @@
         { "label": "Go to the Press Room", "go_to": "press_room", "x": 374,
           "text": "You follow the sound of camera shutters and bad decisions." },
         { "label": "Go to the Pitch", "go_to": "pitch", "x": 443,
-          "needs_choice": "press_answer",
-          "blocked_text": "A steward blocks the tunnel: \"Press conference first, mate. Rules are rules.\"",
           "text": "You walk out under the floodlights. Sixty thousand heads turn. Your knees suddenly remember they are knees." },
         { "label": "Look at the sticky note", "x": 185,
           "text": "Dave's note says: \"Back in 5 min - Dave. P.S. If the angle cuts out, ask Pombo. He films EVERYTHING.\"",
@@ -73,6 +71,7 @@
 
     "press_room": {
       "name": "Press Room",
+      "menu_title": "What do you tell the press?",
       "text": "A wall of microphones and flashing cameras. Every journalist in the country wants one quote from the new VAR official, and they want it now. You only get to say one thing.",
       "pundit": "PUNDIT: Just tell them it's offside, rookie. Easiest quote of your life.",
       "actions": [
@@ -93,12 +92,17 @@
 
     "pitch": {
       "name": "The Pitch",
+      "menu_title": "VAR, what's your call?",
       "text": "Sixty thousand fans are on their feet. The linesman has his flag up. The away captain is screaming. The referee holds a hand to his earpiece and stares at you: \"VAR, what's your call?\"",
       "pundit": "PUNDIT: Clearly offside! Draw the line on the high defender, rookie. Everyone knows that.",
       "actions": [
         { "label": "Rule: GOAL", "ruling": "goal", "x": 311,
+          "needs_choice": "press_answer",
+          "blocked_text": "The referee shakes his head: \"The press is waiting for a statement first, VAR. Go on, I'll wait.\"",
           "text": "You give the signal: GOAL!" },
         { "label": "Rule: OFFSIDE", "ruling": "offside", "x": 311,
+          "needs_choice": "press_answer",
+          "blocked_text": "The referee shakes his head: \"The press is waiting for a statement first, VAR. Go on, I'll wait.\"",
           "text": "You give the signal: OFFSIDE!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You walk back inside. Sixty thousand people boo at the same time. Impressive, really." }
@@ -107,26 +111,25 @@
   },
 
   "review": {
-    "intro": "The footage has four moments. You only get one look before the referee needs an answer, so freeze the right moment and draw the offside line on the right player.",
-    "frames": [
-      { "name": "The build-up",
-        "text": "The home midfielder has the ball at his feet and looks up.",
-        "striker": 24.0, "goalkeeper": 3.0, "deep_defender": 22.5, "high_defender": 27.0 },
-      { "name": "The pass",
-        "text": "The ball is just leaving the midfielder's boot.",
-        "striker": 21.8, "goalkeeper": 4.0, "deep_defender": 21.5, "high_defender": 25.0 },
-      { "name": "The run",
-        "text": "The ball is rolling forward. The striker sprints past the defenders.",
-        "striker": 17.0, "goalkeeper": 5.0, "deep_defender": 19.0, "high_defender": 23.0 },
-      { "name": "The goal",
-        "text": "The ball hits the back of the net.",
-        "striker": 6.0, "goalkeeper": 1.0, "deep_defender": 12.0, "high_defender": 20.0 }
+    "intro": "Pombo's head-cam footage runs for 3 seconds. Find the exact moment the ball leaves the passer's boot, lock it, then draw the offside line. You only get one look.",
+    "step": 0.1,
+    "end": 3.0,
+    "release": 1.2,
+    "players": [
+      { "id": "passer", "name": "Passer (red, number 8)", "colour": [230, 60, 60], "number": "8" },
+      { "id": "striker", "name": "Striker (red, number 9)", "colour": [230, 60, 60], "number": "9" },
+      { "id": "deep_defender", "name": "Defender (blue, number 4)", "colour": [70, 110, 230], "number": "4" },
+      { "id": "high_defender", "name": "Defender (blue, number 5)", "colour": [70, 110, 230], "number": "5" },
+      { "id": "goalkeeper", "name": "Goalkeeper (yellow, number 1)", "colour": [250, 210, 60], "number": "1" }
     ],
-    "line_options": [
-      { "id": "goalkeeper", "name": "The goalkeeper (yellow)" },
-      { "id": "deep_defender", "name": "Defender number 4 (the deeper one)" },
-      { "id": "high_defender", "name": "Defender number 5 (the higher one)" }
-    ],
+    "tracks": {
+      "passer":        [[0.0, 37.0, 70], [1.2, 34.5, 70], [3.0, 32.0, 72]],
+      "striker":       [[0.0, 24.6, 128], [1.2, 21.8, 128], [2.3, 14.0, 128], [3.0, 11.0, 124]],
+      "deep_defender": [[0.0, 22.4, 112], [1.2, 21.5, 112], [2.3, 18.0, 116], [3.0, 16.0, 118]],
+      "high_defender": [[0.0, 27.5, 92], [1.2, 25.0, 92], [3.0, 21.0, 96]],
+      "goalkeeper":    [[0.0, 3.0, 110], [1.2, 4.0, 110], [2.6, 5.0, 110], [3.0, 3.0, 94]],
+      "ball":          [[0.0, 36.3, 72], [1.2, 33.8, 72], [2.3, 14.6, 126], [2.6, 13.2, 124], [3.0, -0.8, 112]]
+    },
     "onside_text": "The striker is level with or behind your line: ONSIDE.",
     "offside_text": "The striker is past your line: OFFSIDE."
   },
@@ -145,12 +148,12 @@
     "right_call_wrong_mouth": {
       "title": "Right Call, Wrong Mouth",
       "show_epilogue": true,
-      "text": "Your review was right: onside, the goal stands. But you told the press \"Clearly a goal!\" before you checked, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. PUNDIT: Right call, wrong mouth. They'll teach this one at VAR school."
+      "text": "Your review was right: onside, the goal stands. But you told the press \"Clearly a goal!\" before the referee had even made the call, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. PUNDIT: Right call, wrong mouth. They'll teach this one at VAR school."
     },
     "justice_served": {
       "title": "Justice Served",
       "show_epilogue": true,
-      "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you decided before you checked. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. PUNDIT: Fine. Correct AND professional. Absolutely terrible for my ratings."
+      "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you picked a side before the official decision. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. PUNDIT: Fine. Correct AND professional. Absolutely terrible for my ratings."
     },
     "var_is_watching": {
       "title": "VAR Is Watching",

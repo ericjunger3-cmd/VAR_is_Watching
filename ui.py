@@ -4,6 +4,7 @@
 # the text is drawn on the big window afterwards (so it stays sharp).
 
 import pygame
+import game
 from sprites import OUTLINE
 
 # The dialogue box at the bottom of the screen (canvas positions).
@@ -180,7 +181,178 @@ def draw_inventory(canvas, inventory, pictures, slot_count):
             canvas.blit(icon, (icon_x, icon_y))
 
 
+def draw_menu_box(canvas):
+    # The dialogue box with a wider tab for the question of a menu.
+    framed_box(canvas, BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT,
+               (255, 245, 220), (255, 255, 245), (220, 190, 140))
+    framed_box(canvas, BOX_X + 8, BOX_Y - 7, 200, 16,
+               (230, 120, 60), (255, 160, 100), (190, 90, 40))
+
+
+# ---------------------------------------------------------------- the VAR Review screen
+
+# The pitch on the review monitor, seen from above. The goal line is on the
+# right; every metre away from the goal line is METRE pixels to the left.
+PITCH_X = 24
+PITCH_Y = 50
+PITCH_WIDTH = 432
+PITCH_HEIGHT = 120
+GOAL_LINE_X = 444
+METRE = 10.5
+
+
+def metres_to_x(metres):
+    # Turn "metres from the goal line" into an x position on the monitor.
+    return int(round(GOAL_LINE_X - metres * METRE))
+
+
+def review_time(review, state):
+    # The time (in seconds) of the moment the player is looking at.
+    # round(..., 1) keeps it a clean number like 1.2.
+    return round(state["frame"] * review["step"], 1)
+
+
+def draw_review(canvas, review, state):
+    # The VAR monitor: dark background, a timeline bar, the pitch from
+    # above, the players and the ball at the chosen moment, and (in the
+    # second step) the offside line.
+    shade = pygame.Surface((canvas.get_width(), canvas.get_height()), pygame.SRCALPHA)
+    shade.fill((10, 10, 20, 235))
+    canvas.blit(shade, (0, 0))
+    framed_box(canvas, 12, 14, 456, 186, (30, 32, 45), (60, 62, 80), (15, 15, 25))
+
+    # The timeline bar with a marker for the current moment.
+    time = review_time(review, state)
+    pygame.draw.rect(canvas, (70, 72, 90), (150, 36, 300, 6))
+    marker_x = 150 + int(300 * time / review["end"])
+    pygame.draw.rect(canvas, OUTLINE, (marker_x - 2, 33, 5, 12))
+    pygame.draw.rect(canvas, (255, 220, 90), (marker_x - 1, 34, 3, 10))
+
+    # The pitch with mowing stripes.
+    for i in range(0, PITCH_WIDTH, 24):
+        if (i // 24) % 2 == 0:
+            colour = (70, 160, 75)
+        else:
+            colour = (85, 180, 90)
+        pygame.draw.rect(canvas, colour, (PITCH_X + i, PITCH_Y, 24, PITCH_HEIGHT))
+
+    # White lines: the goal line, the penalty box (16.5 m) and the goal.
+    white = (240, 240, 240)
+    pygame.draw.line(canvas, white, (GOAL_LINE_X, PITCH_Y), (GOAL_LINE_X, PITCH_Y + PITCH_HEIGHT - 1))
+    box_x = metres_to_x(16.5)
+    pygame.draw.rect(canvas, white, (box_x, PITCH_Y + 20, GOAL_LINE_X - box_x + 1, PITCH_HEIGHT - 40), 1)
+    pygame.draw.rect(canvas, white, (GOAL_LINE_X, PITCH_Y + 48, 10, 24), 1)
+
+    tracks = review["tracks"]
+    ball_x = metres_to_x(game.value_at(tracks["ball"], time, 1))
+    ball_y = int(game.value_at(tracks["ball"], time, 2))
+
+    # Until the pass, the passer's boot touches the ball (a short leg line).
+    # After the pass, the ball rolls away with little speed lines behind it.
+    passer_x = metres_to_x(game.value_at(tracks["passer"], time, 1))
+    passer_y = int(game.value_at(tracks["passer"], time, 2))
+    if time <= review["release"]:
+        pygame.draw.line(canvas, (250, 200, 160), (passer_x, passer_y), (ball_x, ball_y), 2)
+    else:
+        for i in range(1, 4):
+            pygame.draw.line(canvas, white, (ball_x - 3 - i * 4, ball_y), (ball_x - 1 - i * 4, ball_y))
+
+    # The players: a dot with an outline for each of them.
+    for player in review["players"]:
+        x = metres_to_x(game.value_at(tracks[player["id"]], time, 1))
+        y = int(game.value_at(tracks[player["id"]], time, 2))
+        pygame.draw.circle(canvas, OUTLINE, (x, y), 7)
+        pygame.draw.circle(canvas, player["colour"], (x, y), 6)
+
+    # The ball.
+    pygame.draw.circle(canvas, OUTLINE, (ball_x, ball_y), 3)
+    pygame.draw.circle(canvas, white, (ball_x, ball_y), 2)
+
+    # Second step: the offside line. state["line"] is in tenths of a metre.
+    if state["step"] == "line":
+        line_x = metres_to_x(state["line"] / 10)
+        pygame.draw.line(canvas, (255, 70, 200), (line_x, PITCH_Y), (line_x, PITCH_Y + PITCH_HEIGHT - 1), 1)
+
+    # The box for the instructions at the bottom.
+    framed_box(canvas, BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT,
+               (255, 245, 220), (255, 255, 245), (220, 190, 140))
+
+
+def draw_ending_screen(canvas):
+    # Darken everything and draw a big box for the ending.
+    shade = pygame.Surface((canvas.get_width(), canvas.get_height()), pygame.SRCALPHA)
+    shade.fill((10, 10, 20, 200))
+    canvas.blit(shade, (0, 0))
+    framed_box(canvas, 30, 24, 420, 222, (255, 245, 220), (255, 255, 245), (220, 190, 140))
+    framed_box(canvas, 30, 24, 420, 40, (230, 120, 60), (255, 160, 100), (190, 90, 40))
+
+
 # ---------------------------------------------------------------- text (drawn on the window)
+
+def draw_menu_text(window, menu, fonts, scale):
+    # The question in the tab, and the options below it. The selected
+    # option gets an arrow and an orange colour.
+    question = fonts["title"].render(menu["title"].upper(), False, CREAM)
+    window.blit(question, ((BOX_X + 14) * scale, (BOX_Y - 5) * scale))
+    y = BOX_Y + 12
+    for i in range(len(menu["actions"])):
+        label = str(i + 1) + ". " + menu["actions"][i]["label"]
+        if i == menu["selected"]:
+            text = fonts["text"].render("> " + label, False, ORANGE)
+        else:
+            text = fonts["text"].render("  " + label, False, BROWN)
+        window.blit(text, ((BOX_X + 8) * scale, y * scale))
+        y = y + 11
+
+
+def draw_review_text(window, review, state, fonts, scale):
+    # The words on the VAR monitor: the header, the time, the shirt
+    # numbers, and the instructions for the current step.
+    header = fonts["title"].render("VAR REVIEW  -  POMBO'S HEAD-CAM", False, CREAM)
+    window.blit(header, (24 * scale, 20 * scale))
+    time = review_time(review, state)
+    window.blit(fonts["small"].render("TIME " + str(time) + " s", False, (255, 220, 90)),
+                (24 * scale, 34 * scale))
+
+    # Shirt numbers on the dots.
+    for player in review["players"]:
+        x = metres_to_x(game.value_at(review["tracks"][player["id"]], time, 1))
+        y = int(game.value_at(review["tracks"][player["id"]], time, 2))
+        picture = fonts["small"].render(player["number"], False, (255, 255, 255))
+        window.blit(picture, ((x - 2) * scale, (y - 4) * scale))
+
+    # Instructions in the box at the bottom.
+    if state["step"] == "time":
+        lines = ["Find the exact moment the ball leaves the passer's boot.",
+                 "LEFT / RIGHT: move through the footage   ENTER: lock this moment",
+                 "You only get one look.                   ESC: stop the review"]
+    else:
+        lines = ["Moment locked at " + str(time) + " s. Now draw the offside line.",
+                 "LEFT / RIGHT: move the line (hold to go faster)   ENTER: lock",
+                 "                                         ESC: back to the footage"]
+    y = BOX_Y + 12
+    for line in lines:
+        window.blit(fonts["text"].render(line, False, BROWN), ((BOX_X + 10) * scale, y * scale))
+        y = y + 11
+
+
+def draw_ending_text(window, story, ending_id, fonts, scale):
+    # The ending: its title, its text, the epilogue (for most endings)
+    # and what the player can do now.
+    ending = story["endings"][ending_id]
+    window.blit(fonts["small"].render("ENDING", False, CREAM), (40 * scale, 28 * scale))
+    window.blit(fonts["big"].render(ending["title"].upper(), False, CREAM), (40 * scale, 36 * scale))
+    y = 70
+    for line in wrap_text(ending["text"], fonts["text"], 396 * scale):
+        window.blit(fonts["text"].render(line, False, BROWN), (42 * scale, y * scale))
+        y = y + 10
+    if ending["show_epilogue"]:
+        y = y + 6
+        for line in wrap_text(story["epilogue"], fonts["text"], 396 * scale):
+            window.blit(fonts["text"].render(line, False, (120, 60, 140)), (42 * scale, y * scale))
+            y = y + 10
+    hint = fonts["small"].render("N: new game        Q: quit", False, ORANGE)
+    window.blit(hint, (42 * scale, 232 * scale))
 
 def draw_dialogue_text(window, page, letters_shown, fonts, scale):
     # Write the title and the lines of the page. Only the first

@@ -38,15 +38,18 @@ first day. A smug TV pundit narrates everything.
    Pombo/Dave gives the **USB Stick** and his statement.
 4. **Press Room** – one answer only: **"Clearly a goal!"**, **"No comment"** or
    **expose Rex** (needs lanyard + slip + Dave). Betting Slip by the TV camera.
-5. **The Pitch** – locked until the press answer; rule **Goal** or **Offside**
-   (both always allowed).
+5. **The Pitch** – open from the start, but the referee only takes the call
+   after the press answer; rule **Goal** or **Offside** (both allowed).
 
 ### VAR Review
 
-Freeze one of 4 frames (build-up, the pass, the run, the goal) and draw the
-offside line on the goalkeeper, defender 4 (deep) or defender 5 (high).
-Correct: the pass + defender 4 = onside. Frame data (metres from the goal
-line) is in story.json; `judge_offside` compares striker and line.
+A timeline of 3.0 s in 0.1 s steps (no names, no hints). Find the last moment
+the passer's boot touches the ball (1.2 s), lock it, then move a free offside
+line in 0.1 m steps (2D: no number shown; terminal: type metres).
+Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
+(level counts as onside). One step late (1.3 s) = offside. Positions are
+"tracks" of [time, metres, lane] points in story.json; `value_at` interpolates,
+`judge_offside(striker_metres, line_metres)` compares.
 
 ### Items
 

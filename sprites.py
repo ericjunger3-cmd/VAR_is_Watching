@@ -415,6 +415,30 @@ USB = [
     "xxxx..........",
 ]
 
+# The Press Lanyard: a yellow strap with a "PRESS" card (red stripe).
+LANYARD = [
+    ".YY......YY.",
+    "..YY....YY..",
+    "...YY..YY...",
+    "....YYYY....",
+    "...WWWWWW...",
+    "...RRRRRR...",
+    "...WkkkkW...",
+    "...WWWWWW...",
+]
+
+# The Betting Slip: white paper with scribbled lines and a red stamp.
+SLIP = [
+    "WWWWWWWWWWW",
+    "WxxxxxxWWWW",
+    "WWWWWWWWWWW",
+    "WxxxxWxxxxW",
+    "WWWWWWWWWWW",
+    "WxxxWWWWRRW",
+    "WWWWWWWWRRW",
+    "WWWWWWWWWWW",
+]
+
 # The gold padlock on the Mascot Changing Room door.
 PADLOCK = [
     "..xxxxx..",

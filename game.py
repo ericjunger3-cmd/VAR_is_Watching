@@ -132,8 +132,8 @@ def choose_ending(ruling, choices):
         return "clip_of_the_year"
 
     # GOAL after the review. Now the press answer decides the ending.
-    # (The Pitch is locked until the press question is answered,
-    # so "press_answer" is always in choices here.)
+    # (The referee only accepts a ruling after the press question is
+    # answered, so "press_answer" is always in choices here.)
     if choices["press_answer"] == "expose":
         return "var_is_watching"
     if choices["press_answer"] == "no_comment":
@@ -155,59 +155,98 @@ def show_ending(story, ending_id):
         print(story["epilogue"])
 
 
-def judge_offside(frame, line_id):
-    # Compare the striker with the offside line in one frame of the footage.
-    # All positions are metres from the goal line, so a SMALLER number
-    # means closer to the goal. If the striker is closer to the goal than
-    # the line, he is offside.
-    if frame["striker"] < frame[line_id]:
+def value_at(track, time, index):
+    # A track is a list of points like [time, metres, lane]. Between two
+    # points the value changes evenly, so we can work out where something
+    # is at ANY time ("linear interpolation").
+    # index 1 gives the metres from the goal line, index 2 the lane.
+    for i in range(len(track) - 1):
+        start = track[i]
+        end = track[i + 1]
+        if start[0] <= time <= end[0]:
+            # How far we are between the two points: 0.0 = start, 1.0 = end.
+            fraction = (time - start[0]) / (end[0] - start[0])
+            return start[index] + (end[index] - start[index]) * fraction
+    # After the last point: stay at the last value.
+    return track[-1][index]
+
+
+def judge_offside(striker_metres, line_metres):
+    # Compare the striker with the offside line. Positions are metres from
+    # the goal line, so a SMALLER number means closer to the goal. If the
+    # striker is closer to the goal than the line, he is offside.
+    # round(..., 2) removes tiny rounding errors the computer makes with
+    # decimal numbers (e.g. 21.799999999 instead of 21.8).
+    if round(striker_metres, 2) < round(line_metres, 2):
         return "offside"
     return "onside"
 
 
-def ask_number(question, count):
-    # Keep asking until the player types a number from 1 to count.
-    # Returns the number the player chose.
+def is_decimal(text):
+    # True for texts like "21", "21.5" or "0.3": only digits and at most
+    # one dot. replace(".", "", 1) removes the first dot before checking.
+    return text != "" and text.replace(".", "", 1).isdigit()
+
+
+def ask_decimal(question, lowest, highest):
+    # Keep asking until the player types a number between lowest and highest.
     while True:
         answer = input(question + " ").strip()
-        if answer.isdigit() and 1 <= int(answer) <= count:
-            return int(answer)
-        print("Please type a number from 1 to " + str(count) + ".")
+        if is_decimal(answer) and lowest <= float(answer) <= highest:
+            return float(answer)
+        print("Please type a number from " + str(lowest) + " to " + str(highest) + ".")
+
+
+def describe_moment(review, time):
+    # Print where everybody is at one moment of the footage.
+    tracks = review["tracks"]
+    print()
+    print("TIME " + str(time) + " s")
+    if time <= review["release"]:
+        print("The passer's boot is touching the ball.")
+    else:
+        print("The ball is rolling away from the passer.")
+    print("Distance to the goal line:")
+    print("- Ball: " + str(round(value_at(tracks["ball"], time, 1), 1)) + " m")
+    for player in review["players"]:
+        metres = round(value_at(tracks[player["id"]], time, 1), 1)
+        print("- " + player["name"] + ": " + str(metres) + " m")
 
 
 def run_review(story):
-    # The VAR Review in text form: choose a frame of the footage, then the
-    # player to draw the offside line on. Returns "onside" or "offside".
+    # The VAR Review in text form. The player looks at moments of the
+    # footage by typing times, locks one moment, then types where the
+    # offside line goes. Returns "onside" or "offside".
     review = story["review"]
     print()
     print(review["intro"])
 
-    # 1. Choose the frame.
-    print()
-    number = 1
-    for frame in review["frames"]:
-        print(str(number) + ". " + frame["name"])
-        number = number + 1
-    frame = review["frames"][ask_number("Which moment do you freeze?", len(review["frames"])) - 1]
+    # 1. Look at moments until the player locks one with L.
+    looked_at = None
+    while True:
+        print()
+        answer = input("Type a time from 0.0 to " + str(review["end"]) +
+                       " to look at, or L to lock the last moment: ").strip().lower()
+        if answer == "l":
+            if looked_at is None:
+                print("Look at a moment first.")
+            else:
+                break
+        elif is_decimal(answer) and float(answer) <= review["end"]:
+            # Round to the steps of the footage (0.1 s), e.g. 1.23 -> 1.2.
+            looked_at = round(float(answer), 1)
+            describe_moment(review, looked_at)
+        else:
+            print("Please type a time like 1.5, or L.")
 
-    # 2. Show where everybody is in that frame.
+    # 2. Draw the offside line.
     print()
-    print(frame["text"])
-    print("Distance to the goal line:")
-    print("- Striker (red, number 9): " + str(frame["striker"]) + " m")
-    for option in review["line_options"]:
-        print("- " + option["name"] + ": " + str(frame[option["id"]]) + " m")
+    print("Moment locked: " + str(looked_at) + " s")
+    line = round(ask_decimal("Where do you draw the offside line (metres from the goal line)?", 0, 40), 1)
 
-    # 3. Choose where to draw the offside line.
-    print()
-    number = 1
-    for option in review["line_options"]:
-        print(str(number) + ". " + option["name"])
-        number = number + 1
-    option = review["line_options"][ask_number("Draw the offside line at:", len(review["line_options"])) - 1]
-
-    # 4. Show what the line says.
-    result = judge_offside(frame, option["id"])
+    # 3. Compare the striker with the line at the locked moment.
+    striker = value_at(review["tracks"]["striker"], looked_at, 1)
+    result = judge_offside(striker, line)
     print()
     if result == "offside":
         print(review["offside_text"])
