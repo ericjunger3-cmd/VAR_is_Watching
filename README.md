@@ -46,15 +46,25 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 
 - **5 scenes:** VAR Booth (start), Referee's Dressing Room, Mascot Changing Room,
   Press Room, The Pitch.
-- **2 items:** the Lucky Whistle opens the Mascot Changing Room; Pombo the pigeon
-  mascot gives you the USB Stick with the missing angle. Items are reusable and
-  can only be collected once.
-- **1 remembered decision:** in the Press Room you say "Clearly a goal!" or
-  "No comment". The Pitch is locked until you answer.
-- **3 endings:**
-  - *Justice Served*: USB Stick + "No comment"
-  - *Clip of the Year*: no USB Stick
-  - *Right Call, Wrong Mouth*: USB Stick + "Clearly a goal!"
+- **4 items:** the Lucky Whistle opens the Mascot Changing Room; Pombo the pigeon
+  mascot gives you the USB Stick with the missing angle; the Press Lanyard and the
+  Betting Slip are clues. Items are reusable and can only be collected once.
+- **The twist:** Pombo is really Dave, the missing VAR operator, and the TV pundit
+  Rex Smugworth pulled the camera cable because he bet on the away team.
+  Finding this out is optional.
+- **The VAR Review:** plug the USB Stick into the VAR computer, freeze one moment
+  of the footage and draw the offside line on one player. You only get one look.
+  (The right answer: the moment of the pass, line on defender number 4: onside.)
+- **Remembered decisions:** your review result, Dave's statement, and your one
+  answer to the press ("Clearly a goal!", "No comment", or exposing Rex, which
+  needs the lanyard, the slip and Dave's statement). The Pitch is locked until
+  you have spoken to the press.
+- **5 endings:**
+  - *Daylight Robbery*: you rule OFFSIDE
+  - *Clip of the Year*: GOAL without doing the review
+  - *Right Call, Wrong Mouth*: GOAL after the review + "Clearly a goal!"
+  - *Justice Served*: GOAL after the review + "No comment"
+  - *VAR Is Watching*: GOAL after the review + you exposed Rex
 
 ## Acceptance test checklist (A1-A6)
 
@@ -62,15 +72,17 @@ Start each test from a new game: delete `save.json` first, or choose `n` and the
 in the start menu. Type the inputs one at a time, pressing Enter after each one.
 
 **Menu numbers.**
-- **VAR Booth:** `1` Dressing Room, `2` Mascot Room, `3` Press Room, `4` Pitch.
-- **Other rooms:** an item or answer action comes first; "Back to the VAR Booth"
-  is the last numbered action.
+- **VAR Booth:** `1` Dressing Room, `2` Mascot Room, `3` Press Room, `4` Pitch,
+  `5` sticky note, `6` look behind the desk, `7` plug in the USB Stick.
+- **Other rooms:** item, answer and clue actions come first; "Back to the VAR Booth"
+  is always the last numbered action.
+- Actions you have already done disappear, so the numbers after them move up.
 
 | Test | Inputs | Expected result |
 |---|---|---|
 | **A1 Locked route** | `2`, then `i` | "The door is locked..." You stay in the VAR Booth and your pockets are empty. |
 | **A2 Unlocked route** | `1`, `1` (take whistle), `1` (back), `2`, then `i` | The door opens and you are in the Mascot Changing Room. The inventory still shows the Lucky Whistle. |
 | **A3 No duplicate** | `1`, `1` (take whistle), `1` (back), `1` (Dressing Room again), then `i` | After taking it, the "Take the Lucky Whistle" action is gone, also on the second visit. The inventory shows the Lucky Whistle only once. |
-| **A4 Resume** | `1`, `1`, `1`, `2`, `1` (USB), `1`, `3`, `2` (No comment), `q`. Then run `py game.py` again and type `c`, `i`, `1`, `4` | You continue in the Press Room without the answer options. The inventory shows both items. The Pitch is open. |
-| **A5 Two outcomes** | Game 1: `3`, `1`, `1`, `4`, `1` gives **Clip of the Year**. Type `n`, `y`. Game 2: `1`, `1`, `1`, `2`, `1`, `1`, `3`, `2`, `1`, `4`, `1` gives **Justice Served**. Type `q`, run again, `c` | Two different endings. Reopening a finished game shows the same ending, with only `v`, `n` and `q`. |
+| **A4 Resume** | `1`, `1`, `1`, `2`, `1` (USB), `1`, `3`, `2` (No comment), `q`. Then run `py game.py` again and type `c`, `i`, `2` (back), `4` | You continue in the Press Room without the answer options. The inventory shows both items. The Pitch is open. |
+| **A5 Two outcomes** | Game 1: `3`, `1`, `2`, `4`, `1` gives **Clip of the Year**. Type `n`, `y`. Game 2: `1`, `1`, `1`, `2`, `1`, `1`, `7` (review), `2`, `2`, `3`, `2`, `2`, `4`, `1` gives **Justice Served**. Type `q`, run again, `c` | Two different endings. Reopening a finished game shows the same ending, with only `v`, `n` and `q`. |
 | **A6 Restart safely** | `1`, `1` (take whistle), then `r`, `n`, `i`. Then `r`, `y`, `i`, `3` | After `n`: you are still in the Dressing Room with the whistle. After `y`: you are back in the VAR Booth, your pockets are empty, and the Press Room shows both answers again. |

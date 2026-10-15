@@ -4,13 +4,23 @@
 
   "items": {
     "whistle": "Lucky Whistle",
-    "usb": "USB Stick"
+    "usb": "USB Stick",
+    "lanyard": "Press Lanyard",
+    "slip": "Betting Slip"
   },
+
+  "clue_items": ["lanyard", "slip"],
+  "clue_choices": ["dave"],
+  "pundit_nervous": [
+    "PUNDIT: Why are you poking around, rookie? Eyes on the football, please.",
+    "PUNDIT: Haha... lovely weather tonight. Has anyone seen my lanyard? Not that it matters.",
+    "PUNDIT: I want my lawyer. I mean... back to the studio! Quick! Cut to the adverts!"
+  ],
 
   "scenes": {
     "booth": {
       "name": "VAR Booth",
-      "text": "94th minute of the cup final. The home side has just scored and the stadium is shaking. The away captain is screaming \"OFFSIDE!\" at the linesman, a ball boy and the sky. You sit in the VAR Booth in front of twelve screens. Eleven work. The one with the key angle shows only static. It is your first day.",
+      "text": "94th minute of the cup final. The home side has just scored and the stadium is shaking. The away captain is screaming \"OFFSIDE!\" at the linesman, a ball boy and the sky. You sit in the VAR Booth in front of twelve screens. Eleven work. The one with the key angle shows only static. On the TV in the corner, star pundit Rex Smugworth is loving every second. It is your first day.",
       "pundit": "PUNDIT: Day one, a missing camera angle and sixty thousand people waiting. Honestly? Best night of my career.",
       "actions": [
         { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258,
@@ -27,7 +37,13 @@
           "text": "You walk out under the floodlights. Sixty thousand heads turn. Your knees suddenly remember they are knees." },
         { "label": "Look at the sticky note", "x": 185,
           "text": "Dave's note says: \"Back in 5 min - Dave. P.S. If the angle cuts out, ask Pombo. He films EVERYTHING.\"",
-          "closeup": ["Back in 5 min", "- Dave", "P.S. If the angle", "cuts out, ask Pombo.", "He films EVERYTHING."] }
+          "closeup": ["Back in 5 min", "- Dave", "P.S. If the angle", "cuts out, ask Pombo.", "He films EVERYTHING."] },
+        { "label": "Look behind the desk", "take_item": "lanyard", "x": 30,
+          "text": "Behind the desk, the cable of the key camera has been yanked out of the wall. Somebody did this on purpose! Tangled in the cable is a lanyard: \"PRESS - TV STUDIO\"." },
+        { "label": "Plug the USB Stick into the VAR computer", "review": true, "set_choice": "review", "x": 104,
+          "needs_item": "usb",
+          "blocked_text": "The VAR computer has a USB port, but you have nothing to plug in.",
+          "text": "You plug in the USB Stick. Pombo's head-cam footage fills the screen." }
       ]
     },
 
@@ -48,22 +64,28 @@
       "text": "Feathers everywhere. Pombo, the club's pigeon mascot, sits on a bench in his giant costume, head in his wings. He was standing right next to the corner flag when the goal went in.",
       "pundit": "PUNDIT: The rookie is interviewing a pigeon. I could not have scripted this.",
       "actions": [
-        { "label": "Ask Pombo what he saw", "take_item": "usb", "x": 382,
-          "text": "Pombo coos nervously and hands you a USB Stick. \"Filmed it on my head-cam,\" he whispers. \"For TikTok.\" The missing angle!" },
+        { "label": "Ask Pombo what he saw", "take_item": "usb", "set_choice": "dave", "value": "talked", "x": 382,
+          "text": "Pombo pulls off his pigeon head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you a USB Stick: \"Filmed the whole thing on my head-cam.\" Then he whispers: \"At 93:30 a guy in a shiny suit ran out of your booth. Smelled of hair gel.\"" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
-          "text": "You leave Pombo to his crisis and run back to the booth." }
+          "text": "You leave Dave to put his head back on and run back to the booth." }
       ]
     },
 
     "press_room": {
       "name": "Press Room",
-      "text": "A wall of microphones and flashing cameras. Every journalist in the country wants one quote from the new VAR official, and they want it now.",
-      "pundit": "PUNDIT: Careful now. One wrong word and you're a meme by full-time.",
+      "text": "A wall of microphones and flashing cameras. Every journalist in the country wants one quote from the new VAR official, and they want it now. You only get to say one thing.",
+      "pundit": "PUNDIT: Just tell them it's offside, rookie. Easiest quote of your life.",
       "actions": [
-        { "label": "Say: 'Clearly a goal!'", "set_choice": "press_answer", "value": "goal",
+        { "label": "Say: 'Clearly a goal!'", "set_choice": "press_answer", "value": "goal", "x": 330,
           "text": "Cameras flash. The headline is written before you finish the sentence. Somewhere, a VAR rulebook bursts into flames." },
-        { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment",
+        { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment", "x": 330,
           "text": "\"No comment.\" Calm. Professional. Boring. The journalists sigh and put their phones away." },
+        { "label": "Say: 'Rex Smugworth cut the camera feed. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "x": 330,
+          "needs_items": ["lanyard", "slip"], "needs_choice": "dave",
+          "blocked_text": "You can't accuse someone on live TV without proof. You need to know who was in the booth, why they did it, and a witness.",
+          "text": "\"Rex Smugworth pulled the camera cable. Here is his lanyard, his betting slip, and a witness in a pigeon costume.\" The room goes silent. Then every camera turns towards the TV studio." },
+        { "label": "Pick up the crumpled paper by the TV camera", "take_item": "slip", "x": 436,
+          "text": "It's a betting slip: \"500 pounds - AWAY WIN - late offside drama\". Signed: R. Smugworth. Wait... isn't that the pundit on TV?" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You leave the Press Room. A journalist is still shouting questions at the closed door." }
       ]
@@ -71,30 +93,71 @@
 
     "pitch": {
       "name": "The Pitch",
-      "text": "Sixty thousand fans are on their feet. The referee holds a hand to his earpiece and stares at you. Both captains are staring too. Everybody is staring. Time to make the call.",
-      "pundit": "PUNDIT: Here we go. Decision time for the rookie. I have never been happier.",
+      "text": "Sixty thousand fans are on their feet. The linesman has his flag up. The away captain is screaming. The referee holds a hand to his earpiece and stares at you: \"VAR, what's your call?\"",
+      "pundit": "PUNDIT: Clearly offside! Draw the line on the high defender, rookie. Everyone knows that.",
       "actions": [
-        { "label": "Rule: GOAL", "ruling": "goal" },
-        { "label": "Rule: OFFSIDE", "ruling": "offside",
-          "wrong_call_text": "You plug in the USB Stick. Pombo's head-cam shows the striker onside by a full metre. PUNDIT: Ooh, the evidence disagrees with you, rookie. Want to try that again?" },
+        { "label": "Rule: GOAL", "ruling": "goal", "x": 311,
+          "text": "You give the signal: GOAL!" },
+        { "label": "Rule: OFFSIDE", "ruling": "offside", "x": 311,
+          "text": "You give the signal: OFFSIDE!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You walk back inside. Sixty thousand people boo at the same time. Impressive, really." }
       ]
     }
   },
 
+  "review": {
+    "intro": "The footage has four moments. You only get one look before the referee needs an answer, so freeze the right moment and draw the offside line on the right player.",
+    "frames": [
+      { "name": "The build-up",
+        "text": "The home midfielder has the ball at his feet and looks up.",
+        "striker": 24.0, "goalkeeper": 3.0, "deep_defender": 22.5, "high_defender": 27.0 },
+      { "name": "The pass",
+        "text": "The ball is just leaving the midfielder's boot.",
+        "striker": 21.8, "goalkeeper": 4.0, "deep_defender": 21.5, "high_defender": 25.0 },
+      { "name": "The run",
+        "text": "The ball is rolling forward. The striker sprints past the defenders.",
+        "striker": 17.0, "goalkeeper": 5.0, "deep_defender": 19.0, "high_defender": 23.0 },
+      { "name": "The goal",
+        "text": "The ball hits the back of the net.",
+        "striker": 6.0, "goalkeeper": 1.0, "deep_defender": 12.0, "high_defender": 20.0 }
+    ],
+    "line_options": [
+      { "id": "goalkeeper", "name": "The goalkeeper (yellow)" },
+      { "id": "deep_defender", "name": "Defender number 4 (the deeper one)" },
+      { "id": "high_defender", "name": "Defender number 5 (the higher one)" }
+    ],
+    "onside_text": "The striker is level with or behind your line: ONSIDE.",
+    "offside_text": "The striker is past your line: OFFSIDE."
+  },
+
   "endings": {
-    "justice_served": {
-      "title": "Justice Served",
-      "text": "Pombo's footage settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you decided before you checked. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. PUNDIT: Fine. Correct AND professional. Absolutely terrible for my ratings."
+    "daylight_robbery": {
+      "title": "Daylight Robbery",
+      "show_epilogue": true,
+      "text": "You signal OFFSIDE and the goal is gone. Within minutes, freeze-frames all over the internet show the striker was onside by 30 centimetres. The home fans chant your name in a way you will never forget. PUNDIT: What a call! Clearly offside! ...Right? RIGHT?"
     },
     "clip_of_the_year": {
       "title": "Clip of the Year",
-      "text": "With no footage, you make the call on pure vibes. The broadcast cuts to your face at the exact moment you decide, and it is not a good face. By morning the clip has 40 million views and its own song. PUNDIT: Absolute cinema. That clip will outlive us all."
+      "show_epilogue": true,
+      "text": "You never studied the footage, so you make the call on pure vibes. GOAL! You happen to be right, but the broadcast cuts to your face at the exact moment you decide, and it is not a good face. By morning the clip has 40 million views and its own song. PUNDIT: Absolute cinema. That clip will outlive us all."
     },
     "right_call_wrong_mouth": {
       "title": "Right Call, Wrong Mouth",
-      "text": "Pombo's footage proves it: a goal. But you told the press \"Clearly a goal!\" before you checked, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. PUNDIT: Right call, wrong mouth. They'll teach this one at VAR school."
+      "show_epilogue": true,
+      "text": "Your review was right: onside, the goal stands. But you told the press \"Clearly a goal!\" before you checked, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. PUNDIT: Right call, wrong mouth. They'll teach this one at VAR school."
+    },
+    "justice_served": {
+      "title": "Justice Served",
+      "show_epilogue": true,
+      "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you decided before you checked. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. PUNDIT: Fine. Correct AND professional. Absolutely terrible for my ratings."
+    },
+    "var_is_watching": {
+      "title": "VAR Is Watching",
+      "show_epilogue": false,
+      "text": "You give the goal and the stadium explodes. On every TV in the country, Rex Smugworth freezes mid-grin as two stewards walk into his studio holding a lanyard and a betting slip. In the stands, a pigeon takes off its head and bows. The goal stands. Rex does not. PUNDIT: This is an outrage! I want my lawy-- [SIGNAL LOST]"
     }
-  }
+  },
+
+  "epilogue": "Meanwhile, in the TV studio, Rex Smugworth smooths his hair and smiles. Nobody will ever know who pulled the camera cable at 93:30. Or will they? (Play again to find out.)"
 }

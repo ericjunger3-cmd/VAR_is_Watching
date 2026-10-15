@@ -45,7 +45,30 @@ def load_progress():
     return progress
 
 
-def show_scene(story, scene_id, first_visit):
+def count_clues(story, progress):
+    # Count how many clues against the pundit the player has found:
+    # the clue items in the inventory plus the clue choices that were made.
+    count = 0
+    for item_id in story["clue_items"]:
+        if item_id in progress["inventory"]:
+            count = count + 1
+    for choice_name in story["clue_choices"]:
+        if choice_name in progress["choices"]:
+            count = count + 1
+    return count
+
+
+def pundit_line(story, scene, progress):
+    # The pundit says his normal line for the scene, but the more clues
+    # the player has found, the more nervous he gets.
+    clues = count_clues(story, progress)
+    if clues == 0:
+        return scene["pundit"]
+    # 1 clue -> the first nervous line (index 0), 2 clues -> index 1, ...
+    return story["pundit_nervous"][clues - 1]
+
+
+def show_scene(story, scene_id, first_visit, pundit_text):
     # Look up the scene dictionary by its id, e.g. "booth".
     scene = story["scenes"][scene_id]
 
@@ -56,7 +79,7 @@ def show_scene(story, scene_id, first_visit):
     if first_visit:
         print(scene["text"])
         print()
-    print(scene["pundit"])
+    print(pundit_text)
 
 
 def is_hidden(action, inventory, choices):
@@ -85,28 +108,34 @@ def blocked_reason(action, inventory, choices):
     # explanation text. Otherwise return None, which means "not blocked".
     if "needs_item" in action and action["needs_item"] not in inventory:
         return action["blocked_text"]
+    # Some actions need several items: every one of them must be in the inventory.
+    if "needs_items" in action:
+        for item_id in action["needs_items"]:
+            if item_id not in inventory:
+                return action["blocked_text"]
     # Same idea for a decision the player has not made yet.
     if "needs_choice" in action and action["needs_choice"] not in choices:
         return action["blocked_text"]
     return None
 
 
-def choose_ending(ruling, inventory, choices):
-    # Decide the ending from the ruling, the inventory and the press answer.
-    # Returns the id of an ending, or None if the ruling is refused.
+def choose_ending(ruling, choices):
+    # Decide the ending from the ruling and the choices made during the game.
+    # The checks are read from top to bottom; the first one that fits wins.
 
-    # Without the USB Stick there is no evidence: either ruling goes viral.
-    if "usb" not in inventory:
+    # The goal was legal (onside by 30 cm), so OFFSIDE is always the wrong call.
+    if ruling == "offside":
+        return "daylight_robbery"
+
+    # GOAL, but without studying the footage: right, but only by luck.
+    if "review" not in choices:
         return "clip_of_the_year"
 
-    # With the USB Stick the footage shows it was a goal,
-    # so ruling offside is refused.
-    if ruling == "offside":
-        return None
-
-    # The ruling is GOAL. Now the press answer decides the ending.
+    # GOAL after the review. Now the press answer decides the ending.
     # (The Pitch is locked until the press question is answered,
     # so "press_answer" is always in choices here.)
+    if choices["press_answer"] == "expose":
+        return "var_is_watching"
     if choices["press_answer"] == "no_comment":
         return "justice_served"
     return "right_call_wrong_mouth"
@@ -120,6 +149,71 @@ def show_ending(story, ending_id):
     print("ENDING: " + ending["title"])
     print("*****************************************")
     print(ending["text"])
+    # Most endings also reveal what the pundit got away with.
+    if ending["show_epilogue"]:
+        print()
+        print(story["epilogue"])
+
+
+def judge_offside(frame, line_id):
+    # Compare the striker with the offside line in one frame of the footage.
+    # All positions are metres from the goal line, so a SMALLER number
+    # means closer to the goal. If the striker is closer to the goal than
+    # the line, he is offside.
+    if frame["striker"] < frame[line_id]:
+        return "offside"
+    return "onside"
+
+
+def ask_number(question, count):
+    # Keep asking until the player types a number from 1 to count.
+    # Returns the number the player chose.
+    while True:
+        answer = input(question + " ").strip()
+        if answer.isdigit() and 1 <= int(answer) <= count:
+            return int(answer)
+        print("Please type a number from 1 to " + str(count) + ".")
+
+
+def run_review(story):
+    # The VAR Review in text form: choose a frame of the footage, then the
+    # player to draw the offside line on. Returns "onside" or "offside".
+    review = story["review"]
+    print()
+    print(review["intro"])
+
+    # 1. Choose the frame.
+    print()
+    number = 1
+    for frame in review["frames"]:
+        print(str(number) + ". " + frame["name"])
+        number = number + 1
+    frame = review["frames"][ask_number("Which moment do you freeze?", len(review["frames"])) - 1]
+
+    # 2. Show where everybody is in that frame.
+    print()
+    print(frame["text"])
+    print("Distance to the goal line:")
+    print("- Striker (red, number 9): " + str(frame["striker"]) + " m")
+    for option in review["line_options"]:
+        print("- " + option["name"] + ": " + str(frame[option["id"]]) + " m")
+
+    # 3. Choose where to draw the offside line.
+    print()
+    number = 1
+    for option in review["line_options"]:
+        print(str(number) + ". " + option["name"])
+        number = number + 1
+    option = review["line_options"][ask_number("Draw the offside line at:", len(review["line_options"])) - 1]
+
+    # 4. Show what the line says.
+    result = judge_offside(frame, option["id"])
+    print()
+    if result == "offside":
+        print(review["offside_text"])
+    else:
+        print(review["onside_text"])
+    return result
 
 
 def ask_yes_no(question):
@@ -230,8 +324,8 @@ def play_game(story, progress):
         first_visit = progress["scene"] not in progress["visited"]
         if first_visit:
             progress["visited"].append(progress["scene"])
-        show_scene(story, progress["scene"], first_visit)
         scene = story["scenes"][progress["scene"]]
+        show_scene(story, progress["scene"], first_visit, pundit_line(story, scene, progress))
 
         # Only the visible actions get a number in the menu.
         actions = get_visible_actions(scene, inventory, choices)
@@ -274,23 +368,18 @@ def play_game(story, progress):
             print(reason)
             continue
 
-        # A ruling on the Pitch can end the game.
+        # Show the result of the action.
+        print()
+        print(action["text"])
+
+        # A ruling on the Pitch ends the game.
         if "ruling" in action:
-            ending_id = choose_ending(action["ruling"], inventory, choices)
-            if ending_id is None:
-                # The ruling was refused: show why and change nothing.
-                print()
-                print(action["wrong_call_text"])
-                continue
+            ending_id = choose_ending(action["ruling"], choices)
             # Remember and save the ending, so it cannot be changed later.
             progress["ending"] = ending_id
             save_progress(progress)
             show_ending(story, ending_id)
             return after_ending_menu(story, ending_id)
-
-        # Show the result of the action.
-        print()
-        print(action["text"])
 
         # If the action gives an item, add it (but never a second copy).
         if "take_item" in action:
@@ -299,8 +388,13 @@ def play_game(story, progress):
                 inventory.append(item_id)
 
         # If the action is a decision, remember it in the choices dictionary.
+        # The VAR Review is a special decision: its value is what the
+        # player's own offside line showed ("onside" or "offside").
         if "set_choice" in action:
-            choices[action["set_choice"]] = action["value"]
+            if "review" in action:
+                choices[action["set_choice"]] = run_review(story)
+            else:
+                choices[action["set_choice"]] = action["value"]
 
         # If the action leads somewhere, move to that scene.
         if "go_to" in action:

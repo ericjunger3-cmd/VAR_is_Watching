@@ -18,32 +18,59 @@ https://nova-sbe-introduction-to-programming.github.io/intro-to-programming-2026
 and the key VAR angle is missing. The player is a junior VAR official on their
 first day. A smug TV pundit narrates everything.
 
+### The twist (optional to discover)
+
+- **Pombo is Dave**, the missing VAR operator from the sticky note, working a
+  second job as the mascot. He filmed the goal on his head-cam (the USB Stick)
+  and saw a man in a shiny suit run out of the booth at 93:30.
+- **The pundit, Rex Smugworth, pulled the camera cable** because he bet 500 on
+  the away team. Clues: the Press Lanyard (behind the booth desk), the Betting
+  Slip (press room), Dave's statement. The pundit gets more nervous with every
+  clue. Every ending except the best one ends with an epilogue hinting at him.
+- The truth: the striker was **onside by 30 cm**, so GOAL is the right call.
+
 ### Scenes
 
-1. **VAR Booth** – starting scene.
-2. **Referee's Dressing Room** – the **Lucky Whistle** can be collected here.
-3. **Mascot Changing Room** – locked; needs the Lucky Whistle to enter.
-   Pombo the pigeon mascot gives the **USB Stick**.
-4. **Press Room** – decision: say **"Clearly a goal!"** or **"No comment"**.
-5. **The Pitch** – the player rules **Goal** or **Offside**.
+1. **VAR Booth** – start. Sticky note (close-up), lanyard behind the desk,
+   VAR computer for the **VAR Review** (needs the USB; one look only).
+2. **Referee's Dressing Room** – the **Lucky Whistle**.
+3. **Mascot Changing Room** – locked; needs the Lucky Whistle.
+   Pombo/Dave gives the **USB Stick** and his statement.
+4. **Press Room** – one answer only: **"Clearly a goal!"**, **"No comment"** or
+   **expose Rex** (needs lanyard + slip + Dave). Betting Slip by the TV camera.
+5. **The Pitch** – locked until the press answer; rule **Goal** or **Offside**
+   (both always allowed).
+
+### VAR Review
+
+Freeze one of 4 frames (build-up, the pass, the run, the goal) and draw the
+offside line on the goalkeeper, defender 4 (deep) or defender 5 (high).
+Correct: the pass + defender 4 = onside. Frame data (metres from the goal
+line) is in story.json; `judge_offside` compares striker and line.
 
 ### Items
 
-- Lucky Whistle, USB Stick.
+- Lucky Whistle, USB Stick, Press Lanyard, Betting Slip.
 - Items are **reusable** (not used up) and **cannot be duplicated**.
 
-### Endings
+### Endings (`choose_ending` in game.py, checked top to bottom)
 
-- **Justice Served** – has the USB Stick + said "No comment".
-- **Clip of the Year** – no USB Stick.
-- **Right Call, Wrong Mouth** – has the USB Stick + said "Clearly a goal!".
+- **Daylight Robbery** – ruled OFFSIDE.
+- **Clip of the Year** – GOAL without the review.
+- **VAR Is Watching** – GOAL after the review + exposed Rex (best ending).
+- **Justice Served** – GOAL after the review + "No comment".
+- **Right Call, Wrong Mouth** – GOAL after the review + "Clearly a goal!".
 
 ## Tech
 
-- Python terminal app.
-- `story.json` – all story content (scenes, text, actions, items, endings).
-- `game.py` – the game logic.
-- `save.json` – player progress, **saved after every accepted action**.
+- Python. Terminal version: `game.py`. 2D pixel-art version (pygame-ce):
+  `game_2d.py` (game loop), `rooms.py` (room drawings), `sprites.py` (pixel
+  grids), `ui.py` (dialogue box, pundit TV, close-ups, inventory bar).
+- `story.json` – all story content, shared by both versions.
+- `save.json` – terminal progress, **saved after every accepted action**.
+  The 2D version will save to `save_2d.json` (same format).
+- Run with `py game.py` / `py game_2d.py` (Python 3.15 on this PC; `python`
+  points to the Microsoft Store alias).
 
 ## Brief requirements (Plot Twist BRD v1.0)
 
@@ -104,5 +131,6 @@ first day. A smug TV pundit narrates everything.
 ### How this game maps to the brief
 
 - A1/A2: the Lucky Whistle is the "key" for the Mascot Changing Room.
-- A3: the Lucky Whistle and USB Stick can each be collected only once.
-- PT04: the Press Room answer is remembered and changes the final ending.
+- A3: every item can be collected only once (taken items disappear).
+- PT04: the review result and the press answer are remembered and change the
+  ending; exposing Rex needs earlier clues (needs_items + needs_choice).
