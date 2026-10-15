@@ -133,6 +133,18 @@ def draw_labels(window, font, small_font, scene_id):
         window.blit(picture, (x * SCALE, y * SCALE))
 
 
+def draw_scoreboard_text(window, font, ball):
+    # The yellow bar of the scoreboard says "VAR CHECK", or flashes
+    # "GOAL?!" while the player's goal is celebrated.
+    if ball["celebrate"] > 0:
+        text = "GOAL?!"
+        x = 226
+    else:
+        text = "VAR CHECK"
+        x = 210
+    window.blit(font.render(text, False, (30, 20, 20)), (x * SCALE, 66 * SCALE))
+
+
 def room_pages(scene, fonts):
     # The dialogue pages for entering a room: its name and its description.
     return ui.make_pages(scene["name"], scene["text"], fonts["text"], SCALE)
@@ -317,6 +329,66 @@ def handle_walking_key(key, scene, nearby, progress, story, screen, fonts, playe
         screen["menu"] = {"title": scene["menu_title"], "actions": nearby, "selected": 0}
 
 
+# ---------------------------------------------------------------- the ball on the pitch
+
+KICK_SPEED = 6        # how fast the ball starts rolling after a kick (pixels per frame)
+FRICTION = 0.95       # every frame the ball keeps 95 % of its speed
+GOAL_X = 421          # the ball is in the goal when it rolls past this x
+CELEBRATION = 90      # how many frames the goal celebration lasts (3 seconds)
+
+
+def new_ball():
+    # The ball lies on its spot and does not move.
+    # "celebrate" counts down the frames of a goal celebration (0 = none).
+    return {"x": float(rooms.BALL_X), "speed": 0.0, "celebrate": 0}
+
+
+def update_ball(ball, player, player_width):
+    # Move the ball one frame: kicks, rolling, bouncing and goals.
+
+    # During a goal celebration the ball waits in the net,
+    # then it goes back to its spot.
+    if ball["celebrate"] > 0:
+        ball["celebrate"] = ball["celebrate"] - 1
+        if ball["celebrate"] == 0:
+            ball["x"] = float(rooms.BALL_X)
+            ball["speed"] = 0.0
+        return
+
+    # A kick: the player walks into the ball.
+    # The player's feet are a few pixels inside the edges of the picture.
+    walking = player["walk_timer"] > 0
+    feet_left = player["x"] + 6
+    feet_right = player["x"] + player_width - 6
+    ball_left = ball["x"]
+    ball_right = ball["x"] + 7
+    touching = feet_right >= ball_left and feet_left <= ball_right
+    if walking and touching:
+        if player["facing_left"]:
+            ball["speed"] = -KICK_SPEED
+            ball["x"] = feet_left - 8          # push it out of the player's feet
+        else:
+            ball["speed"] = KICK_SPEED
+            ball["x"] = feet_right + 1
+
+    # Rolling: move by the speed, then slow down a bit (friction).
+    ball["x"] = ball["x"] + ball["speed"]
+    ball["speed"] = ball["speed"] * FRICTION
+    if abs(ball["speed"]) < 0.1:
+        ball["speed"] = 0.0
+
+    # Bounce off the left edge, losing some speed.
+    if ball["x"] < 2:
+        ball["x"] = 2
+        ball["speed"] = -ball["speed"] * 0.6
+
+    # GOAL! The ball stops in the net and the celebration starts.
+    if ball["x"] > GOAL_X:
+        ball["x"] = 440.0
+        ball["speed"] = 0.0
+        ball["celebrate"] = CELEBRATION
+
+
 # ---------------------------------------------------------------- what is on screen
 
 def box_is_open(screen):
@@ -400,7 +472,7 @@ def handle_pause_key(key, screen):
 
 # ---------------------------------------------------------------- drawing
 
-def draw_game(assets, story, progress, screen, player, nearby):
+def draw_game(assets, story, progress, screen, player, nearby, ball):
     # Draw one picture of the game, in layers from the back to the front.
     window = assets["window"]
     canvas = assets["canvas"]
@@ -412,7 +484,7 @@ def draw_game(assets, story, progress, screen, player, nearby):
     show_ending = ending_is_showing(progress, screen)
 
     # 1. The room, the player and the E bubble on the small canvas.
-    rooms.draw_room(canvas, progress["scene"], assets["pictures"], progress)
+    rooms.draw_room(canvas, progress["scene"], assets["pictures"], progress, ball)
     canvas.blit(player_picture(player, assets["standing"], assets["walking"]), (player["x"], player_y))
     if len(nearby) > 0:
         draw_e_bubble(canvas, player["x"], player_y, player_width)
@@ -420,6 +492,8 @@ def draw_game(assets, story, progress, screen, player, nearby):
 
     # 2. The sharp room labels and the "E" in the bubble.
     draw_labels(window, fonts["label"], fonts["label_small"], progress["scene"])
+    if progress["scene"] == "pitch":
+        draw_scoreboard_text(window, fonts["label"], ball)
     if len(nearby) > 0:
         letter = fonts["bubble"].render("E", False, sprites.OUTLINE)
         letter_x = player["x"] + player_width // 2 - 3
@@ -448,7 +522,12 @@ def draw_game(assets, story, progress, screen, player, nearby):
     # 4. The text inside the boxes.
     full_screen = screen["closeup"] is not None or screen["review"] is not None or show_ending
     if not full_screen and screen["confirm"] is None:
-        ui.draw_pundit_text(window, game.pundit_line(story, scene, progress), fonts, SCALE)
+        # After a goal with the ball, the pundit comments on that instead.
+        if progress["scene"] == "pitch" and ball["celebrate"] > 0:
+            pundit_text = story["ball_goal_pundit"]
+        else:
+            pundit_text = game.pundit_line(story, scene, progress)
+        ui.draw_pundit_text(window, pundit_text, fonts, SCALE)
     if len(screen["dialogue"]) > 0:
         ui.draw_dialogue_text(window, screen["dialogue"][0], screen["letters"], fonts, SCALE)
     if screen["menu"] is not None:
@@ -480,6 +559,7 @@ def title_screen(assets, story):
     confirm = None      # the yes/no question, while it is open
     # Behind the menu we show the pitch with all the players.
     empty_progress = game.new_progress(story)
+    still_ball = new_ball()
 
     while True:
         has_save = game.load_progress(SAVE_FILE) is not None
@@ -517,7 +597,7 @@ def title_screen(assets, story):
         canvas = assets["canvas"]
         overlay = assets["overlay"]
         window = assets["window"]
-        rooms.draw_room(canvas, "pitch", assets["pictures"], empty_progress)
+        rooms.draw_room(canvas, "pitch", assets["pictures"], empty_progress, still_ball)
         window.blit(pygame.transform.scale(canvas, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
         overlay.fill((0, 0, 0, 0))
         ui.draw_title_screen(overlay, len(labels), selected)
@@ -541,6 +621,8 @@ def play(assets, story, progress, screen, player):
     clock = pygame.time.Clock()
     fonts = assets["fonts"]
     player_width = assets["standing"].get_width()
+    # The ball on the pitch is just for fun: it is not saved.
+    ball = new_ball()
 
     while True:
         scene = story["scenes"][progress["scene"]]
@@ -605,11 +687,15 @@ def play(assets, story, progress, screen, player):
         else:
             player["walk_timer"] = 0
 
+        # The ball rolls on the pitch.
+        if progress["scene"] == "pitch":
+            update_ball(ball, player, player_width)
+
         # The typing effect: a few more letters appear every frame.
         if len(screen["dialogue"]) > 0:
             screen["letters"] = screen["letters"] + TYPE_SPEED
 
-        draw_game(assets, story, progress, screen, player, nearby)
+        draw_game(assets, story, progress, screen, player, nearby, ball)
         pygame.display.flip()
         clock.tick(30)
 

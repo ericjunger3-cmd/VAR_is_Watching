@@ -11,6 +11,7 @@
 
   "clue_items": ["lanyard", "slip"],
   "clue_choices": ["dave"],
+  "ball_goal_pundit": "PUNDIT: Did the VAR official just score?! Somebody check the VAR! Oh wait... that's you. Doesn't count, rookie.",
   "pundit_nervous": [
     "PUNDIT: Why are you poking around, rookie? Eyes on the football, please.",
     "PUNDIT: Haha... lovely weather tonight. Has anyone seen my lanyard? Not that it matters.",

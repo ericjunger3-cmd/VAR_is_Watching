@@ -937,8 +937,11 @@ REFEREE_X = 296
 CAPTAIN_X = 322
 
 
-def draw_pitch(canvas, pictures):
-    draw_stadium(canvas)
+def draw_pitch(canvas, pictures, ball):
+    # During a goal celebration the scoreboard flashes (on for 8 frames,
+    # off for 8 frames ...).
+    flashing = ball["celebrate"] > 0 and (ball["celebrate"] // 8) % 2 == 0
+    draw_stadium(canvas, flashing)
 
     # Advertising boards along the side of the pitch.
     boards = [(YELLOW, OUTLINE), ((70, 110, 230), WHITE), (WHITE, HOME_RED), ((90, 180, 110), WHITE)]
@@ -987,13 +990,17 @@ def draw_pitch(canvas, pictures):
     outlined_box(canvas, WHITE, CAPTAIN_X - 8, 140, 34, 12)
     pygame.draw.polygon(canvas, OUTLINE, [(CAPTAIN_X + 4, 152), (CAPTAIN_X + 2, 158), (CAPTAIN_X + 10, 152)])
 
-    # The ball, with a little shadow.
-    ball = pictures["ball"]
-    pygame.draw.ellipse(canvas, (50, 140, 50), (BALL_X, FLOOR_Y - 2, 10, 4))
-    canvas.blit(ball, (BALL_X, FLOOR_Y - ball.get_height() + 1))
+    # The ball, with a little shadow. ball["x"] is where it is now.
+    # While it rolls, the picture is turned in steps of 90 degrees
+    # (every 6 pixels it rolls), which keeps the pixel art sharp.
+    ball_x = int(ball["x"])
+    turns = (ball_x // 6) % 4
+    ball_picture = pygame.transform.rotate(pictures["ball"], turns * 90)
+    pygame.draw.ellipse(canvas, (50, 140, 50), (ball_x, FLOOR_Y - 2, 10, 4))
+    canvas.blit(ball_picture, (ball_x, FLOOR_Y - ball_picture.get_height() + 1))
 
 
-def draw_stadium(canvas):
+def draw_stadium(canvas, celebrating=False):
     # Sky, roof, two tiers of fans with the scoreboard, and floodlights.
     pygame.draw.rect(canvas, (110, 190, 250), (0, 0, CANVAS_WIDTH, 20))
     pygame.draw.rect(canvas, (140, 205, 255), (0, 20, CANVAS_WIDTH, 14))
@@ -1020,6 +1027,8 @@ def draw_stadium(canvas):
     pygame.draw.rect(canvas, HOME_RED, (194, 50, 30, 10))
     pygame.draw.rect(canvas, AWAY_BLUE, (256, 50, 30, 10))
     pygame.draw.rect(canvas, (255, 200, 40), (194, 66, 92, 10))
+    if celebrating:
+        pygame.draw.rect(canvas, (230, 60, 60), (194, 66, 92, 10))
 
     # A red banner between the tiers.
     pygame.draw.rect(canvas, OUTLINE, (0, 92, CANVAS_WIDTH, 3))
@@ -1075,10 +1084,11 @@ def draw_goal(canvas):
 
 # ---------------------------------------------------------------- choosing a room
 
-def draw_room(canvas, scene_id, pictures, progress):
+def draw_room(canvas, scene_id, pictures, progress, ball):
     # Draw the room that belongs to a scene id from story.json.
     # pictures holds the characters and objects that live in the rooms.
-    # progress is needed for things that change (padlock, whistle, steward).
+    # progress is needed for things that change (padlock, whistle, slip ...),
+    # ball says where the ball on the pitch is.
     if scene_id == "booth":
         draw_booth(canvas, pictures, progress)
     elif scene_id == "dressing_room":
@@ -1088,7 +1098,7 @@ def draw_room(canvas, scene_id, pictures, progress):
     elif scene_id == "press_room":
         draw_press_room(canvas, progress)
     elif scene_id == "pitch":
-        draw_pitch(canvas, pictures)
+        draw_pitch(canvas, pictures, ball)
 
 
 # Text labels for each room: (text, x, y, colour, small?) in canvas positions.
@@ -1119,7 +1129,6 @@ LABELS = {
         ("HOME", 195, 50, (255, 255, 255), False),
         ("1 - 0", 229, 50, (255, 255, 255), False),
         ("AWAY", 258, 50, (255, 255, 255), False),
-        ("VAR CHECK", 210, 66, (30, 20, 20), False),
         ("OFFSIDE!", CAPTAIN_X - 6, 141, (230, 40, 40), True),
     ],
 }
