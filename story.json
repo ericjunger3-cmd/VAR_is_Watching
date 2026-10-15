@@ -22,6 +22,8 @@
         { "label": "Go to the Press Room", "go_to": "press_room",
           "text": "You follow the sound of camera clicks." },
         { "label": "Go to the Pitch", "go_to": "pitch",
+          "needs_choice": "press_answer",
+          "blocked_text": "Security blocks the tunnel: 'Talk to the press first, mate.'",
           "text": "You walk out under the floodlights." }
       ]
     },
@@ -55,6 +57,10 @@
       "text": "(placeholder) A wall of microphones points at you.",
       "pundit": "PUNDIT: Careful now. One wrong word and you're a meme.",
       "actions": [
+        { "label": "Say: 'Clearly a goal!'", "set_choice": "press_answer", "value": "goal",
+          "text": "Cameras flash. Somewhere, a VAR rulebook bursts into flames." },
+        { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment",
+          "text": "Calm. Professional. Boring. Perfect." },
         { "label": "Back to the VAR Booth", "go_to": "booth",
           "text": "You escape before anyone asks a question." }
       ]

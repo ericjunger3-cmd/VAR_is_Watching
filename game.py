@@ -24,27 +24,34 @@ def show_scene(story, scene_id):
     print(scene["pundit"])
 
 
-def is_hidden(action, inventory):
+def is_hidden(action, inventory, choices):
     # An action that gives an item disappears once the player has that item.
     # This way the same item can never be collected twice.
     if "take_item" in action and action["take_item"] in inventory:
         return True
+    # An answer option disappears once that question has been answered.
+    # This way a decision can only be made once.
+    if "set_choice" in action and action["set_choice"] in choices:
+        return True
     return False
 
 
-def get_visible_actions(scene, inventory):
+def get_visible_actions(scene, inventory, choices):
     # Make a new list with only the actions the player should see right now.
     visible = []
     for action in scene["actions"]:
-        if not is_hidden(action, inventory):
+        if not is_hidden(action, inventory, choices):
             visible.append(action)
     return visible
 
 
-def blocked_reason(action, inventory):
+def blocked_reason(action, inventory, choices):
     # If the action needs an item the player does not have, return the
     # explanation text. Otherwise return None, which means "not blocked".
     if "needs_item" in action and action["needs_item"] not in inventory:
+        return action["blocked_text"]
+    # Same idea for a decision the player has not made yet.
+    if "needs_choice" in action and action["needs_choice"] not in choices:
         return action["blocked_text"]
     return None
 
@@ -82,13 +89,16 @@ def main():
     # inventory is a list of item ids the player carries, e.g. ["whistle"].
     inventory = []
 
+    # choices remembers the player's decisions, e.g. {"press_answer": "goal"}.
+    choices = {}
+
     # The game loop: show the scene, ask for a choice, react, repeat.
     while True:
         show_scene(story, current_scene)
         scene = story["scenes"][current_scene]
 
         # Only the visible actions get a number in the menu.
-        actions = get_visible_actions(scene, inventory)
+        actions = get_visible_actions(scene, inventory, choices)
         show_actions(actions)
 
         # strip() removes spaces, lower() turns "Q" into "q".
@@ -117,7 +127,7 @@ def main():
 
         # A blocked action only shows the reason and changes nothing:
         # the player stays in the same scene with the same inventory.
-        reason = blocked_reason(action, inventory)
+        reason = blocked_reason(action, inventory, choices)
         if reason is not None:
             print()
             print(reason)
@@ -132,6 +142,10 @@ def main():
             item_id = action["take_item"]
             if item_id not in inventory:
                 inventory.append(item_id)
+
+        # If the action is a decision, remember it in the choices dictionary.
+        if "set_choice" in action:
+            choices[action["set_choice"]] = action["value"]
 
         # If the action leads somewhere, move to that scene.
         if "go_to" in action:
