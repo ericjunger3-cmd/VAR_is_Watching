@@ -2,6 +2,11 @@
   "title": "VAR Is Watching",
   "start_scene": "booth",
 
+  "items": {
+    "whistle": "Lucky Whistle",
+    "usb": "USB Stick"
+  },
+
   "scenes": {
     "booth": {
       "name": "VAR Booth",
@@ -21,9 +26,11 @@
 
     "dressing_room": {
       "name": "Referee's Dressing Room",
-      "text": "(placeholder) Muddy boots, a half-eaten orange and a whistle on the bench.",
+      "text": "(placeholder) Muddy boots and a half-eaten orange.",
       "pundit": "PUNDIT: Snooping in the ref's room. Bold. Pointless, but bold.",
       "actions": [
+        { "label": "Take the Lucky Whistle from the bench", "take_item": "whistle",
+          "text": "You pocket the Lucky Whistle. It feels... lucky." },
         { "label": "Back to the VAR Booth", "go_to": "booth",
           "text": "You hurry back to your screens." }
       ]
@@ -31,9 +38,11 @@
 
     "mascot_room": {
       "name": "Mascot Changing Room",
-      "text": "(placeholder) Pombo the pigeon mascot sits on a bench, holding something small.",
+      "text": "(placeholder) Pombo the pigeon mascot sits on a bench, looking guilty.",
       "pundit": "PUNDIT: Asking a pigeon for evidence. This is why I love football.",
       "actions": [
+        { "label": "Ask Pombo what he is hiding", "take_item": "usb",
+          "text": "Pombo coos and drops a USB Stick into your hand." },
         { "label": "Back to the VAR Booth", "go_to": "booth",
           "text": "You hurry back to your screens." }
       ]
