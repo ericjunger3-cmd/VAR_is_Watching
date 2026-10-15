@@ -2,6 +2,7 @@
 # All the story text lives in story.json. This file contains the game logic.
 
 import json
+import os
 
 
 def load_story():
@@ -10,6 +11,34 @@ def load_story():
     with open("story.json", "r", encoding="utf-8") as file:
         story = json.load(file)
     return story
+
+
+def new_progress(story):
+    # Everything that changes during a game is kept in one dictionary.
+    # This is exactly what gets written to save.json.
+    progress = {
+        "scene": story["start_scene"],   # where the player is
+        "inventory": [],                 # item ids, e.g. ["whistle"]
+        "choices": {},                   # decisions, e.g. {"press_answer": "goal"}
+        "ending": None                   # ending id once the game is over
+    }
+    return progress
+
+
+def save_progress(progress):
+    # Write the progress dictionary to save.json.
+    # indent=2 makes the file easy to read if you open it yourself.
+    with open("save.json", "w", encoding="utf-8") as file:
+        json.dump(progress, file, indent=2)
+
+
+def load_progress():
+    # If there is no save file yet, return None ("nothing saved").
+    if not os.path.exists("save.json"):
+        return None
+    with open("save.json", "r", encoding="utf-8") as file:
+        progress = json.load(file)
+    return progress
 
 
 def show_scene(story, scene_id):
@@ -131,19 +160,28 @@ def main():
     story = load_story()
     print("*** " + story["title"] + " ***")
 
-    # current_scene remembers where the player is (a scene id like "booth").
-    current_scene = story["start_scene"]
+    # Continue the saved game if there is one, otherwise start a new one.
+    # (Step 8 will ask the player first.)
+    progress = load_progress()
+    if progress is None:
+        progress = new_progress(story)
 
-    # inventory is a list of item ids the player carries, e.g. ["whistle"].
-    inventory = []
+    # If the saved game is already finished, the ending cannot change.
+    if progress["ending"] is not None:
+        show_ending(story, progress["ending"])
+        after_ending_menu(story, progress["ending"])
+        return
 
-    # choices remembers the player's decisions, e.g. {"press_answer": "goal"}.
-    choices = {}
+    # Short names for the inventory list and the choices dictionary.
+    # They point to the same list/dictionary inside progress, so changing
+    # inventory also changes progress["inventory"].
+    inventory = progress["inventory"]
+    choices = progress["choices"]
 
     # The game loop: show the scene, ask for a choice, react, repeat.
     while True:
-        show_scene(story, current_scene)
-        scene = story["scenes"][current_scene]
+        show_scene(story, progress["scene"])
+        scene = story["scenes"][progress["scene"]]
 
         # Only the visible actions get a number in the menu.
         actions = get_visible_actions(scene, inventory, choices)
@@ -189,6 +227,9 @@ def main():
                 print()
                 print(action["wrong_call_text"])
                 continue
+            # Remember and save the ending, so it cannot be changed later.
+            progress["ending"] = ending_id
+            save_progress(progress)
             show_ending(story, ending_id)
             after_ending_menu(story, ending_id)
             break
@@ -209,7 +250,10 @@ def main():
 
         # If the action leads somewhere, move to that scene.
         if "go_to" in action:
-            current_scene = action["go_to"]
+            progress["scene"] = action["go_to"]
+
+        # The action was accepted, so save the progress right away.
+        save_progress(progress)
 
 
 # Only start the game when this file is run directly (py game.py).
