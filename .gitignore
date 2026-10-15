@@ -221,3 +221,6 @@ __marimo__/
 
 # Player progress (created by the game)
 save.json
+
+# Progress of the 2D game
+save_2d.json

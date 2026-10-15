@@ -287,7 +287,70 @@ def draw_ending_screen(canvas):
     framed_box(canvas, 30, 24, 420, 40, (230, 120, 60), (255, 160, 100), (190, 90, 40))
 
 
+# ---------------------------------------------------------------- title screen and yes/no box
+
+# The buttons on the title screen.
+BUTTON_X = 170
+BUTTON_Y = 104
+BUTTON_WIDTH = 140
+BUTTON_HEIGHT = 28
+BUTTON_GAP = 36
+
+
+def draw_title_screen(canvas, button_count, selected):
+    # A slightly darker stadium (already drawn on the canvas), a banner for
+    # the title and big framed buttons. The selected button is orange.
+    shade = pygame.Surface((canvas.get_width(), canvas.get_height()), pygame.SRCALPHA)
+    shade.fill((10, 10, 30, 90))
+    canvas.blit(shade, (0, 0))
+    framed_box(canvas, 80, 26, 320, 58, (230, 120, 60), (255, 160, 100), (190, 90, 40))
+    for i in range(button_count):
+        y = BUTTON_Y + i * BUTTON_GAP
+        if i == selected:
+            framed_box(canvas, BUTTON_X - 4, y - 2, BUTTON_WIDTH + 8, BUTTON_HEIGHT + 4,
+                       (255, 200, 120), (255, 230, 170), (210, 140, 70))
+        else:
+            framed_box(canvas, BUTTON_X, y, BUTTON_WIDTH, BUTTON_HEIGHT,
+                       (255, 236, 200), (255, 250, 230), (215, 180, 130))
+
+
+def draw_confirm_box(canvas):
+    # Darken everything and draw a small box in the middle for a yes/no question.
+    shade = pygame.Surface((canvas.get_width(), canvas.get_height()), pygame.SRCALPHA)
+    shade.fill((10, 10, 20, 170))
+    canvas.blit(shade, (0, 0))
+    framed_box(canvas, 100, 96, 280, 72, (255, 245, 220), (255, 255, 245), (220, 190, 140))
+
+
 # ---------------------------------------------------------------- text (drawn on the window)
+
+def draw_title_text(window, labels, selected, has_save, fonts, scale):
+    # The game title, the button labels (in the middle of each button)
+    # and a hint about the keys.
+    window.blit(fonts["big"].render("VAR IS WATCHING", False, CREAM), (96 * scale, 34 * scale))
+    window.blit(fonts["small"].render("A comedy mystery in the 94th minute", False, CREAM),
+                (98 * scale, 66 * scale))
+    for i in range(len(labels)):
+        picture = fonts["title"].render(labels[i].upper(), False, BROWN)
+        x = BUTTON_X * scale + (BUTTON_WIDTH * scale - picture.get_width()) // 2
+        y = (BUTTON_Y + i * BUTTON_GAP + 8) * scale
+        window.blit(picture, (x, y))
+    if has_save:
+        note = "A saved game was found: PLAY continues it."
+    else:
+        note = "No saved game yet: PLAY starts a new one."
+    window.blit(fonts["small"].render(note, False, CREAM), (120 * scale, 214 * scale))
+    window.blit(fonts["small"].render("UP / DOWN: choose      ENTER: select", False, CREAM),
+                (136 * scale, 226 * scale))
+
+
+def draw_confirm_text(window, question, fonts, scale):
+    # The question of the yes/no box, and the keys to answer it.
+    y = 104
+    for line in wrap_text(question, fonts["text"], 260 * scale):
+        window.blit(fonts["text"].render(line, False, BROWN), (110 * scale, y * scale))
+        y = y + 11
+    window.blit(fonts["small"].render("Y: yes        N: no", False, ORANGE), (110 * scale, 154 * scale))
 
 def draw_menu_text(window, menu, fonts, scale):
     # The question in the tab, and the options below it. The selected

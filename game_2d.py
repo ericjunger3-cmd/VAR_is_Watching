@@ -23,6 +23,9 @@ FRAMES_PER_STEP = 5
 # How many letters of the dialogue appear per frame (the typing effect).
 TYPE_SPEED = 2
 
+# The 2D game saves its progress in its own file (same format as save.json).
+SAVE_FILE = "save_2d.json"
+
 
 def move_player(player, keys, player_width):
     # Move the player left or right while an arrow key (or A / D) is held.
@@ -201,6 +204,9 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
     screen["dialogue"] = pages
     screen["letters"] = 0
 
+    # The action was accepted, so save the progress right away.
+    game.save_progress(progress, SAVE_FILE)
+
 
 # ---------------------------------------------------------------- keys in each screen mode
 
@@ -280,6 +286,7 @@ def handle_review_key(key, progress, story, screen, fonts):
             striker = game.value_at(review["tracks"]["striker"], time, 1)
             result = game.judge_offside(striker, state["line"] / 10)
             progress["choices"]["review"] = result
+            game.save_progress(progress, SAVE_FILE)
             close_review(screen)
             if result == "offside":
                 say(screen, review["offside_text"], fonts)
@@ -313,9 +320,11 @@ def handle_walking_key(key, scene, nearby, progress, story, screen, fonts, playe
 # ---------------------------------------------------------------- what is on screen
 
 def box_is_open(screen):
-    # True if any box is open: dialogue, close-up, menu or the VAR Review.
+    # True if any box is open: dialogue, close-up, menu, VAR Review,
+    # pause menu or a yes/no question.
     return (len(screen["dialogue"]) > 0 or screen["closeup"] is not None
-            or screen["menu"] is not None or screen["review"] is not None)
+            or screen["menu"] is not None or screen["review"] is not None
+            or screen["pause"] is not None or screen["confirm"] is not None)
 
 
 def ending_is_showing(progress, screen):
@@ -326,90 +335,214 @@ def ending_is_showing(progress, screen):
 
 # ---------------------------------------------------------------- starting a game
 
-def new_game(story, fonts, player):
-    # A fresh game: new progress (like game.py), the player in the middle
-    # of the booth, and the booth's description in the dialogue box.
-    progress = game.new_progress(story)
-    progress["visited"].append(progress["scene"])
-    player["x"] = 245
-    screen = {
-        "dialogue": room_pages(story["scenes"][progress["scene"]], fonts),
+def make_screen(dialogue):
+    # A fresh screen dictionary: nothing open except the given dialogue.
+    return {
+        "dialogue": dialogue,
         "letters": 0,       # how many letters of the page are typed so far
         "closeup": None,    # the lines of the sticky note while it is open
         "menu": None,       # the open menu (press answers, GOAL / OFFSIDE)
         "review": None,     # the VAR Review while it is open
+        "pause": None,      # the pause menu (Escape) while it is open
+        "confirm": None,    # a yes/no question while it is open
     }
+
+
+def new_game(story, fonts, player):
+    # A fresh game: new progress (like game.py), saved right away, the player
+    # in the middle of the booth and the booth's description on screen.
+    progress = game.new_progress(story)
+    progress["visited"].append(progress["scene"])
+    game.save_progress(progress, SAVE_FILE)
+    player["x"] = 245
+    screen = make_screen(room_pages(story["scenes"][progress["scene"]], fonts))
     return progress, screen
 
 
-def main():
-    pygame.init()
-    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("VAR Is Watching")
+def continue_game(story, fonts, player, progress, player_width):
+    # Continue a saved game. The save file only knows the room, so the
+    # player starts in front of the door back to the booth (or in the middle
+    # of the booth), with a short reminder of where they are.
+    scene = story["scenes"][progress["scene"]]
+    if progress["scene"] == story["start_scene"]:
+        player["x"] = 245
+    else:
+        player["x"] = arrival_x(scene, story["start_scene"], player_width)
+    pages = ui.make_pages(scene["name"], "You continue where you left off.", fonts["text"], SCALE)
+    return make_screen(pages)
+
+
+# ---------------------------------------------------------------- pause menu and yes/no box
+
+PAUSE_OPTIONS = ["Resume", "Restart", "Back to the title screen"]
+
+
+def handle_pause_key(key, screen):
+    # Up / down chooses, Enter confirms, Escape resumes the game.
+    # Returns "title" when the player wants to go back to the title screen.
+    pause = screen["pause"]
+    if key in [pygame.K_UP, pygame.K_w]:
+        pause["selected"] = (pause["selected"] - 1) % len(PAUSE_OPTIONS)
+    elif key in [pygame.K_DOWN, pygame.K_s]:
+        pause["selected"] = (pause["selected"] + 1) % len(PAUSE_OPTIONS)
+    elif key == pygame.K_ESCAPE:
+        screen["pause"] = None
+    elif key in [pygame.K_RETURN, pygame.K_SPACE, pygame.K_e]:
+        choice = PAUSE_OPTIONS[pause["selected"]]
+        screen["pause"] = None
+        if choice == "Restart":
+            # Restarting deletes the progress, so ask first.
+            screen["confirm"] = "Restart? Your current progress will be lost."
+        elif choice == "Back to the title screen":
+            return "title"
+    return None
+
+
+# ---------------------------------------------------------------- drawing
+
+def draw_game(assets, story, progress, screen, player, nearby):
+    # Draw one picture of the game, in layers from the back to the front.
+    window = assets["window"]
+    canvas = assets["canvas"]
+    overlay = assets["overlay"]
+    fonts = assets["fonts"]
+    player_y = assets["player_y"]
+    player_width = assets["standing"].get_width()
+    scene = story["scenes"][progress["scene"]]
+    show_ending = ending_is_showing(progress, screen)
+
+    # 1. The room, the player and the E bubble on the small canvas.
+    rooms.draw_room(canvas, progress["scene"], assets["pictures"], progress)
+    canvas.blit(player_picture(player, assets["standing"], assets["walking"]), (player["x"], player_y))
+    if len(nearby) > 0:
+        draw_e_bubble(canvas, player["x"], player_y, player_width)
+    window.blit(pygame.transform.scale(canvas, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
+
+    # 2. The sharp room labels and the "E" in the bubble.
+    draw_labels(window, fonts["label"], fonts["label_small"], progress["scene"])
+    if len(nearby) > 0:
+        letter = fonts["bubble"].render("E", False, sprites.OUTLINE)
+        letter_x = player["x"] + player_width // 2 - 3
+        window.blit(letter, (letter_x * SCALE, (player_y - 17) * SCALE))
+
+    # 3. The boxes on the see-through overlay. fill((0, 0, 0, 0)) wipes it
+    #    clean every frame (the 4th number 0 means fully transparent).
+    #    The pundit's TV and the inventory are always there.
+    overlay.fill((0, 0, 0, 0))
+    ui.draw_pundit_tv(overlay, assets["pundit"])
+    ui.draw_inventory(overlay, progress["inventory"], assets["pictures"], len(story["items"]))
+    if len(screen["dialogue"]) > 0:
+        ui.draw_dialogue_box(overlay, screen["dialogue"][0])
+    if screen["menu"] is not None or screen["pause"] is not None:
+        ui.draw_menu_box(overlay)
+    if screen["closeup"] is not None:
+        ui.draw_note_closeup(overlay)
+    if screen["review"] is not None:
+        ui.draw_review(overlay, story["review"], screen["review"])
+    if show_ending:
+        ui.draw_ending_screen(overlay)
+    if screen["confirm"] is not None:
+        ui.draw_confirm_box(overlay)
+    window.blit(pygame.transform.scale(overlay, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
+
+    # 4. The text inside the boxes.
+    full_screen = screen["closeup"] is not None or screen["review"] is not None or show_ending
+    if not full_screen and screen["confirm"] is None:
+        ui.draw_pundit_text(window, game.pundit_line(story, scene, progress), fonts, SCALE)
+    if len(screen["dialogue"]) > 0:
+        ui.draw_dialogue_text(window, screen["dialogue"][0], screen["letters"], fonts, SCALE)
+    if screen["menu"] is not None:
+        ui.draw_menu_text(window, screen["menu"], fonts, SCALE)
+    if screen["pause"] is not None:
+        # The pause menu looks like the other menus: a title and options.
+        pause_menu = {"title": "Paused", "actions": [], "selected": screen["pause"]["selected"]}
+        for option in PAUSE_OPTIONS:
+            pause_menu["actions"].append({"label": option})
+        ui.draw_menu_text(window, pause_menu, fonts, SCALE)
+    if screen["closeup"] is not None:
+        ui.draw_note_text(window, screen["closeup"], fonts, SCALE)
+    if screen["review"] is not None:
+        ui.draw_review_text(window, story["review"], screen["review"], fonts, SCALE)
+    if show_ending:
+        ui.draw_ending_text(window, story, progress["ending"], fonts, SCALE)
+    if screen["confirm"] is not None:
+        ui.draw_confirm_text(window, screen["confirm"], fonts, SCALE)
+
+
+# ---------------------------------------------------------------- the title screen
+
+def title_screen(assets, story):
+    # Show the title screen until the player chooses something.
+    # Returns "play", "new" or "exit".
     clock = pygame.time.Clock()
-    label_font = pygame.font.SysFont("consolas", 15, bold=True)
-    small_label_font = pygame.font.SysFont("consolas", 11, bold=True)
-    bubble_font = pygame.font.SysFont("consolas", 22, bold=True)
+    labels = ["Play", "New Game", "Exit"]
+    selected = 0
+    confirm = None      # the yes/no question, while it is open
+    # Behind the menu we show the pitch with all the players.
+    empty_progress = game.new_progress(story)
 
-    # The fonts used by ui.py, kept together in one dictionary.
-    # "inkfree" is a handwriting font that comes with Windows.
-    fonts = {
-        "title": pygame.font.SysFont("consolas", 17, bold=True),
-        "text": pygame.font.SysFont("consolas", 17, bold=True),
-        "small": pygame.font.SysFont("consolas", 14, bold=True),
-        "big": pygame.font.SysFont("consolas", 34, bold=True),
-        "hand_big": pygame.font.SysFont("inkfree", 46, bold=True),
-        "hand": pygame.font.SysFont("inkfree", 28, bold=True),
-    }
+    while True:
+        has_save = game.load_progress(SAVE_FILE) is not None
 
-    # The story from story.json, reused from the terminal game.
-    story = game.load_story()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "exit"
+            if event.type != pygame.KEYDOWN:
+                continue
 
-    # The small canvas we draw the room on, and a see-through overlay for
-    # the boxes, so room labels never shine through a box.
-    canvas = pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT))
-    overlay = pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT), pygame.SRCALPHA)
+            if confirm is not None:
+                # Only Y or N answer the question.
+                if event.key == pygame.K_y:
+                    return "new"
+                if event.key in [pygame.K_n, pygame.K_ESCAPE]:
+                    confirm = None
+            elif event.key in [pygame.K_UP, pygame.K_w]:
+                selected = (selected - 1) % len(labels)
+            elif event.key in [pygame.K_DOWN, pygame.K_s]:
+                selected = (selected + 1) % len(labels)
+            elif event.key in [pygame.K_RETURN, pygame.K_SPACE, pygame.K_e]:
+                choice = labels[selected]
+                if choice == "Play":
+                    return "play"
+                if choice == "Exit":
+                    return "exit"
+                if choice == "New Game":
+                    # A new game replaces a saved game, so ask first.
+                    if has_save:
+                        confirm = "Start a new game? This deletes your saved progress."
+                    else:
+                        return "new"
 
-    # Turn the pixel grids into pictures once, at the start.
-    standing = sprites.make_sprite(sprites.PLAYER)
-    walking = sprites.make_sprite(sprites.PLAYER_WALK)
-    player_width = standing.get_width()
-    pundit_picture = sprites.make_sprite(sprites.PUNDIT)
+        # Draw: the pitch, the title, the buttons and (maybe) the question.
+        canvas = assets["canvas"]
+        overlay = assets["overlay"]
+        window = assets["window"]
+        rooms.draw_room(canvas, "pitch", assets["pictures"], empty_progress)
+        window.blit(pygame.transform.scale(canvas, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
+        overlay.fill((0, 0, 0, 0))
+        ui.draw_title_screen(overlay, len(labels), selected)
+        if confirm is not None:
+            ui.draw_confirm_box(overlay)
+        window.blit(pygame.transform.scale(overlay, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
+        if confirm is None:
+            ui.draw_title_text(window, labels, selected, has_save, assets["fonts"], SCALE)
+        else:
+            ui.draw_confirm_text(window, confirm, assets["fonts"], SCALE)
+        pygame.display.flip()
+        clock.tick(30)
 
-    # The characters and objects that live in the rooms.
-    # Some use the same letters with their own colours (e.g. the kits).
-    pictures = {
-        "pombo": sprites.make_sprite(sprites.POMBO),
-        "referee": sprites.make_sprite(sprites.REFEREE, sprites.REFEREE_COLOURS),
-        "striker": sprites.make_sprite(sprites.STRIKER, sprites.STRIKER_COLOURS),
-        "captain": sprites.make_sprite(sprites.CAPTAIN, sprites.CAPTAIN_COLOURS),
-        "linesman": sprites.make_sprite(sprites.LINESMAN, sprites.LINESMAN_COLOURS),
-        "ball": sprites.make_sprite(sprites.BALL),
-        "steward": sprites.make_sprite(sprites.STEWARD),
-        "padlock": sprites.make_sprite(sprites.PADLOCK),
-        # Item pictures: the key is the item id from story.json.
-        "whistle": sprites.make_sprite(sprites.WHISTLE),
-        "usb": sprites.make_sprite(sprites.USB),
-        "lanyard": sprites.make_sprite(sprites.LANYARD),
-        "slip": sprites.make_sprite(sprites.SLIP),
-    }
 
-    # Everything about the player in one dictionary.
-    player = {
-        "x": 245,               # position from the left edge of the room
-        "facing_left": False,   # which way the player looks
-        "walk_timer": 0         # frames spent walking (for the animation)
-    }
+# ---------------------------------------------------------------- playing
 
-    # The y position never changes: the feet always touch the floor.
-    player_y = rooms.FLOOR_Y - standing.get_height()
+def play(assets, story, progress, screen, player):
+    # The game loop. Returns "title" (back to the title screen) or
+    # "quit" (the window was closed). The progress is saved after every
+    # accepted action, so nothing is lost either way.
+    clock = pygame.time.Clock()
+    fonts = assets["fonts"]
+    player_width = assets["standing"].get_width()
 
-    # progress: the story so far (like in game.py).
-    # screen: which boxes are open right now (dialogue, close-up, menu, review).
-    progress, screen = new_game(story, fonts, player)
-
-    running = True
-    while running:
+    while True:
         scene = story["scenes"][progress["scene"]]
 
         # Is something open on the screen? Then the player cannot walk.
@@ -422,14 +555,21 @@ def main():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                return "quit"
 
             # KEYDOWN happens once when a key is pressed (not while held).
             if event.type != pygame.KEYDOWN:
                 continue
 
             # Only one thing reacts to a key: whatever is open on top.
-            if len(screen["dialogue"]) > 0:
+            if screen["confirm"] is not None:
+                if event.key == pygame.K_y:
+                    # Yes: start a fresh game (it is saved right away).
+                    progress, screen = new_game(story, fonts, player)
+                elif event.key in [pygame.K_n, pygame.K_ESCAPE]:
+                    # No: close the question, nothing changes.
+                    screen["confirm"] = None
+            elif len(screen["dialogue"]) > 0:
                 handle_dialogue_key(event.key, screen)
             elif screen["closeup"] is not None:
                 if event.key in [pygame.K_e, pygame.K_SPACE, pygame.K_ESCAPE]:
@@ -438,19 +578,23 @@ def main():
                 handle_menu_key(event.key, progress, story, screen, fonts, player, player_width)
             elif screen["review"] is not None:
                 handle_review_key(event.key, progress, story, screen, fonts)
+            elif screen["pause"] is not None:
+                if handle_pause_key(event.key, screen) == "title":
+                    return "title"
             elif ending_is_showing(progress, screen):
                 if event.key == pygame.K_n:
-                    progress, screen = new_game(story, fonts, player)
+                    # A new game replaces the finished game, so ask first.
+                    screen["confirm"] = "Start a new game? The finished game will be deleted."
                 elif event.key == pygame.K_q:
-                    running = False
+                    return "title"
+            elif event.key == pygame.K_ESCAPE:
+                screen["pause"] = {"selected": 0}
             else:
                 handle_walking_key(event.key, scene, nearby, progress, story, screen, fonts, player, player_width)
 
-        # The keys may have changed what is open (e.g. N starts a new game),
+        # The keys may have changed what is open (e.g. a new game started),
         # so we check again before walking and drawing.
-        scene = story["scenes"][progress["scene"]]
         free_to_walk = not box_is_open(screen) and not ending_is_showing(progress, screen)
-        show_ending = ending_is_showing(progress, screen)
         if not free_to_walk:
             nearby = []
 
@@ -465,58 +609,87 @@ def main():
         if len(screen["dialogue"]) > 0:
             screen["letters"] = screen["letters"] + TYPE_SPEED
 
-        # The picture is built in layers, from the back to the front:
-        # 1. The room, the player and the E bubble on the small canvas.
-        rooms.draw_room(canvas, progress["scene"], pictures, progress)
-        canvas.blit(player_picture(player, standing, walking), (player["x"], player_y))
-        if len(nearby) > 0:
-            draw_e_bubble(canvas, player["x"], player_y, player_width)
-        big_picture = pygame.transform.scale(canvas, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        window.blit(big_picture, (0, 0))
-
-        # 2. The sharp room labels and the "E" in the bubble.
-        draw_labels(window, label_font, small_label_font, progress["scene"])
-        if len(nearby) > 0:
-            letter = bubble_font.render("E", False, sprites.OUTLINE)
-            letter_x = player["x"] + player_width // 2 - 3
-            window.blit(letter, (letter_x * SCALE, (player_y - 17) * SCALE))
-
-        # 3. The boxes on the see-through overlay. fill((0, 0, 0, 0)) wipes it
-        #    clean every frame (the 4th number 0 means fully transparent).
-        #    The pundit's TV and the inventory are always there.
-        overlay.fill((0, 0, 0, 0))
-        ui.draw_pundit_tv(overlay, pundit_picture)
-        ui.draw_inventory(overlay, progress["inventory"], pictures, len(story["items"]))
-        if len(screen["dialogue"]) > 0:
-            ui.draw_dialogue_box(overlay, screen["dialogue"][0])
-        if screen["menu"] is not None:
-            ui.draw_menu_box(overlay)
-        if screen["closeup"] is not None:
-            ui.draw_note_closeup(overlay)
-        if screen["review"] is not None:
-            ui.draw_review(overlay, story["review"], screen["review"])
-        if show_ending:
-            ui.draw_ending_screen(overlay)
-        big_overlay = pygame.transform.scale(overlay, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        window.blit(big_overlay, (0, 0))
-
-        # 4. The text inside the boxes.
-        full_screen = screen["closeup"] is not None or screen["review"] is not None or show_ending
-        if not full_screen:
-            ui.draw_pundit_text(window, game.pundit_line(story, scene, progress), fonts, SCALE)
-        if len(screen["dialogue"]) > 0:
-            ui.draw_dialogue_text(window, screen["dialogue"][0], screen["letters"], fonts, SCALE)
-        if screen["menu"] is not None:
-            ui.draw_menu_text(window, screen["menu"], fonts, SCALE)
-        if screen["closeup"] is not None:
-            ui.draw_note_text(window, screen["closeup"], fonts, SCALE)
-        if screen["review"] is not None:
-            ui.draw_review_text(window, story["review"], screen["review"], fonts, SCALE)
-        if show_ending:
-            ui.draw_ending_text(window, story, progress["ending"], fonts, SCALE)
-
+        draw_game(assets, story, progress, screen, player, nearby)
         pygame.display.flip()
         clock.tick(30)
+
+
+def main():
+    pygame.init()
+    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("VAR Is Watching")
+
+    # The fonts, kept together in one dictionary.
+    # "inkfree" is a handwriting font that comes with Windows.
+    fonts = {
+        "title": pygame.font.SysFont("consolas", 17, bold=True),
+        "text": pygame.font.SysFont("consolas", 17, bold=True),
+        "small": pygame.font.SysFont("consolas", 14, bold=True),
+        "big": pygame.font.SysFont("consolas", 34, bold=True),
+        "hand_big": pygame.font.SysFont("inkfree", 46, bold=True),
+        "hand": pygame.font.SysFont("inkfree", 28, bold=True),
+        "label": pygame.font.SysFont("consolas", 15, bold=True),
+        "label_small": pygame.font.SysFont("consolas", 11, bold=True),
+        "bubble": pygame.font.SysFont("consolas", 22, bold=True),
+    }
+
+    # Everything we need for drawing, kept together in one dictionary,
+    # so we don't have to pass ten things to every function.
+    standing = sprites.make_sprite(sprites.PLAYER)
+    assets = {
+        "window": window,
+        # The small canvas for the rooms, and a see-through overlay for the
+        # boxes, so room labels never shine through a box.
+        "canvas": pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT)),
+        "overlay": pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT), pygame.SRCALPHA),
+        "fonts": fonts,
+        "standing": standing,
+        "walking": sprites.make_sprite(sprites.PLAYER_WALK),
+        "pundit": sprites.make_sprite(sprites.PUNDIT),
+        # The feet always touch the floor.
+        "player_y": rooms.FLOOR_Y - standing.get_height(),
+        # The characters and objects that live in the rooms. Some use the
+        # same letters with their own colours (e.g. the kits).
+        "pictures": {
+            "pombo": sprites.make_sprite(sprites.POMBO),
+            "referee": sprites.make_sprite(sprites.REFEREE, sprites.REFEREE_COLOURS),
+            "striker": sprites.make_sprite(sprites.STRIKER, sprites.STRIKER_COLOURS),
+            "captain": sprites.make_sprite(sprites.CAPTAIN, sprites.CAPTAIN_COLOURS),
+            "linesman": sprites.make_sprite(sprites.LINESMAN, sprites.LINESMAN_COLOURS),
+            "ball": sprites.make_sprite(sprites.BALL),
+            "steward": sprites.make_sprite(sprites.STEWARD),
+            "padlock": sprites.make_sprite(sprites.PADLOCK),
+            # Item pictures: the key is the item id from story.json.
+            "whistle": sprites.make_sprite(sprites.WHISTLE),
+            "usb": sprites.make_sprite(sprites.USB),
+            "lanyard": sprites.make_sprite(sprites.LANYARD),
+            "slip": sprites.make_sprite(sprites.SLIP),
+        },
+    }
+
+    # The story from story.json, reused from the terminal game.
+    story = game.load_story()
+
+    # Everything about the player in one dictionary.
+    player = {
+        "x": 245,               # position from the left edge of the room
+        "facing_left": False,   # which way the player looks
+        "walk_timer": 0         # frames spent walking (for the animation)
+    }
+
+    # Title screen -> game -> title screen ... until the player exits.
+    while True:
+        choice = title_screen(assets, story)
+        if choice == "exit":
+            break
+        saved = game.load_progress(SAVE_FILE)
+        if choice == "play" and saved is not None:
+            progress = saved
+            screen = continue_game(story, fonts, player, progress, standing.get_width())
+        else:
+            progress, screen = new_game(story, fonts, player)
+        if play(assets, story, progress, screen, player) == "quit":
+            break
 
     pygame.quit()
 

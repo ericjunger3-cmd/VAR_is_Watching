@@ -26,18 +26,20 @@ def new_progress(story):
     return progress
 
 
-def save_progress(progress):
-    # Write the progress dictionary to save.json.
+def save_progress(progress, file_name="save.json"):
+    # Write the progress dictionary to a save file.
+    # file_name="save.json" is a default: if no file name is given, save.json
+    # is used. The 2D version passes "save_2d.json" instead.
     # indent=2 makes the file easy to read if you open it yourself.
-    with open("save.json", "w", encoding="utf-8") as file:
+    with open(file_name, "w", encoding="utf-8") as file:
         json.dump(progress, file, indent=2)
 
 
-def load_progress():
+def load_progress(file_name="save.json"):
     # If there is no save file yet, return None ("nothing saved").
-    if not os.path.exists("save.json"):
+    if not os.path.exists(file_name):
         return None
-    with open("save.json", "r", encoding="utf-8") as file:
+    with open(file_name, "r", encoding="utf-8") as file:
         progress = json.load(file)
     # Save files from before "visited" existed do not have it yet.
     if "visited" not in progress:
