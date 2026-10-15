@@ -6,7 +6,57 @@
     "booth": {
       "name": "VAR Booth",
       "text": "94th minute of the cup final. The home side has just scored. The away side is screaming offside. Twelve screens in front of you. Eleven work. The one with the key angle shows only static.",
-      "pundit": "PUNDIT: Day one on the job and the footage is already missing. You love to see it."
+      "pundit": "PUNDIT: Day one on the job and the footage is already missing. You love to see it.",
+      "actions": [
+        { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room",
+          "text": "You jog down the tunnel." },
+        { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room",
+          "text": "You walk to the end of the corridor." },
+        { "label": "Go to the Press Room", "go_to": "press_room",
+          "text": "You follow the sound of camera clicks." },
+        { "label": "Go to the Pitch", "go_to": "pitch",
+          "text": "You walk out under the floodlights." }
+      ]
+    },
+
+    "dressing_room": {
+      "name": "Referee's Dressing Room",
+      "text": "(placeholder) Muddy boots, a half-eaten orange and a whistle on the bench.",
+      "pundit": "PUNDIT: Snooping in the ref's room. Bold. Pointless, but bold.",
+      "actions": [
+        { "label": "Back to the VAR Booth", "go_to": "booth",
+          "text": "You hurry back to your screens." }
+      ]
+    },
+
+    "mascot_room": {
+      "name": "Mascot Changing Room",
+      "text": "(placeholder) Pombo the pigeon mascot sits on a bench, holding something small.",
+      "pundit": "PUNDIT: Asking a pigeon for evidence. This is why I love football.",
+      "actions": [
+        { "label": "Back to the VAR Booth", "go_to": "booth",
+          "text": "You hurry back to your screens." }
+      ]
+    },
+
+    "press_room": {
+      "name": "Press Room",
+      "text": "(placeholder) A wall of microphones points at you.",
+      "pundit": "PUNDIT: Careful now. One wrong word and you're a meme.",
+      "actions": [
+        { "label": "Back to the VAR Booth", "go_to": "booth",
+          "text": "You escape before anyone asks a question." }
+      ]
+    },
+
+    "pitch": {
+      "name": "The Pitch",
+      "text": "(placeholder) 60,000 fans are waiting. The referee looks at you.",
+      "pundit": "PUNDIT: Here we go. Decision time for the rookie.",
+      "actions": [
+        { "label": "Back to the VAR Booth", "go_to": "booth",
+          "text": "You walk back inside. The crowd boos." }
+      ]
     }
   }
 }

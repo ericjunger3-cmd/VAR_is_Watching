@@ -24,12 +24,53 @@ def show_scene(story, scene_id):
     print(scene["pundit"])
 
 
+def show_actions(scene):
+    # Print every action of the scene with a number in front, starting at 1.
+    print()
+    number = 1
+    for action in scene["actions"]:
+        print(str(number) + ". " + action["label"])
+        number = number + 1
+    print("q. Quit")
+
+
 def main():
     story = load_story()
     print("*** " + story["title"] + " ***")
 
-    # For now we only show the starting scene.
-    show_scene(story, story["start_scene"])
+    # current_scene remembers where the player is (a scene id like "booth").
+    current_scene = story["start_scene"]
+
+    # The game loop: show the scene, ask for a choice, react, repeat.
+    while True:
+        show_scene(story, current_scene)
+        scene = story["scenes"][current_scene]
+        show_actions(scene)
+
+        # strip() removes spaces, lower() turns "Q" into "q".
+        choice = input("> ").strip().lower()
+
+        if choice == "q":
+            print("Thanks for playing!")
+            break
+
+        # isdigit() is True only if the text contains just digits, e.g. "2".
+        if not choice.isdigit():
+            print("Please type a number from the list.")
+            continue
+
+        number = int(choice)
+        if number < 1 or number > len(scene["actions"]):
+            print("That number is not in the list.")
+            continue
+
+        # The list starts at index 0, but our menu starts at 1, so subtract 1.
+        action = scene["actions"][number - 1]
+
+        # Show the result of the action and move to the new scene.
+        print()
+        print(action["text"])
+        current_scene = action["go_to"]
 
 
 # Only start the game when this file is run directly (py game.py).
