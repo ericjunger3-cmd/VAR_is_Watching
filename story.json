@@ -13,15 +13,15 @@
       "text": "94th minute of the cup final. The home side has just scored and the stadium is shaking. The away captain is screaming \"OFFSIDE!\" at the linesman, a ball boy and the sky. You sit in the VAR Booth in front of twelve screens. Eleven work. The one with the key angle shows only static and a sticky note: \"Back in 5 min - Dave\". It is your first day.",
       "pundit": "PUNDIT: Day one, a missing camera angle and sixty thousand people waiting. Honestly? Best night of my career.",
       "actions": [
-        { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room",
+        { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258,
           "text": "You sprint down the tunnel, past a confused steward and a trolley of orange slices." },
-        { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room",
+        { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room", "x": 316,
           "needs_item": "whistle",
           "blocked_text": "The door is locked. A laminated sign says: \"MASCOTS ONLY. Whistle for entry.\"",
           "text": "You blow the Lucky Whistle. Somewhere inside, a pigeon coos. The door clicks open." },
-        { "label": "Go to the Press Room", "go_to": "press_room",
+        { "label": "Go to the Press Room", "go_to": "press_room", "x": 374,
           "text": "You follow the sound of camera shutters and bad decisions." },
-        { "label": "Go to the Pitch", "go_to": "pitch",
+        { "label": "Go to the Pitch", "go_to": "pitch", "x": 443,
           "needs_choice": "press_answer",
           "blocked_text": "A steward blocks the tunnel: \"Press conference first, mate. Rules are rules.\"",
           "text": "You walk out under the floodlights. Sixty thousand heads turn. Your knees suddenly remember they are knees." }
@@ -35,7 +35,7 @@
       "actions": [
         { "label": "Take the Lucky Whistle from the bench", "take_item": "whistle",
           "text": "You pick up the Lucky Whistle. Someone has written LUCKY on it in marker pen, so it must be true." },
-        { "label": "Back to the VAR Booth", "go_to": "booth",
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You hurry back to the booth. The static is still there. So is Dave's note." }
       ]
     },
@@ -47,7 +47,7 @@
       "actions": [
         { "label": "Ask Pombo what he saw", "take_item": "usb",
           "text": "Pombo coos nervously and hands you a USB Stick. \"Filmed it on my head-cam,\" he whispers. \"For TikTok.\" The missing angle!" },
-        { "label": "Back to the VAR Booth", "go_to": "booth",
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You leave Pombo to his crisis and run back to the booth." }
       ]
     },
@@ -61,7 +61,7 @@
           "text": "Cameras flash. The headline is written before you finish the sentence. Somewhere, a VAR rulebook bursts into flames." },
         { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment",
           "text": "\"No comment.\" Calm. Professional. Boring. The journalists sigh and put their phones away." },
-        { "label": "Back to the VAR Booth", "go_to": "booth",
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You leave the Press Room. A journalist is still shouting questions at the closed door." }
       ]
     },
@@ -74,7 +74,7 @@
         { "label": "Rule: GOAL", "ruling": "goal" },
         { "label": "Rule: OFFSIDE", "ruling": "offside",
           "wrong_call_text": "You plug in the USB Stick. Pombo's head-cam shows the striker onside by a full metre. PUNDIT: Ooh, the evidence disagrees with you, rookie. Want to try that again?" },
-        { "label": "Back to the VAR Booth", "go_to": "booth",
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You walk back inside. Sixty thousand people boo at the same time. Impressive, really." }
       ]
     }

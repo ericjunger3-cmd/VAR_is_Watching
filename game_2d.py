@@ -3,6 +3,7 @@
 # and this file runs the game.
 
 import pygame
+import game
 import sprites
 import rooms
 
@@ -61,18 +62,52 @@ def player_picture(player, standing, walking):
     return picture
 
 
-def draw_labels(window, font):
+# How close (in canvas pixels) the player must be to something to use it.
+REACH = 14
+
+
+def find_nearby_action(scene, player_x, player_width):
+    # Look for an action in this scene whose "x" is close to the player.
+    # Returns that action, or None if nothing is in reach.
+    player_middle = player_x + player_width // 2
+    for action in scene["actions"]:
+        # abs() turns a negative distance into a positive one.
+        if "x" in action and abs(action["x"] - player_middle) <= REACH:
+            return action
+    return None
+
+
+def arrival_x(scene, came_from, player_width):
+    # When entering a room, stand in front of the door that leads back
+    # to the room we came from. Returns the new x position of the player.
+    for action in scene["actions"]:
+        if "go_to" in action and action["go_to"] == came_from and "x" in action:
+            return action["x"] - player_width // 2
+    # No matching door found: start near the left side.
+    return 30
+
+
+def draw_e_bubble(canvas, player_x, player_y, player_width):
+    # A little white speech bubble above the player's head.
+    # The letter "E" is added later on the big window.
+    x = player_x + player_width // 2 - 7
+    y = player_y - 18
+    pygame.draw.rect(canvas, sprites.OUTLINE, (x, y, 14, 14))
+    pygame.draw.rect(canvas, (255, 252, 235), (x + 1, y + 1, 12, 12))
+    pygame.draw.rect(canvas, (235, 225, 195), (x + 1, y + 11, 12, 2))
+    pygame.draw.rect(canvas, sprites.OUTLINE, (x + 5, y + 14, 4, 2))
+
+
+def draw_labels(window, font, small_font, scene_id):
     # Text is drawn on the big window (not the small canvas), so it stays sharp.
     # The positions are canvas positions, so we multiply them by SCALE.
-    labels = [
-        ("REF", 250, 110, (60, 60, 70)),
-        ("MASCOT", 299, 110, (90, 60, 10)),
-        ("PRESS", 359, 110, (255, 255, 255)),
-        ("PITCH", 430, 117, (255, 255, 255)),
-    ]
-    for text, x, y, colour in labels:
+    for text, x, y, colour, small in rooms.LABELS[scene_id]:
+        if small:
+            label_font = small_font
+        else:
+            label_font = font
         # render(text, smooth edges, colour): False gives sharp pixel edges.
-        picture = font.render(text, False, colour)
+        picture = label_font.render(text, False, colour)
         window.blit(picture, (x * SCALE, y * SCALE))
 
 
@@ -82,14 +117,31 @@ def main():
     pygame.display.set_caption("VAR Is Watching")
     clock = pygame.time.Clock()
     label_font = pygame.font.SysFont("consolas", 15, bold=True)
+    small_font = pygame.font.SysFont("consolas", 11, bold=True)
+    bubble_font = pygame.font.SysFont("consolas", 22, bold=True)
+
+    # The story from story.json, reused from the terminal game.
+    story = game.load_story()
+    scene_id = story["start_scene"]
 
     # The small canvas we draw the room on.
     canvas = pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT))
 
-    # Turn the player's pixel grids into pictures once, at the start.
+    # Turn the pixel grids into pictures once, at the start.
     standing = sprites.make_sprite(sprites.PLAYER)
     walking = sprites.make_sprite(sprites.PLAYER_WALK)
     player_width = standing.get_width()
+
+    # The characters and objects that live in the rooms.
+    # Some use the same letters with their own colours (e.g. the kits).
+    pictures = {
+        "pombo": sprites.make_sprite(sprites.POMBO),
+        "referee": sprites.make_sprite(sprites.REFEREE, sprites.REFEREE_COLOURS),
+        "striker": sprites.make_sprite(sprites.STRIKER, sprites.STRIKER_COLOURS),
+        "captain": sprites.make_sprite(sprites.CAPTAIN, sprites.CAPTAIN_COLOURS),
+        "linesman": sprites.make_sprite(sprites.LINESMAN, sprites.LINESMAN_COLOURS),
+        "ball": sprites.make_sprite(sprites.BALL),
+    }
 
     # Everything about the player in one dictionary.
     player = {
@@ -103,24 +155,44 @@ def main():
 
     running = True
     while running:
+        scene = story["scenes"][scene_id]
+
+        # Is there a door (or later: an object) right next to the player?
+        nearby = find_nearby_action(scene, player["x"], player_width)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            # KEYDOWN happens once when a key is pressed (not while held).
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+                if nearby is not None and "go_to" in nearby:
+                    # Walk through the door. (Locked doors come in step P5.)
+                    came_from = scene_id
+                    scene_id = nearby["go_to"]
+                    new_scene = story["scenes"][scene_id]
+                    player["x"] = arrival_x(new_scene, came_from, player_width)
 
         # get_pressed() tells us which keys are held down right now.
         keys = pygame.key.get_pressed()
         move_player(player, keys, player_width)
 
         # 1. Draw the room and the player on the small canvas.
-        rooms.draw_booth(canvas)
+        rooms.draw_room(canvas, scene_id, pictures)
         canvas.blit(player_picture(player, standing, walking), (player["x"], player_y))
+        if nearby is not None:
+            draw_e_bubble(canvas, player["x"], player_y, player_width)
 
         # 2. Scale the canvas up to the window size and show it.
         big_picture = pygame.transform.scale(canvas, (WINDOW_WIDTH, WINDOW_HEIGHT))
         window.blit(big_picture, (0, 0))
 
-        # 3. Sharp text on top.
-        draw_labels(window, label_font)
+        # 3. Sharp text on top: room labels and the "E" in the bubble.
+        draw_labels(window, label_font, small_font, scene_id)
+        if nearby is not None:
+            letter = bubble_font.render("E", False, sprites.OUTLINE)
+            letter_x = player["x"] + player_width // 2 - 3
+            window.blit(letter, (letter_x * SCALE, (player_y - 17) * SCALE))
 
         pygame.display.flip()
         clock.tick(30)
