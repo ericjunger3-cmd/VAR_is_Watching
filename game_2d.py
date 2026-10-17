@@ -62,7 +62,7 @@ def move_player(player, keys, player_width):
 
 def player_picture(player, standing, walking):
     # Choose which picture to draw. Standing still: the front view.
-    # Walking: one of the four side-view frames in walking (a list).
+    # Walking: one of the four walking frames in walking (a list).
     # The frame changes every FRAMES_PER_STEP frames:
     # (walk_timer // FRAMES_PER_STEP) counts 0, 1, 2, 3, 4 ... and
     # "% 4" turns that into 0, 1, 2, 3, 0, 1, 2, 3 ...
@@ -71,11 +71,22 @@ def player_picture(player, standing, walking):
     frame = (player["walk_timer"] // FRAMES_PER_STEP) % 4
     picture = walking[frame]
 
-    # The side pictures look to the right. Mirror them when walking left.
+    # The walking pictures look to the right. Mirror them when walking left.
     # flip(picture, flip left-right?, flip up-down?)
     if player["facing_left"]:
         picture = pygame.transform.flip(picture, True, False)
     return picture
+
+
+def walk_bounce(player):
+    # The little bounce while walking: on the "legs passing" frames
+    # (frame 1 and 3) the body is 1 pixel higher. Returns 0 or 1.
+    if player["walk_timer"] == 0:
+        return 0
+    frame = (player["walk_timer"] // FRAMES_PER_STEP) % 4
+    if frame == 1 or frame == 3:
+        return 1
+    return 0
 
 
 # How close (in canvas pixels) the player must be to something to use it.
@@ -456,7 +467,14 @@ def continue_game(story, fonts, player, progress, player_width):
 
 # ---------------------------------------------------------------- pause menu and yes/no box
 
-PAUSE_OPTIONS = ["Resume", "Restart", "Back to the title screen"]
+PAUSE_OPTIONS = ["Resume", "Fullscreen", "Restart", "Back to the title screen"]
+
+
+def fullscreen_label():
+    # The text for the fullscreen option: it shows if fullscreen is on now.
+    if pygame.display.is_fullscreen():
+        return "Fullscreen: ON"
+    return "Fullscreen: OFF"
 
 
 def handle_pause_key(key, screen):
@@ -471,6 +489,10 @@ def handle_pause_key(key, screen):
         screen["pause"] = None
     elif key in [pygame.K_RETURN, pygame.K_SPACE, pygame.K_e]:
         choice = PAUSE_OPTIONS[pause["selected"]]
+        if choice == "Fullscreen":
+            # Switch, and keep the pause menu open (you see ON / OFF change).
+            pygame.display.toggle_fullscreen()
+            return None
         screen["pause"] = None
         if choice == "Restart":
             # Restarting deletes the progress, so ask first.
@@ -503,7 +525,8 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     #    is scaled up and placed so that the camera's part is in the window.
     extras = {"tick": tick, "ball": ball, "reveal": screen["reveal"]}
     rooms.draw_room(canvas, progress["scene"], assets["pictures"], progress, extras)
-    canvas.blit(player_picture(player, assets["standing"], assets["walking"]), (player["x"], player_y))
+    picture = player_picture(player, assets["standing"], assets["walking"])
+    canvas.blit(picture, (player["x"], player_y - walk_bounce(player)))
     big_room = pygame.transform.scale(canvas, (rooms.ROOM_WIDTH * SCALE, WINDOW_HEIGHT))
     window.blit(big_room, (-offset, 0))
 
@@ -571,6 +594,8 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         # The pause menu looks like the other menus: a title and options.
         pause_menu = {"title": "Paused", "actions": [], "selected": screen["pause"]["selected"]}
         for option in PAUSE_OPTIONS:
+            if option == "Fullscreen":
+                option = fullscreen_label()
             pause_menu["actions"].append({"label": option})
         ui.draw_menu_text(window, pause_menu, fonts, SCALE)
     if screen["closeup"] is not None:
@@ -589,13 +614,10 @@ def title_screen(assets, story):
     # Show the title screen until the player chooses something.
     # Returns "play", "new" or "exit".
     clock = pygame.time.Clock()
-    labels = ["Play", "New Game", "Exit"]
+    labels = ["Play", "New Game", "Fullscreen", "Exit"]
     selected = 0
     confirm = None      # the yes/no question, while it is open
-    # Behind the menu we show the pitch with all the players.
-    empty_progress = game.new_progress(story)
-    still_ball = new_ball()
-    tick = 0
+    tick = 0    # the frame counter, for the animations
 
     while True:
         has_save = game.load_progress(SAVE_FILE) is not None
@@ -604,6 +626,11 @@ def title_screen(assets, story):
             if event.type == pygame.QUIT:
                 return "exit"
             if event.type != pygame.KEYDOWN:
+                continue
+
+            # F11 switches between window and fullscreen, at any moment.
+            if event.key == pygame.K_F11:
+                pygame.display.toggle_fullscreen()
                 continue
 
             if confirm is not None:
@@ -622,6 +649,8 @@ def title_screen(assets, story):
                     return "play"
                 if choice == "Exit":
                     return "exit"
+                if choice == "Fullscreen":
+                    pygame.display.toggle_fullscreen()
                 if choice == "New Game":
                     # A new game replaces a saved game, so ask first.
                     if has_save:
@@ -634,17 +663,22 @@ def title_screen(assets, story):
         overlay = assets["overlay"]
         window = assets["window"]
         tick = tick + 1
-        extras = {"tick": tick, "ball": still_ball, "reveal": None}
-        rooms.draw_room(canvas, "pitch", assets["pictures"], empty_progress, extras)
+        rooms.draw_title_background(canvas, assets["pictures"], tick)
         view = canvas.subsurface((0, 0, rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT))
         window.blit(pygame.transform.scale(view, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
         overlay.fill((0, 0, 0, 0))
-        ui.draw_title_screen(overlay, len(labels), selected)
+        # The fullscreen option shows ON or OFF, so we change its text.
+        shown = []
+        for label in labels:
+            if label == "Fullscreen":
+                label = fullscreen_label()
+            shown.append(label)
+        ui.draw_title_screen(overlay, shown, selected, tick, assets["pictures"])
         if confirm is not None:
             ui.draw_confirm_box(overlay)
         window.blit(pygame.transform.scale(overlay, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
         if confirm is None:
-            ui.draw_title_text(window, labels, selected, has_save, assets["fonts"], SCALE)
+            ui.draw_title_text(window, has_save, assets["fonts"], SCALE)
         else:
             ui.draw_confirm_text(window, confirm, assets["fonts"], SCALE)
         pygame.display.flip()
@@ -682,6 +716,11 @@ def play(assets, story, progress, screen, player):
 
             # KEYDOWN happens once when a key is pressed (not while held).
             if event.type != pygame.KEYDOWN:
+                continue
+
+            # F11 switches between window and fullscreen, at any moment.
+            if event.key == pygame.K_F11:
+                pygame.display.toggle_fullscreen()
                 continue
 
             # Only one thing reacts to a key: whatever is open on top.
@@ -780,7 +819,9 @@ def play(assets, story, progress, screen, player):
 
 def main():
     pygame.init()
-    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    # SCALED: in fullscreen, the game picture is made bigger to fill the
+    # screen (with black bars if the screen has a different shape).
+    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SCALED)
     pygame.display.set_caption("VAR Is Watching")
 
     # The fonts, kept together in one dictionary.
@@ -809,7 +850,7 @@ def main():
         "overlay": pygame.Surface((rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT), pygame.SRCALPHA),
         "fonts": fonts,
         "standing": standing,
-        # The four walking pictures (side view), made one by one in a loop.
+        # The four walking pictures (3/4 view), made one by one in a loop.
         "walking": [],
         "pundit": sprites.make_sprite(sprites.PUNDIT, sprites.PUNDIT_COLOURS),
         # The feet always touch the floor.
@@ -834,10 +875,14 @@ def main():
             "dave_head": sprites.make_sprite(sprites.DAVE_HEAD),
             "lanyard": sprites.make_sprite(sprites.LANYARD),
             "slip": sprites.make_sprite(sprites.SLIP),
+            # For the title screen: the VAR screen above the logo and the arrow.
+            "var_screen": sprites.make_sprite(sprites.VAR_SCREEN),
+            "arrow": sprites.make_sprite(sprites.ARROW),
+            "player": standing,
         },
     }
 
-    for frame in sprites.PLAYER_SIDE:
+    for frame in sprites.PLAYER_WALK:
         assets["walking"].append(sprites.make_sprite(frame))
 
     # The story from story.json, reused from the terminal game.

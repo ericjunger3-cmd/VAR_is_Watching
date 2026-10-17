@@ -56,11 +56,13 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `E` | use what is in front of you (a door, an item, a person): an "E" bubble shows where you can |
 | `E`, `Space` or `Enter` | next page of the text box (or show the whole page at once) |
 | `↑` `↓` (or `W` `S`) + `Enter` | choose in a menu (you can also press `1`, `2`, `3`) |
-| `Escape` | pause menu: Resume, Restart, Back to the title screen (also closes a menu or close-up) |
+| `Escape` | pause menu: Resume, Fullscreen on/off, Restart, Back to the title screen (also closes a menu or close-up) |
+| `F11` | switch between window and fullscreen (works everywhere) |
 | `Y` / `N` | answer a yes/no question |
 
 - **Title screen:** *Play* continues your saved game (or starts one),
-  *New Game* starts again (asks first if there is a save), *Exit* closes the game.
+  *New Game* starts again (asks first if there is a save), *Fullscreen* switches
+  between window and fullscreen, *Exit* closes the game. The game always starts in a window.
 - **Inventory:** the bar at the bottom of the screen always shows your items.
   A new item flies into its slot when you pick it up.
 - **The VAR Review:** `←` `→` move through the footage in 0.1 s steps, `Enter`

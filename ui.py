@@ -6,6 +6,7 @@
 import math
 import pygame
 import game
+import sprites
 from sprites import OUTLINE
 
 # The dialogue box at the bottom of the screen (canvas positions).
@@ -342,29 +343,121 @@ def draw_ending_screen(canvas):
 
 # ---------------------------------------------------------------- title screen and yes/no box
 
-# The buttons on the title screen.
-BUTTON_X = 170
-BUTTON_Y = 104
-BUTTON_WIDTH = 140
-BUTTON_HEIGHT = 28
-BUTTON_GAP = 36
+# Where things go on the title screen (canvas positions, from the top).
+ICON_Y = 6          # the VAR screen with the eye
+LOGO_Y = 32         # "VAR" in big pixel letters
+LOGO_SIZE = 5       # each pixel of a letter becomes a 5 x 5 square
+SUBLOGO_Y = 78      # "IS WATCHING" in smaller pixel letters
+MENU_Y = 116        # the first option of the menu
+MENU_GAP = 22       # the distance between two options
+MENU_SIZE = 2       # the menu letters: 2 x 2 squares
+SHADE_END = 200     # the dark shade behind the logo fades out here
+
+# The colours of the pixel letters, one colour per row (7 rows), from the
+# top to the bottom. Light at the top and darker at the bottom makes the
+# letters look shiny.
+GOLD_ROWS = [(255, 240, 150), (255, 225, 90), (255, 205, 60), (250, 175, 50),
+             (240, 145, 40), (230, 120, 35), (215, 100, 30)]
+CREAM_ROWS = [(255, 253, 245), (255, 250, 235), (255, 246, 225), (248, 236, 210),
+              (240, 226, 195), (232, 215, 180), (222, 200, 165)]
 
 
-def draw_title_screen(canvas, button_count, selected):
-    # A slightly darker stadium (already drawn on the canvas), a banner for
-    # the title and big framed buttons. The selected button is orange.
-    shade = pygame.Surface((canvas.get_width(), canvas.get_height()), pygame.SRCALPHA)
-    shade.fill((10, 10, 30, 90))
-    canvas.blit(shade, (0, 0))
-    framed_box(canvas, 80, 26, 320, 58, (230, 120, 60), (255, 160, 100), (190, 90, 40))
-    for i in range(button_count):
-        y = BUTTON_Y + i * BUTTON_GAP
-        if i == selected:
-            framed_box(canvas, BUTTON_X - 4, y - 2, BUTTON_WIDTH + 8, BUTTON_HEIGHT + 4,
-                       (255, 200, 120), (255, 230, 170), (210, 140, 70))
+def pixel_text_width(text, size):
+    # How wide a text in pixel letters is (in canvas pixels).
+    # Every letter is as wide as its grid, plus 1 empty column after it;
+    # a space is 3 columns wide.
+    columns = 0
+    for letter in text:
+        if letter == " ":
+            columns = columns + 3
         else:
-            framed_box(canvas, BUTTON_X, y, BUTTON_WIDTH, BUTTON_HEIGHT,
-                       (255, 236, 200), (255, 250, 230), (215, 180, 130))
+            columns = columns + len(sprites.PIXEL_LETTERS[letter][0]) + 1
+    # The last letter needs no empty column after it.
+    return (columns - 1) * size
+
+
+def draw_pixel_text(canvas, text, x, y, size, row_colours):
+    # Draw a text in the chunky pixel letters from sprites.py.
+    # Every "#" of a letter becomes a size x size square.
+    # We draw the whole text three times, each time on top of the last:
+    #   1. "shadow":  dark squares a bit lower (the letters look thick)
+    #   2. "outline": dark squares a bit bigger (a dark edge around them)
+    #   3. "colour":  the coloured squares, one colour per row
+    for layer in ["shadow", "outline", "colour"]:
+        left = x
+        for letter in text:
+            if letter == " ":
+                left = left + 3 * size
+                continue
+            grid = sprites.PIXEL_LETTERS[letter]
+            for row in range(len(grid)):
+                for column in range(len(grid[row])):
+                    if grid[row][column] != "#":
+                        continue
+                    square_x = left + column * size
+                    square_y = y + row * size
+                    if layer == "shadow":
+                        pygame.draw.rect(canvas, OUTLINE, (square_x - 1, square_y + 1, size + 2, size + 2))
+                    elif layer == "outline":
+                        pygame.draw.rect(canvas, OUTLINE, (square_x - 1, square_y - 1, size + 2, size + 2))
+                    else:
+                        pygame.draw.rect(canvas, row_colours[row], (square_x, square_y, size, size))
+            # Move to the next letter: its width plus 1 empty column.
+            left = left + (len(grid[0]) + 1) * size
+
+
+def draw_centred_pixel_text(canvas, text, y, size, row_colours):
+    # Pixel letters in the middle of the canvas: start at half of
+    # (canvas width - text width). Returns the x where the text starts.
+    x = (canvas.get_width() - pixel_text_width(text, size)) // 2
+    draw_pixel_text(canvas, text, x, y, size, row_colours)
+    return x
+
+
+def draw_title_screen(canvas, labels, selected, tick, pictures):
+    # The logo (the VAR screen with the eye, "VAR", "IS WATCHING") and the
+    # menu in pixel letters. The chosen option is gold and has an arrow.
+
+    # A shade that is dark at the top and fades out towards the grass,
+    # so the busy crowd behind the logo gets calmer. Every row of pixels
+    # gets a bit less dark (alpha 190 at the top, 0 at the grass).
+    shade = pygame.Surface((canvas.get_width(), 1), pygame.SRCALPHA)
+    for y in range(SHADE_END):
+        alpha = 190 - 190 * y // SHADE_END
+        shade.fill((15, 15, 35, alpha))
+        canvas.blit(shade, (0, y))
+
+    # The VAR screen. The pupil moves left and right slowly: math.sin goes
+    # smoothly from -1 to 1 and back, so "4 * sin" goes from -4 to 4.
+    screen = pictures["var_screen"]
+    screen_x = (canvas.get_width() - screen.get_width()) // 2
+    canvas.blit(screen, (screen_x, ICON_Y))
+    look = round(4 * math.sin(tick * 0.05))
+    # The middle of the eye is 15 pixels from the left and 9 from the top
+    # of the picture (counting the outline).
+    eye_x = screen_x + 15 + look
+    eye_y = ICON_Y + 9
+    pygame.draw.circle(canvas, (60, 110, 210), (eye_x, eye_y), 3)
+    pygame.draw.circle(canvas, OUTLINE, (eye_x, eye_y), 2)
+    canvas.set_at((eye_x - 1, eye_y - 1), (255, 255, 255))
+
+    # The logo.
+    draw_centred_pixel_text(canvas, "VAR", LOGO_Y, LOGO_SIZE, GOLD_ROWS)
+    draw_centred_pixel_text(canvas, "IS WATCHING", SUBLOGO_Y, 2, CREAM_ROWS)
+
+    # The menu: every option in the middle, the chosen one gold.
+    for i in range(len(labels)):
+        y = MENU_Y + i * MENU_GAP
+        text = labels[i].upper()
+        if i == selected:
+            x = draw_centred_pixel_text(canvas, text, y, MENU_SIZE, GOLD_ROWS)
+            # The arrow sits left of the option and moves a little
+            # back and forth, like it is pointing.
+            arrow = pictures["arrow"]
+            nudge = round(2 * math.sin(tick * 0.2))
+            canvas.blit(arrow, (x - arrow.get_width() - 6 + nudge, y + 1))
+        else:
+            draw_centred_pixel_text(canvas, text, y, MENU_SIZE, CREAM_ROWS)
 
 
 def draw_confirm_box(canvas):
@@ -377,24 +470,27 @@ def draw_confirm_box(canvas):
 
 # ---------------------------------------------------------------- text (drawn on the window)
 
-def draw_title_text(window, labels, selected, has_save, fonts, scale):
-    # The game title, the button labels (in the middle of each button)
-    # and a hint about the keys.
-    window.blit(fonts["big"].render("VAR IS WATCHING", False, CREAM), (96 * scale, 34 * scale))
-    window.blit(fonts["small"].render("A comedy mystery in the 94th minute", False, CREAM),
-                (98 * scale, 66 * scale))
-    for i in range(len(labels)):
-        picture = fonts["title"].render(labels[i].upper(), False, BROWN)
-        x = BUTTON_X * scale + (BUTTON_WIDTH * scale - picture.get_width()) // 2
-        y = (BUTTON_Y + i * BUTTON_GAP + 8) * scale
-        window.blit(picture, (x, y))
+def draw_centred_text(window, text, font, colour, y):
+    # Write a text in the middle of the window, with a dark shadow
+    # 2 pixels lower and to the right, so it is easy to read on any background.
+    picture = font.render(text, False, colour)
+    shadow = font.render(text, False, OUTLINE)
+    x = (window.get_width() - picture.get_width()) // 2
+    window.blit(shadow, (x + 2, y + 2))
+    window.blit(picture, (x, y))
+
+
+def draw_title_text(window, has_save, fonts, scale):
+    # The sharp text on the title screen: the line under the logo and the
+    # hints at the bottom, all in the middle of the window.
+    # (The logo and the menu are pixel letters, see draw_title_screen.)
+    draw_centred_text(window, "A comedy mystery in the 94th minute", fonts["small"], CREAM, 98 * scale)
     if has_save:
         note = "A saved game was found: PLAY continues it."
     else:
         note = "No saved game yet: PLAY starts a new one."
-    window.blit(fonts["small"].render(note, False, CREAM), (120 * scale, 214 * scale))
-    window.blit(fonts["small"].render("UP / DOWN: choose      ENTER: select", False, CREAM),
-                (136 * scale, 226 * scale))
+    draw_centred_text(window, note, fonts["small"], CREAM, 214 * scale)
+    draw_centred_text(window, "UP / DOWN: choose    ENTER: select    F11: fullscreen", fonts["small"], CREAM, 228 * scale)
 
 
 def draw_confirm_text(window, question, fonts, scale):

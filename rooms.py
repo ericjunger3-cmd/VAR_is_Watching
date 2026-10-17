@@ -1025,6 +1025,23 @@ def draw_pitch(canvas, pictures, ball, tick):
     # During a goal celebration the scoreboard flashes (on for 8 frames,
     # off for 8 frames ...).
     flashing = ball["celebrate"] > 0 and (ball["celebrate"] // 8) % 2 == 0
+    draw_pitch_background(canvas, flashing, tick)
+    draw_pitch_people(canvas, pictures, ball, tick)
+
+
+def draw_title_background(canvas, pictures, tick):
+    # The title screen: the empty pitch, with the VAR official on the left
+    # and Pombo on the right, like decorations next to the menu.
+    draw_pitch_background(canvas, False, tick)
+    player = pictures["player"]
+    canvas.blit(player, (112, FLOOR_Y - player.get_height() - bob(tick, 0)))
+    pombo = pictures["pombo"]
+    canvas.blit(pombo, (340, FLOOR_Y - pombo.get_height() - bob(tick, 10)))
+
+
+def draw_pitch_background(canvas, flashing, tick):
+    # Everything on the pitch except the people and the ball:
+    # the stadium, the boards, the grass, the tunnel, the flag and the goal.
     draw_stadium(canvas, flashing, tick)
 
     # Advertising boards along the side of the pitch.
@@ -1056,6 +1073,8 @@ def draw_pitch(canvas, pictures, ball, tick):
 
     draw_goal(canvas)
 
+
+def draw_pitch_people(canvas, pictures, ball, tick):
     # The people: linesman, striker, referee and the away captain.
     # They breathe (one pixel up and down); the angry captain jumps.
     for name, x, phase in [("linesman", LINESMAN_X, 3), ("striker", STRIKER_X, 11),
