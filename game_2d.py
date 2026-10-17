@@ -819,6 +819,10 @@ def play(assets, story, progress, screen, player):
 
 def main():
     pygame.init()
+    # The game's logo in the title bar and the taskbar (set it before
+    # the window opens).
+    pygame.display.set_icon(pygame.image.load("icon.png"))
+
     # SCALED: in fullscreen, the game picture is made bigger to fill the
     # screen (with black bars if the screen has a different shape).
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SCALED)

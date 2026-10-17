@@ -30,6 +30,10 @@ py game_2d.py
 
 (On Mac/Linux, or if `py` does not work: use `python` or `python3` instead of `py`.)
 
+**Desktop shortcut (Windows):** a shortcut can start the 2D version with a double-click.
+Its target is `pyw game_2d.py` (`pyw` starts Python without a console window), its
+"Start in" folder is this game folder, and its icon is `var_is_watching.ico`.
+
 Run the games in a real terminal window: the terminal version waits for you to
 type, and the 2D version opens its own game window.
 
@@ -85,6 +89,7 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `story.json` | all the story content: scenes, actions, items and endings (shared by both versions) |
 | `save.json` | terminal progress; created by the game and saved after every accepted action |
 | `save_2d.json` | 2D progress, same format; saved after every accepted action |
+| `icon.png`, `var_is_watching.ico` | the game's logo: the window icon (png) and the desktop shortcut icon (ico) |
 
 ## The game at a glance
 
