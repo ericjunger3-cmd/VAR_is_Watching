@@ -519,18 +519,6 @@ def draw_feather(canvas, x, y):
 
 # ---------------------------------------------------------------- floors
 
-def draw_carpet(canvas, colour, light, dark):
-    # A wooden skirting board and a carpet with a dotted pattern.
-    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, ROOM_WIDTH, 1))
-    pygame.draw.rect(canvas, (150, 95, 55), (0, FLOOR_Y, ROOM_WIDTH, 4))
-    pygame.draw.rect(canvas, (190, 130, 80), (0, FLOOR_Y, ROOM_WIDTH, 1))
-    pygame.draw.rect(canvas, colour, (0, FLOOR_Y + 4, ROOM_WIDTH, CANVAS_HEIGHT - FLOOR_Y))
-    pygame.draw.rect(canvas, dark, (0, FLOOR_Y + 4, ROOM_WIDTH, 2))
-    for y in range(FLOOR_Y + 10, CANVAS_HEIGHT, 8):
-        for x in range(4 + (y // 8) % 2 * 4, ROOM_WIDTH, 8):
-            canvas.set_at((x, y), light)
-
-
 # ---------------------------------------------------------------- Referee's Dressing Room
 
 def draw_tile_floor(canvas, tick):
@@ -606,6 +594,8 @@ def draw_dressing_room(canvas, pictures, progress, tick):
     pygame.draw.rect(canvas, (215, 225, 235), (0, 0, ROOM_WIDTH, 6))
     pygame.draw.rect(canvas, OUTLINE, (0, 6, ROOM_WIDTH, 1))
     draw_ceiling_lamps(canvas, [90, 230, 370])
+    # The floor comes before the furniture, so the shadows are drawn on top of it.
+    draw_tile_floor(canvas, tick)
 
     draw_door(canvas, 20, (250, 250, 250), (200, 200, 210))     # back to the booth
     draw_wall_clock(canvas, tick)
@@ -694,8 +684,6 @@ def draw_dressing_room(canvas, pictures, progress, tick):
     # The lamps shine down into the room.
     for lamp_x in [90, 230, 370]:
         draw_light_cone(canvas, lamp_x + 8, 13, FLOOR_Y, 14, 80)
-
-    draw_tile_floor(canvas, tick)
 
 
 # Where the dressing room clock hangs (its middle).
@@ -866,63 +854,167 @@ def draw_shower(canvas, tick):
 # ---------------------------------------------------------------- Mascot Changing Room
 
 def draw_mascot_room(canvas, pictures, progress, tick, reveal):
-    # Purple striped wallpaper with darker wooden panels below.
-    canvas.fill((215, 180, 230))
-    for x in range(0, ROOM_WIDTH, 24):
-        pygame.draw.rect(canvas, (205, 168, 222), (x, 0, 12, FLOOR_Y))
-    pygame.draw.rect(canvas, OUTLINE, (0, 139, ROOM_WIDTH, 1))
-    pygame.draw.rect(canvas, (150, 100, 170), (0, 140, ROOM_WIDTH, 60))
-    for x in range(0, ROOM_WIDTH, 20):
-        pygame.draw.rect(canvas, (170, 120, 190), (x + 1, 142, 17, 56))
-        pygame.draw.rect(canvas, (190, 145, 210), (x + 1, 142, 17, 2))
+    draw_mascot_wall(canvas)
+    draw_wood_floor(canvas)
     draw_ceiling_lamps(canvas, [120, 330])
+    draw_flag_garland(canvas)
 
     draw_door(canvas, 20, (255, 210, 70), (215, 160, 40))       # back to the booth
 
     # Framed "Employee of the Month" photo of Pombo.
-    shaded_box(canvas, (250, 215, 90), (255, 240, 150), (200, 160, 40), 82, 30, 40, 46)
-    pygame.draw.rect(canvas, (150, 200, 240), (87, 35, 30, 30))
-    pygame.draw.circle(canvas, (155, 160, 182), (102, 52), 9)
-    pygame.draw.circle(canvas, (200, 205, 220), (102, 58), 7)
-    pygame.draw.rect(canvas, (250, 165, 60), (100, 51, 4, 3))
-    pygame.draw.rect(canvas, OUTLINE, (98, 48, 2, 2))
-    pygame.draw.rect(canvas, OUTLINE, (105, 48, 2, 2))
-    pygame.draw.rect(canvas, HOME_RED, (87, 67, 30, 5))
+    y = PHOTO_Y
+    shaded_box(canvas, (250, 215, 90), (255, 240, 150), (200, 160, 40), 82, y, 40, 46)
+    pygame.draw.rect(canvas, (150, 200, 240), (87, y + 5, 30, 30))
+    pygame.draw.rect(canvas, (185, 220, 248), (87, y + 5, 30, 8))              # lighter sky
+    pygame.draw.circle(canvas, (155, 160, 182), (102, y + 22), 9)
+    pygame.draw.circle(canvas, (200, 205, 220), (102, y + 28), 7)
+    pygame.draw.rect(canvas, (250, 165, 60), (100, y + 21, 4, 3))
+    pygame.draw.rect(canvas, OUTLINE, (98, y + 18, 2, 2))
+    pygame.draw.rect(canvas, OUTLINE, (105, y + 18, 2, 2))
+    pygame.draw.rect(canvas, HOME_RED, (87, y + 37, 30, 5))
+    pygame.draw.rect(canvas, (255, 120, 110), (87, y + 37, 30, 1))
 
     draw_mascot_heads(canvas)
     draw_costume_rack(canvas)
-    draw_ring_light(canvas)
-    draw_mirror_table(canvas)
+    draw_ring_light(canvas, tick)
+    draw_mirror_table(canvas, tick)
 
-    # A bag of bird seed and a laundry basket full of feathers.
-    outlined_box(canvas, (220, 190, 140), 456, 168, 24, 32)
-    pygame.draw.rect(canvas, (190, 155, 100), (456, 168, 24, 4))
-    outlined_box(canvas, (200, 140, 80), 92, 180, 30, 20)
+    # A bag of bird seed, with a few seeds spilled on the floor.
+    draw_shadow(canvas, 452, 201, 32)
+    shaded_box(canvas, (220, 190, 140), (240, 215, 170), (185, 150, 100), 456, 168, 24, 32)
+    pygame.draw.polygon(canvas, OUTLINE, [(455, 168), (481, 168), (476, 160), (460, 160)])
+    pygame.draw.polygon(canvas, (200, 165, 115), [(457, 167), (479, 167), (475, 161), (461, 161)])
+    for seed_x, seed_y in [(446, 203), (450, 206), (441, 205), (444, 209)]:
+        pygame.draw.rect(canvas, (200, 160, 90), (seed_x, seed_y, 2, 1))
+
+    # A laundry basket full of feathers, with a woven pattern.
+    draw_shadow(canvas, 89, 201, 36)
+    shaded_box(canvas, (200, 140, 80), (230, 175, 110), (160, 105, 55), 92, 180, 30, 20)
     for i in range(0, 30, 4):
-        pygame.draw.rect(canvas, (170, 110, 55), (92 + i, 181, 2, 19))
+        pygame.draw.rect(canvas, (170, 110, 55), (92 + i, 182, 2, 17))
+    pygame.draw.rect(canvas, (230, 175, 110), (92, 189, 30, 1))
     for feather_x in [96, 104, 112, 118]:
         pygame.draw.circle(canvas, OUTLINE, (feather_x, 179), 4)
         pygame.draw.circle(canvas, (200, 205, 220), (feather_x, 179), 3)
+        pygame.draw.circle(canvas, (235, 238, 245), (feather_x - 1, 178), 1)
+
+    # The rug in front of Pombo's bench (an oval, flat on the floor).
+    pygame.draw.ellipse(canvas, OUTLINE, (330, 204, 130, 22))
+    pygame.draw.ellipse(canvas, (200, 90, 150), (331, 205, 128, 20))
+    pygame.draw.ellipse(canvas, (240, 160, 200), (338, 207, 114, 16))
+    pygame.draw.ellipse(canvas, (200, 90, 150), (360, 210, 70, 10), 1)
 
     # Pombo's bench, and Pombo himself.
+    draw_shadow(canvas, 334, 201, 120)
     shaded_box(canvas, (215, 150, 80), (245, 185, 110), (170, 110, 60), 336, 178, 116, 6)
     for leg_x in [342, 442]:
-        outlined_box(canvas, (160, 100, 55), leg_x, 185, 5, 15)
+        shaded_box(canvas, (160, 100, 55), (190, 125, 75), (120, 75, 40), leg_x, 185, 5, 15)
+    draw_shadow(canvas, 360, 201, 44)
     draw_pombo(canvas, pictures, progress, tick, reveal)
 
-    draw_carpet(canvas, (130, 70, 150), (160, 100, 180), (100, 50, 120))
+    # The lamps shine down into the room.
+    for lamp_x in [120, 330]:
+        draw_light_cone(canvas, lamp_x + 8, 13, FLOOR_Y, 14, 90)
 
     # Feathers on the floor.
-    for feather_x, feather_y in [(90, FLOOR_Y + 8), (165, FLOOR_Y + 14), (262, FLOOR_Y + 9),
-                                 (325, FLOOR_Y + 20), (455, FLOOR_Y + 12)]:
+    for feather_x, feather_y in [(70, FLOOR_Y + 8), (165, FLOOR_Y + 14), (262, FLOOR_Y + 9),
+                                 (300, FLOOR_Y + 22), (470, FLOOR_Y + 14), (200, FLOOR_Y + 30)]:
         draw_feather(canvas, feather_x, feather_y)
 
     # Feathers slowly falling through the air, swaying left and right.
     # When a feather reaches the floor it starts again at the top.
-    for start_x, offset in [(270, 0), (420, 60), (190, 120), (110, 30)]:
+    for start_x, offset in [(270, 0), (420, 60), (190, 120), (110, 30), (330, 90)]:
         fall = (tick // 2 + offset) % 180
         sway = ((tick // 15 + offset) % 3) - 1
         draw_feather(canvas, start_x + sway * 2, 15 + fall)
+
+
+# Where things hang on the mascot room wall (moved down, so the timer
+# and the pundit's speech box do not hide them).
+PHOTO_Y = 56
+MIRROR_Y = 66
+
+
+def draw_mascot_wall(canvas):
+    # Purple striped wallpaper with little diamonds, darker at the top,
+    # and wooden panels below with a moulding rail.
+    canvas.fill((215, 180, 230))
+    for x in range(0, ROOM_WIDTH, 24):
+        pygame.draw.rect(canvas, (205, 168, 222), (x, 0, 12, 140))
+        # A small light diamond in the middle of every light stripe.
+        for y in range(10, 140, 16):
+            pygame.draw.polygon(canvas, (228, 200, 240), [(x + 18, y - 2), (x + 20, y), (x + 18, y + 2), (x + 16, y)])
+    # Less light near the ceiling and just above the panels.
+    draw_dark_band(canvas, 0, 14, 40)
+    draw_dark_band(canvas, 0, 6, 35)
+    draw_dark_band(canvas, 126, 13, 25)
+
+    # The moulding rail on top of the panels: light top, dark bottom.
+    pygame.draw.rect(canvas, OUTLINE, (0, 136, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (185, 140, 205), (0, 137, ROOM_WIDTH, 4))
+    pygame.draw.rect(canvas, (215, 180, 232), (0, 137, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (120, 75, 140), (0, 140, ROOM_WIDTH, 1))
+
+    # The panels: every panel has a light top and left edge and a dark
+    # bottom and right edge, so it looks a little raised.
+    pygame.draw.rect(canvas, (140, 92, 160), (0, 141, ROOM_WIDTH, 59))
+    for x in range(0, ROOM_WIDTH, 20):
+        pygame.draw.rect(canvas, (170, 120, 190), (x + 2, 145, 16, 50))
+        pygame.draw.rect(canvas, (195, 150, 214), (x + 2, 145, 16, 1))
+        pygame.draw.rect(canvas, (195, 150, 214), (x + 2, 145, 1, 50))
+        pygame.draw.rect(canvas, (125, 80, 145), (x + 2, 194, 16, 1))
+        pygame.draw.rect(canvas, (125, 80, 145), (x + 17, 145, 1, 50))
+    draw_dark_band(canvas, 188, 12, 35)
+
+
+def draw_wood_floor(canvas):
+    # Wooden floor boards. Like the dressing room tiles, every row is a
+    # bit taller and lighter than the row behind it, which gives depth.
+    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (110, 65, 120), (0, FLOOR_Y, ROOM_WIDTH, 4))      # skirting board
+    pygame.draw.rect(canvas, (150, 100, 165), (0, FLOOR_Y, ROOM_WIDTH, 1))
+    y = FLOOR_Y + 4
+    height = 4
+    row = 0
+    while y < CANVAS_HEIGHT:
+        wood = (150 + row * 7, 95 + row * 6, 62 + row * 4)
+        light = (175 + row * 7, 118 + row * 6, 80 + row * 4)
+        gap = darker(wood, 0.6)
+        length = height * 14
+        pygame.draw.rect(canvas, wood, (0, y, ROOM_WIDTH, height))
+        pygame.draw.rect(canvas, light, (0, y, ROOM_WIDTH, 1))                # light top edge
+        pygame.draw.rect(canvas, gap, (0, y + height - 1, ROOM_WIDTH, 1))     # gap between rows
+        # Where one board ends and the next starts (shifted in every row).
+        shift = (row * 37) % length
+        for x in range(-length + shift, ROOM_WIDTH, length):
+            pygame.draw.rect(canvas, gap, (x, y, 1, height))
+            # A short darker line: the wood grain.
+            grain_x = x + length // 3
+            pygame.draw.rect(canvas, darker(wood, 0.85), (grain_x, y + height // 2, length // 4, 1))
+        y = y + height
+        height = height + 1
+        row = row + 1
+
+
+def draw_flag_garland(canvas):
+    # A string of little club flags under the ceiling. The string hangs
+    # lower in the middle, like a real string: the dip is biggest halfway.
+    start_x = 124
+    end_x = 226
+    for i in range(9):
+        x = start_x + i * 12
+        # Halfway (i = 4) the dip is 4 * 4 = 16 ... at the ends it is 0.
+        dip = (i * (8 - i)) // 4
+        y = 14 + dip
+        if i < 8:
+            next_dip = ((i + 1) * (7 - i)) // 4
+            pygame.draw.line(canvas, OUTLINE, (x, y), (x + 12, 14 + next_dip))
+        if i % 2 == 0:
+            colour = HOME_RED
+        else:
+            colour = WHITE
+        pygame.draw.polygon(canvas, OUTLINE, [(x - 1, y), (x + 9, y), (x + 4, y + 10)])
+        pygame.draw.polygon(canvas, colour, [(x, y + 1), (x + 7, y + 1), (x + 4, y + 8)])
 
 
 def draw_pombo(canvas, pictures, progress, tick, reveal):
@@ -967,34 +1059,47 @@ def draw_pombo(canvas, pictures, progress, tick, reveal):
 
 def draw_mascot_heads(canvas):
     # A shelf with spare mascot heads: a lion, a bee and a spare pigeon.
+    draw_shadow(canvas, 137, 61, 116)
     shaded_box(canvas, (190, 130, 80), (220, 160, 105), (150, 95, 55), 135, 54, 120, 5)
-    # lion
+    # lion: a mane, a lighter face and a shine
     pygame.draw.circle(canvas, OUTLINE, (155, 42), 13)
-    pygame.draw.circle(canvas, (230, 140, 40), (155, 42), 12)
+    pygame.draw.circle(canvas, (200, 110, 30), (155, 42), 12)
+    pygame.draw.circle(canvas, (230, 140, 40), (154, 41), 11)
     pygame.draw.circle(canvas, (250, 200, 90), (155, 43), 8)
+    pygame.draw.circle(canvas, (255, 225, 140), (153, 41), 3)
     pygame.draw.rect(canvas, OUTLINE, (151, 40, 2, 2))
     pygame.draw.rect(canvas, OUTLINE, (157, 40, 2, 2))
     pygame.draw.rect(canvas, (150, 80, 40), (153, 45, 4, 2))
     # bee
     pygame.draw.circle(canvas, OUTLINE, (195, 44), 11)
-    pygame.draw.circle(canvas, YELLOW, (195, 44), 10)
+    pygame.draw.circle(canvas, (215, 170, 30), (195, 44), 10)
+    pygame.draw.circle(canvas, YELLOW, (194, 43), 9)
     pygame.draw.rect(canvas, OUTLINE, (186, 41, 18, 3))
     pygame.draw.rect(canvas, OUTLINE, (187, 47, 16, 3))
+    pygame.draw.rect(canvas, (255, 240, 150), (190, 37, 3, 2))
     pygame.draw.line(canvas, OUTLINE, (191, 34), (188, 28))
     pygame.draw.line(canvas, OUTLINE, (199, 34), (202, 28))
+    pygame.draw.circle(canvas, OUTLINE, (188, 28), 2)
+    pygame.draw.circle(canvas, OUTLINE, (202, 28), 2)
     # spare pigeon head
     pygame.draw.circle(canvas, OUTLINE, (235, 44), 11)
-    pygame.draw.circle(canvas, (155, 160, 182), (235, 44), 10)
+    pygame.draw.circle(canvas, (120, 125, 148), (235, 44), 10)
+    pygame.draw.circle(canvas, (155, 160, 182), (234, 43), 9)
     pygame.draw.rect(canvas, (250, 165, 60), (233, 46, 5, 3))
     pygame.draw.rect(canvas, OUTLINE, (230, 41, 2, 2))
     pygame.draw.rect(canvas, OUTLINE, (239, 41, 2, 2))
 
 
 def draw_costume_rack(canvas):
-    # A rail with three costumes: orange lion, striped bee, grey pigeon.
+    # A rail with three costumes (orange lion, striped bee, grey pigeon)
+    # and a pair of giant pink pigeon-foot slippers under it.
+    draw_shadow(canvas, 128, 201, 132)
     pygame.draw.rect(canvas, OUTLINE, (132, 92, 126, 4))
-    outlined_box(canvas, (200, 200, 210), 134, 92, 3, 108)
-    outlined_box(canvas, (200, 200, 210), 253, 92, 3, 108)
+    pygame.draw.rect(canvas, (220, 220, 230), (133, 93, 124, 1))
+    for pole_x in [134, 253]:
+        outlined_box(canvas, (200, 200, 210), pole_x, 92, 3, 108)
+        pygame.draw.rect(canvas, (235, 235, 245), (pole_x, 92, 1, 108))
+        outlined_box(canvas, (150, 150, 165), pole_x - 4, 197, 11, 3)        # foot
     costumes = [(145, (230, 140, 40), (250, 180, 80)),
                 (180, YELLOW, (255, 235, 120)),
                 (215, (155, 160, 182), (200, 205, 220))]
@@ -1002,41 +1107,83 @@ def draw_costume_rack(canvas):
         pygame.draw.rect(canvas, OUTLINE, (x + 12, 94, 2, 6))                  # hanger
         pygame.draw.polygon(canvas, OUTLINE, [(x - 1, 99), (x + 27, 99), (x + 30, 160), (x - 4, 160)])
         pygame.draw.polygon(canvas, colour, [(x, 100), (x + 26, 100), (x + 29, 159), (x - 3, 159)])
+        # Light on the left, shadow on the right, a fold in the middle.
         pygame.draw.rect(canvas, light, (x + 2, 102, 3, 54))
+        pygame.draw.polygon(canvas, darker(colour, 0.78), [(x + 20, 100), (x + 26, 100), (x + 29, 159), (x + 22, 159)])
+        pygame.draw.line(canvas, darker(colour, 0.85), (x + 13, 104), (x + 13, 158))
         if colour == YELLOW:
             for stripe_y in [112, 126, 140]:
                 pygame.draw.rect(canvas, OUTLINE, (x - 1, stripe_y, 29, 4))
+    # The slippers: pink feet with three toes each.
+    for foot_x in [168, 196]:
+        pygame.draw.ellipse(canvas, OUTLINE, (foot_x - 1, 189, 20, 12))
+        pygame.draw.ellipse(canvas, (240, 135, 150), (foot_x, 190, 18, 10))
+        pygame.draw.ellipse(canvas, (255, 180, 190), (foot_x + 3, 191, 8, 4))
+        for toe in range(3):
+            pygame.draw.rect(canvas, OUTLINE, (foot_x + 3 + toe * 5, 198, 1, 2))
 
 
-def draw_ring_light(canvas):
-    # Pombo's TikTok setup: a ring light with a phone, on a tripod.
+def draw_ring_light(canvas, tick):
+    # Pombo's TikTok setup: a glowing ring light with a phone, on a tripod.
+    glow = pygame.Surface((60, 60), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (255, 255, 220, 40), (30, 30), 28)
+    pygame.draw.circle(glow, (255, 255, 220, 40), (30, 30), 21)
+    canvas.blit(glow, (270, 42))
     pygame.draw.circle(canvas, OUTLINE, (300, 72), 15)
     pygame.draw.circle(canvas, (255, 255, 230), (300, 72), 14)
+    pygame.draw.circle(canvas, WHITE, (299, 71), 12, 2)
     pygame.draw.circle(canvas, OUTLINE, (300, 72), 9)
     pygame.draw.circle(canvas, (215, 180, 230), (300, 72), 8)
     outlined_box(canvas, (40, 40, 50), 296, 66, 8, 13)
     pygame.draw.rect(canvas, (120, 200, 255), (297, 67, 6, 10))
-    pygame.draw.rect(canvas, OUTLINE, (299, 87, 2, 90))
+    pygame.draw.rect(canvas, (200, 235, 255), (297, 67, 6, 2))
+    # The red "recording" dot on the phone blinks.
+    if (tick // 20) % 2 == 0:
+        pygame.draw.rect(canvas, (255, 60, 60), (301, 75, 2, 2))
+    draw_shadow(canvas, 284, 201, 32)
+    pygame.draw.rect(canvas, OUTLINE, (299, 87, 3, 90))
+    pygame.draw.rect(canvas, (110, 110, 125), (300, 87, 1, 89))
     pygame.draw.line(canvas, OUTLINE, (300, 176), (288, 199), 2)
     pygame.draw.line(canvas, OUTLINE, (300, 176), (312, 199), 2)
     pygame.draw.line(canvas, OUTLINE, (300, 176), (300, 199), 2)
 
 
-def draw_mirror_table(canvas):
-    # A mirror with light bulbs, and a table with a foam finger,
-    # a sweatband and a bottle.
-    shaded_box(canvas, (250, 215, 90), (255, 240, 150), (200, 160, 40), 340, 28, 76, 66)
-    pygame.draw.rect(canvas, (190, 230, 250), (346, 34, 64, 54))
-    pygame.draw.line(canvas, WHITE, (352, 80), (370, 44), 3)
-    pygame.draw.line(canvas, WHITE, (362, 82), (378, 50), 1)
+def draw_mirror_table(canvas, tick):
+    # A make-up mirror with light bulbs all around, and a table with a
+    # foam finger, a sweatband and a bottle. The bulbs twinkle: every
+    # 10 frames another bulb is a bit brighter.
+    y = MIRROR_Y
+    shaded_box(canvas, (250, 215, 90), (255, 240, 150), (200, 160, 40), 340, y, 76, 52)
+    draw_bands(canvas, [(170, 215, 240), (190, 230, 250), (205, 238, 252)], 346, y + 6, 64, 40)
+    pygame.draw.line(canvas, WHITE, (352, y + 40), (366, y + 12), 3)          # reflections
+    pygame.draw.line(canvas, WHITE, (362, y + 42), (376, y + 16), 1)
+    bulbs = []
     for bulb_x in range(344, 416, 9):
-        pygame.draw.circle(canvas, (255, 255, 210), (bulb_x, 30), 2)
-    shaded_box(canvas, (190, 130, 80), (220, 160, 105), (150, 95, 55), 336, 120, 84, 6)
-    outlined_box(canvas, HOME_RED, 345, 110, 8, 10)                            # foam finger
-    pygame.draw.rect(canvas, HOME_RED, (348, 102, 3, 8))
-    outlined_box(canvas, WHITE, 362, 113, 12, 7)                               # sweatband
-    pygame.draw.rect(canvas, HOME_RED, (362, 116, 12, 1))
-    outlined_box(canvas, (250, 165, 60), 384, 110, 6, 10)                      # bottle
+        bulbs.append((bulb_x, y + 2))
+    for bulb_y in range(y + 12, y + 50, 10):
+        bulbs.append((342, bulb_y))
+        bulbs.append((414, bulb_y))
+    bright = (tick // 10) % len(bulbs)
+    for i in range(len(bulbs)):
+        bulb_x, bulb_y = bulbs[i]
+        if i == bright:
+            glow = pygame.Surface((12, 12), pygame.SRCALPHA)
+            pygame.draw.circle(glow, (255, 250, 200, 90), (6, 6), 6)
+            canvas.blit(glow, (bulb_x - 6, bulb_y - 6))
+            pygame.draw.circle(canvas, WHITE, (bulb_x, bulb_y), 2)
+        else:
+            pygame.draw.circle(canvas, (255, 245, 190), (bulb_x, bulb_y), 2)
+
+    # The table, with a shadow on the wall under it.
+    draw_shadow(canvas, 338, y + 64, 88)
+    shaded_box(canvas, (190, 130, 80), (220, 160, 105), (150, 95, 55), 336, y + 54, 84, 6)
+    outlined_box(canvas, HOME_RED, 345, y + 44, 8, 10)                         # foam finger
+    pygame.draw.rect(canvas, HOME_RED, (348, y + 36, 3, 8))
+    pygame.draw.rect(canvas, (255, 120, 110), (345, y + 44, 2, 10))
+    outlined_box(canvas, WHITE, 362, y + 47, 12, 7)                            # sweatband
+    pygame.draw.rect(canvas, HOME_RED, (362, y + 50, 12, 1))
+    outlined_box(canvas, (250, 165, 60), 384, y + 44, 6, 10)                   # bottle
+    pygame.draw.rect(canvas, (255, 210, 130), (385, y + 45, 1, 8))
 
 
 # ---------------------------------------------------------------- Press Room
@@ -1599,7 +1746,7 @@ LABELS = {
     ],
     "mascot_room": [
         ("BOOTH", 28, 110, (90, 60, 10), False),
-        ("EMPLOYEE", 83, 79, (120, 60, 20), True),
+        ("EMPLOYEE", 83, 105, (120, 60, 20), True),
         ("SEEDS", 457, 180, (120, 80, 30), True),
     ],
     "press_room": [
