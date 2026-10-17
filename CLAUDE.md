@@ -38,6 +38,8 @@ first day. A smug TV pundit narrates everything.
    Pombo/Dave gives the **USB Stick** and his statement.
 4. **Press Room** – one answer only: **"Clearly a goal!"**, **"No comment"** or
    **expose Rex** (needs lanyard + slip + Dave). Betting Slip by the TV camera.
+   Why the VAR goes there: Rex's TV channel has a deal with the league, so the
+   VAR must give one live quote before every decision (said in the booth intro).
 5. **The Pitch** – open from the start, but the referee only takes the call
    after the press answer; rule **Goal** or **Offside** (both allowed).
 

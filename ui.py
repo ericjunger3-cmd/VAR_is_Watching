@@ -443,9 +443,9 @@ def draw_review_text(window, review, state, fonts, scale):
                  "LEFT / RIGHT: move through the footage   ENTER: lock this moment",
                  "You only get one look.                   ESC: stop the review"]
     else:
-        lines = ["Moment locked at " + str(time) + " s. Now draw the offside line.",
+        lines = ["Locked at " + str(time) + " s. Put the line on the 2nd-last opponent.",
                  "LEFT / RIGHT: move the line (hold to go faster)   ENTER: lock",
-                 "                                         ESC: back to the footage"]
+                 "The keeper counts. Level = onside.       ESC: back to the footage"]
     y = BOX_Y + 12
     for line in lines:
         window.blit(fonts["text"].render(line, False, BROWN), ((BOX_X + 10) * scale, y * scale))

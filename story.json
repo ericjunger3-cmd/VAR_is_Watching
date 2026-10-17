@@ -24,22 +24,22 @@
   "scenes": {
     "booth": {
       "name": "VAR Booth",
-      "text": "94th minute of the cup final. The home side has just scored and the stadium is shaking. The away captain is screaming \"OFFSIDE!\" at the linesman, a ball boy and the sky. You sit in the VAR Booth in front of twelve screens. Eleven work. The one with the key angle shows only static. On the TV in the corner, star pundit Rex Smugworth is loving every second. It is your first day.",
+      "text": "94th minute of the cup final. The home side has just scored and the stadium is shaking. The away captain is screaming \"OFFSIDE!\" at the linesman, a ball boy and the sky. You sit in the VAR Booth in front of twelve screens. Eleven work. The one with the key angle shows only static. On the TV in the corner, star pundit Rex Smugworth is loving every second. It is your first day. Your job: find the missing angle and give the referee your call. And thanks to a new deal with Rex's TV channel, the VAR must give the Press Room one live quote before every decision.",
       "pundit": "PUNDIT: Day one, a missing camera angle and sixty thousand people waiting. Honestly? Best night of my career.",
       "actions": [
         { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258,
           "text": "You sprint down the tunnel, past a confused steward and a trolley of orange slices." },
         { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room", "x": 316,
           "needs_item": "whistle",
-          "blocked_text": "The door is locked. A laminated sign says: \"MASCOTS ONLY. Whistle for entry.\"",
+          "blocked_text": "The door is locked. A laminated sign says: \"MASCOTS ONLY. Whistle for entry.\" The referee always keeps a spare whistle in his dressing room.",
           "text": "You blow the Lucky Whistle. Somewhere inside, a pigeon coos. The door clicks open." },
         { "label": "Go to the Press Room", "go_to": "press_room", "x": 374,
           "text": "You follow the sound of camera shutters and bad decisions." },
         { "label": "Go to the Pitch", "go_to": "pitch", "x": 443,
           "text": "You walk out under the floodlights. Sixty thousand heads turn. Your knees suddenly remember they are knees." },
         { "label": "Look at the sticky note", "x": 185,
-          "text": "Dave's note says: \"Back in 5 min - Dave. P.S. If the angle cuts out, ask Pombo. He films EVERYTHING.\"",
-          "closeup": ["Back in 5 min", "- Dave", "P.S. If the angle", "cuts out, ask Pombo.", "He films EVERYTHING."] },
+          "text": "Dave's note says: \"Back in 5 min - Dave. P.S. Angle cuts out? Ask Pombo, our mascot. He films EVERYTHING.\"",
+          "closeup": ["Back in 5 min - Dave", "P.S. Angle cuts out?", "Ask Pombo, our", "mascot. He films", "EVERYTHING."] },
         { "label": "Look behind the desk", "take_item": "lanyard", "x": 30,
           "text": "Behind the desk, the cable of the key camera has been yanked out of the wall. Somebody did this on purpose! Tangled in the cable is a lanyard: \"PRESS - TV STUDIO\"." },
         { "label": "Plug the USB Stick into the VAR computer", "review": true, "set_choice": "review", "x": 104,
@@ -71,7 +71,7 @@
       "pundit": "PUNDIT: The rookie is interviewing a pigeon. I could not have scripted this.",
       "actions": [
         { "label": "Ask Pombo what he saw", "take_item": "usb", "set_choice": "dave", "value": "talked", "x": 345,
-          "text": "Pombo pulls off his pigeon head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you a USB Stick: \"Filmed the whole thing on my head-cam.\" Then he whispers: \"At 93:30 a guy in a shiny suit ran out of your booth. Smelled of hair gel.\"" },
+          "text": "Pombo pulls off his pigeon head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you a USB Stick: \"Filmed the whole thing on my head-cam. Plug it into the VAR computer in your booth.\" Then he whispers: \"At 93:30 a guy in a shiny suit ran out of your booth. Smelled of hair gel.\"" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You leave Dave to put his head back on and run back to the booth." }
       ]
@@ -80,7 +80,7 @@
     "press_room": {
       "name": "Press Room",
       "menu_title": "What do you tell the press?",
-      "text": "A wall of microphones and flashing cameras. Every journalist in the country wants one quote from the new VAR official, and they want it now. You only get to say one thing.",
+      "text": "A wall of microphones and flashing cameras. Every journalist in the country wants one quote from the new VAR official, and they want it now. Rex's TV channel paid for this: one live quote from the VAR before the decision. You only get to say one thing. Choose carefully: once you've spoken, you can't take it back.",
       "pundit": "PUNDIT: Just tell them it's offside, rookie. Easiest quote of your life.",
       "actions": [
         { "label": "Say: 'Clearly a goal!'", "set_choice": "press_answer", "value": "goal", "x": 330,
@@ -106,11 +106,11 @@
       "actions": [
         { "label": "Rule: GOAL", "ruling": "goal", "x": 311,
           "needs_choice": "press_answer",
-          "blocked_text": "The referee shakes his head: \"The press is waiting for a statement first, VAR. Go on, I'll wait.\"",
+          "blocked_text": "The referee shakes his head: \"TV contract, VAR. Press Room first, then your call. I'll wait.\"",
           "text": "You give the signal: GOAL!" },
         { "label": "Rule: OFFSIDE", "ruling": "offside", "x": 311,
           "needs_choice": "press_answer",
-          "blocked_text": "The referee shakes his head: \"The press is waiting for a statement first, VAR. Go on, I'll wait.\"",
+          "blocked_text": "The referee shakes his head: \"TV contract, VAR. Press Room first, then your call. I'll wait.\"",
           "text": "You give the signal: OFFSIDE!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You walk back inside. Sixty thousand people boo at the same time. Impressive, really." }
@@ -119,7 +119,7 @@
   },
 
   "review": {
-    "intro": "Pombo's head-cam footage runs for 3 seconds. Find the exact moment the ball leaves the passer's boot, lock it, then draw the offside line. You only get one look.",
+    "intro": "Pombo's head-cam footage runs for 3 seconds. Find the exact moment the ball leaves the passer's boot and lock it. Then draw the offside line: it goes on the second-last opponent (the goalkeeper counts as one), and level counts as onside. You only get one look.",
     "step": 0.1,
     "end": 3.0,
     "release": 1.2,
