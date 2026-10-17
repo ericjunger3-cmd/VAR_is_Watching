@@ -39,7 +39,7 @@
           "text": "You walk out under the floodlights. Sixty thousand heads turn. Your knees suddenly remember they are knees." },
         { "label": "Look at the sticky note", "x": 185,
           "text": "Dave's note says: \"Back in 5 min - Dave. P.S. Angle cuts out? Ask Pombo, our mascot. He films EVERYTHING.\"",
-          "closeup": ["Back in 5 min - Dave", "P.S. Angle cuts out?", "Ask Pombo, our", "mascot. He films", "EVERYTHING."] },
+          "closeup": ["Back in 5 min", "- Dave", "P.S. Angle cuts out?", "Ask Pombo, our mascot.", "He films EVERYTHING."] },
         { "label": "Look behind the desk", "take_item": "lanyard", "x": 30,
           "text": "Behind the desk, the cable of the key camera has been yanked out of the wall. Somebody did this on purpose! Tangled in the cable is a lanyard: \"PRESS - TV STUDIO\"." },
         { "label": "Plug the USB Stick into the VAR computer", "review": true, "set_choice": "review", "x": 104,

@@ -46,15 +46,22 @@ def draw_wall(canvas):
     pygame.draw.rect(canvas, OUTLINE, (0, 10, ROOM_WIDTH, 1))
     for x in range(0, ROOM_WIDTH, 24):
         pygame.draw.rect(canvas, (240, 216, 170), (x, 11, 12, 140))
+    # Less light near the ceiling and just above the panelling.
+    draw_dark_band(canvas, 11, 10, 25)
+    draw_dark_band(canvas, 11, 4, 25)
+    draw_dark_band(canvas, 136, 11, 20)
 
-    # Wood panelling on the lower part of the wall.
+    # Wood panelling on the lower part of the wall, with a rail on top.
     pygame.draw.rect(canvas, OUTLINE, (0, 147, ROOM_WIDTH, 1))
     pygame.draw.rect(canvas, (140, 80, 40), (0, 148, ROOM_WIDTH, 3))
+    pygame.draw.rect(canvas, (175, 110, 60), (0, 148, ROOM_WIDTH, 1))
     pygame.draw.rect(canvas, (180, 110, 60), (0, 151, ROOM_WIDTH, 49))
     for x in range(0, ROOM_WIDTH, 20):
         pygame.draw.rect(canvas, (205, 135, 75), (x + 1, 152, 17, 46))   # plank
         pygame.draw.rect(canvas, (225, 160, 95), (x + 1, 152, 17, 2))    # light top
+        pygame.draw.rect(canvas, (218, 150, 88), (x + 1, 152, 2, 46))    # light left side
         pygame.draw.rect(canvas, (150, 88, 48), (x + 1, 196, 17, 2))     # dark bottom
+    draw_dark_band(canvas, 188, 12, 30)
 
 
 def draw_floor(canvas):
@@ -68,19 +75,24 @@ def draw_floor(canvas):
             canvas.set_at((x, FLOOR_Y - 2 - blade), (160, 235, 120))
     pygame.draw.rect(canvas, (60, 150, 60), (0, FLOOR_Y + 5, ROOM_WIDTH, 2))
 
-    # Bricks: every second row is shifted by half a brick.
-    pygame.draw.rect(canvas, (165, 105, 70), (0, FLOOR_Y + 7, ROOM_WIDTH, 63))
+    # Bricks. Every row is a bit taller, wider and lighter than the row
+    # behind it (the same depth trick as in the other rooms), and every
+    # second row is shifted by half a brick.
+    y = FLOOR_Y + 7
+    height = 7
     row = 0
-    for y in range(FLOOR_Y + 7, CANVAS_HEIGHT, 12):
-        if row % 2 == 0:
-            shift = 0
-        else:
-            shift = 12
-        for x in range(-24 + shift, ROOM_WIDTH, 24):
-            pygame.draw.rect(canvas, (125, 75, 50), (x, y, 24, 12))      # gap
-            pygame.draw.rect(canvas, (185, 122, 82), (x + 1, y + 1, 22, 10))
-            pygame.draw.rect(canvas, (210, 150, 105), (x + 1, y + 1, 22, 2))
-            pygame.draw.rect(canvas, (150, 95, 62), (x + 1, y + 9, 22, 2))
+    while y < CANVAS_HEIGHT:
+        width = height * 2
+        brick = (170 + row * 5, 108 + row * 5, 72 + row * 4)
+        gap = darker(brick, 0.68)
+        pygame.draw.rect(canvas, gap, (0, y, ROOM_WIDTH, height))
+        shift = (row % 2) * (width // 2)
+        for x in range(-width + shift, ROOM_WIDTH, width):
+            pygame.draw.rect(canvas, brick, (x + 1, y + 1, width - 1, height - 1))
+            pygame.draw.rect(canvas, (brick[0] + 25, brick[1] + 28, brick[2] + 22), (x + 1, y + 1, width - 1, 1))
+            pygame.draw.rect(canvas, darker(brick, 0.85), (x + 1, y + height - 2, width - 1, 1))
+        y = y + height
+        height = height + 1
         row = row + 1
 
 
@@ -88,10 +100,13 @@ def draw_door(canvas, x, plaque_colour, plaque_shadow):
     # A wooden door, 40 wide and 72 high, standing on the floor,
     # with a coloured name plaque above it.
     y = FLOOR_Y - 72
+    draw_shadow(canvas, x - 6, FLOOR_Y + 1, 52)
 
-    # Door frame.
+    # Door frame, with a light left edge (the light comes from the left).
     pygame.draw.rect(canvas, OUTLINE, (x - 4, y - 4, 48, 77))
     pygame.draw.rect(canvas, (120, 70, 40), (x - 3, y - 3, 46, 75))
+    pygame.draw.rect(canvas, (155, 95, 55), (x - 3, y - 3, 2, 75))
+    pygame.draw.rect(canvas, (155, 95, 55), (x - 3, y - 3, 46, 1))
     pygame.draw.rect(canvas, OUTLINE, (x - 1, y - 1, 42, 73))
 
     # The door itself: light left edge, dark right edge.
@@ -99,43 +114,59 @@ def draw_door(canvas, x, plaque_colour, plaque_shadow):
     pygame.draw.rect(canvas, (235, 165, 100), (x, y, 3, 72))
     pygame.draw.rect(canvas, (170, 100, 55), (x + 37, y, 3, 72))
 
-    # Four panels.
+    # Four panels that sit a bit deeper in the door: dark on the top and
+    # left (in shadow), light on the bottom and right (catching light).
     panels = [(6, 6, 26), (22, 6, 26), (6, 38, 28), (22, 38, 28)]
     for panel_x, panel_y, panel_height in panels:
-        pygame.draw.rect(canvas, (170, 100, 55), (x + panel_x, y + panel_y, 12, panel_height))
-        pygame.draw.rect(canvas, (190, 118, 65), (x + panel_x + 1, y + panel_y + 1, 10, panel_height - 2))
+        left = x + panel_x
+        top = y + panel_y
+        pygame.draw.rect(canvas, (190, 118, 65), (left, top, 12, panel_height))
+        pygame.draw.rect(canvas, (150, 88, 48), (left, top, 12, 1))
+        pygame.draw.rect(canvas, (150, 88, 48), (left, top, 1, panel_height))
+        pygame.draw.rect(canvas, (228, 158, 95), (left, top + panel_height - 1, 12, 1))
+        pygame.draw.rect(canvas, (228, 158, 95), (left + 11, top, 1, panel_height))
 
-    # Golden door knob.
+    # Golden door knob with a shine.
     pygame.draw.rect(canvas, OUTLINE, (x + 31, y + 36, 5, 5))
     pygame.draw.rect(canvas, (255, 215, 70), (x + 32, y + 37, 3, 3))
+    canvas.set_at((x + 32, y + 37), (255, 250, 200))
 
-    # Name plaque (the text is added later, at full size).
+    # Name plaque (the text is added later, at full size), with a light top edge.
     pygame.draw.rect(canvas, OUTLINE, (x - 2, y - 20, 44, 14))
     pygame.draw.rect(canvas, plaque_shadow, (x - 1, y - 19, 42, 12))
     pygame.draw.rect(canvas, plaque_colour, (x - 1, y - 19, 42, 10))
+    pygame.draw.rect(canvas, (min(255, plaque_colour[0] + 30), min(255, plaque_colour[1] + 30),
+                              min(255, plaque_colour[2] + 30)), (x - 1, y - 19, 42, 1))
 
 
 # ---------------------------------------------------------------- VAR Booth
 
-def draw_window(canvas):
+def draw_window(canvas, tick):
     # A big window with sky, clouds, the stands and the pitch behind it.
     x = 10
     y = 18
     width = 196
     height = 62
 
-    # White window frame with an outline.
+    # White window frame with an outline, and a window sill below.
     pygame.draw.rect(canvas, OUTLINE, (x - 3, y - 3, width + 6, height + 6))
     pygame.draw.rect(canvas, WHITE, (x - 2, y - 2, width + 4, height + 4))
+    pygame.draw.rect(canvas, OUTLINE, (x - 6, y + height + 2, width + 12, 5))
+    pygame.draw.rect(canvas, (235, 230, 220), (x - 5, y + height + 3, width + 10, 3))
+    pygame.draw.rect(canvas, WHITE, (x - 5, y + height + 3, width + 10, 1))
 
     # Sky in three shades of blue, darkest at the top.
     pygame.draw.rect(canvas, (110, 190, 250), (x, y, width, 10))
     pygame.draw.rect(canvas, (140, 210, 255), (x, y + 10, width, 10))
     pygame.draw.rect(canvas, (175, 225, 255), (x, y + 20, width, 16))
 
-    draw_cloud(canvas, x + 20, y + 6)
-    draw_cloud(canvas, x + 120, y + 3)
-    draw_cloud(canvas, x + 170, y + 14)
+    # The clouds drift slowly to the right. set_clip makes sure nothing is
+    # drawn outside the window glass; set_clip(None) turns that off again.
+    canvas.set_clip((x, y, width, height))
+    for start, cloud_y in [(20, 6), (120, 3), (170, 14)]:
+        cloud_x = x - 30 + (start + tick // 8) % (width + 40)
+        draw_cloud(canvas, cloud_x, y + cloud_y)
+    canvas.set_clip(None)
 
     # The stands, full of fans. The colour of each fan comes from a
     # simple calculation, so the crowd looks mixed but never changes.
@@ -155,11 +186,24 @@ def draw_window(canvas):
         pygame.draw.rect(canvas, colour, (x + i, y + 50, 14, 12))
     pygame.draw.line(canvas, WHITE, (x, y + 52), (x + width, y + 52))
 
-    # Two window bars and a floodlight.
-    pygame.draw.rect(canvas, WHITE, (x + width // 3, y, 3, height))
-    pygame.draw.rect(canvas, WHITE, (x + 2 * width // 3, y, 3, height))
+    # A floodlight with a soft glow.
+    glow = pygame.Surface((30, 20), pygame.SRCALPHA)
+    pygame.draw.ellipse(glow, (255, 250, 210, 70), (0, 0, 30, 20))
+    canvas.blit(glow, (x + 142, y - 5))
     pygame.draw.rect(canvas, (90, 90, 100), (x + 150, y + 2, 14, 6))
     pygame.draw.rect(canvas, (255, 250, 200), (x + 151, y + 3, 12, 4))
+
+    # Reflections on the glass: two thin see-through white lines.
+    shine = pygame.Surface((width, height), pygame.SRCALPHA)
+    pygame.draw.line(shine, (255, 255, 255, 80), (20, height), (50, 0), 4)
+    pygame.draw.line(shine, (255, 255, 255, 60), (34, height), (64, 0), 2)
+    canvas.blit(shine, (x, y))
+
+    # Two window bars.
+    pygame.draw.rect(canvas, WHITE, (x + width // 3, y, 3, height))
+    pygame.draw.rect(canvas, WHITE, (x + 2 * width // 3, y, 3, height))
+    pygame.draw.rect(canvas, (215, 215, 225), (x + width // 3 + 2, y, 1, height))
+    pygame.draw.rect(canvas, (215, 215, 225), (x + 2 * width // 3 + 2, y, 1, height))
 
 
 def draw_cloud(canvas, x, y):
@@ -171,23 +215,38 @@ def draw_cloud(canvas, x, y):
     pygame.draw.rect(canvas, (215, 235, 255), (x - 5, y + 9, 31, 3))
 
 
-def draw_monitors(canvas):
+def draw_monitors(canvas, tick):
     # Twelve monitors in two rows of six. Eleven show a camera angle,
     # the last one is broken and has Dave's sticky note on it.
+    # First a soft blue glow on the wall behind them, from all the screens.
+    glow = pygame.Surface((220, 70), pygame.SRCALPHA)
+    pygame.draw.ellipse(glow, (150, 200, 255, 18), (0, 0, 220, 70))
+    canvas.blit(glow, (-4, 76))
+
     camera_number = 0
     for row in range(2):
         for column in range(6):
             x = 12 + column * 32
             y = 88 + row * 24
 
-            # Monitor frame.
+            # Monitor frame: light top edge, dark bottom edge.
             pygame.draw.rect(canvas, OUTLINE, (x - 2, y - 2, 30, 22))
             pygame.draw.rect(canvas, (90, 95, 115), (x - 1, y - 1, 28, 20))
+            pygame.draw.rect(canvas, (130, 135, 155), (x - 1, y - 1, 28, 1))
+            pygame.draw.rect(canvas, (60, 64, 80), (x - 1, y + 18, 28, 1))
 
             if camera_number == 11:
                 draw_broken_screen(canvas, x + 1, y + 1)
+                led = (230, 50, 50)
             else:
                 draw_camera(canvas, camera_number, x + 1, y + 1)
+                led = (90, 230, 110)
+            # A small power light that blinks now and then. Every monitor
+            # blinks at another moment (camera_number * 13 shifts the timing).
+            if (tick + camera_number * 13) % 90 > 6:
+                canvas.set_at((x + 24, y + 18), led)
+            # A tiny shine in the top-left corner of the screen.
+            canvas.set_at((x + 1, y + 1), (235, 245, 255))
             camera_number = camera_number + 1
 
 
@@ -351,61 +410,100 @@ def draw_camera(canvas, number, x, y):
 
 
 def draw_desk(canvas):
-    # The wooden desk with drawers, a keyboard and a mug.
+    # The wooden desk with drawers, a keyboard, a mug and a stack of papers.
+    draw_shadow(canvas, 0, FLOOR_Y + 1, 214)
     pygame.draw.rect(canvas, OUTLINE, (4, 163, 206, 38))
     pygame.draw.rect(canvas, (215, 140, 70), (5, 164, 204, 6))     # desk top
     pygame.draw.rect(canvas, (245, 175, 100), (5, 164, 204, 2))    # light edge
     pygame.draw.rect(canvas, (170, 100, 50), (5, 170, 204, 30))    # front
+    pygame.draw.rect(canvas, (150, 88, 45), (5, 170, 204, 2))      # shadow under the top
     pygame.draw.rect(canvas, (140, 80, 40), (5, 196, 204, 4))      # dark bottom
 
-    # Two drawers with handles.
+    # Two drawers that stick out a little: light top, dark bottom.
     for drawer_x in [12, 150]:
         pygame.draw.rect(canvas, OUTLINE, (drawer_x, 174, 50, 22))
         pygame.draw.rect(canvas, (190, 115, 60), (drawer_x + 1, 175, 48, 20))
+        pygame.draw.rect(canvas, (215, 140, 80), (drawer_x + 1, 175, 48, 1))
+        pygame.draw.rect(canvas, (160, 95, 50), (drawer_x + 1, 194, 48, 1))
         pygame.draw.rect(canvas, OUTLINE, (drawer_x + 22, 183, 6, 2))
+        pygame.draw.rect(canvas, (230, 200, 150), (drawer_x + 22, 183, 6, 1))
 
     # Keyboard with little keys.
     pygame.draw.rect(canvas, OUTLINE, (78, 158, 52, 7))
     pygame.draw.rect(canvas, (220, 222, 235), (79, 159, 50, 5))
+    pygame.draw.rect(canvas, (245, 246, 252), (79, 159, 50, 1))
     for key_x in range(81, 128, 4):
         canvas.set_at((key_x, 161), (150, 150, 170))
 
     # A white mug with a red stripe.
     pygame.draw.rect(canvas, OUTLINE, (150, 152, 11, 12))
     pygame.draw.rect(canvas, WHITE, (151, 153, 9, 10))
+    pygame.draw.rect(canvas, (220, 222, 230), (157, 153, 3, 10))
     pygame.draw.rect(canvas, (230, 70, 70), (151, 157, 9, 3))
     pygame.draw.rect(canvas, OUTLINE, (161, 155, 3, 5))
+    pygame.draw.rect(canvas, (120, 70, 40), (152, 153, 7, 1))                 # coffee
+
+    # A messy stack of papers.
+    for i in range(3):
+        outlined_box(canvas, (245, 245, 238), 172 + i, 160 - i * 2, 22, 2)
+    pygame.draw.rect(canvas, (170, 175, 190), (176, 155, 12, 1))
+
+    # The office chair, seen from behind: backrest, pole and wheels.
+    draw_shadow(canvas, 92, FLOOR_Y + 1, 32)
+    shaded_box(canvas, (50, 52, 66), (80, 82, 100), (32, 33, 44), 96, 166, 24, 18)
+    pygame.draw.rect(canvas, OUTLINE, (106, 185, 4, 9))
+    pygame.draw.rect(canvas, (120, 125, 140), (107, 185, 2, 8))
+    pygame.draw.rect(canvas, OUTLINE, (95, 194, 26, 3))
+    for wheel_x in [95, 106, 117]:
+        pygame.draw.rect(canvas, OUTLINE, (wheel_x, 196, 4, 4))
 
 
 def draw_tunnel(canvas):
     # A stone archway to the pitch, with daylight at the end.
     x = 412
+    stone = (140, 140, 155)
     pygame.draw.rect(canvas, OUTLINE, (x - 2, 128, 66, 73))
     pygame.draw.ellipse(canvas, OUTLINE, (x - 2, 110, 66, 40))
-    pygame.draw.rect(canvas, (140, 140, 155), (x, 130, 62, 70))
-    pygame.draw.ellipse(canvas, (140, 140, 155), (x, 112, 62, 36))
+    pygame.draw.rect(canvas, stone, (x, 130, 62, 70))
+    pygame.draw.ellipse(canvas, stone, (x, 112, 62, 36))
 
-    # The dark inside of the tunnel.
-    pygame.draw.rect(canvas, (55, 60, 80), (x + 6, 136, 50, 64))
-    pygame.draw.ellipse(canvas, (55, 60, 80), (x + 6, 120, 50, 32))
+    # Stone blocks on the two pillars: a dark joint line every 8 pixels,
+    # and a light top edge on every block.
+    for block_y in range(136, 200, 8):
+        for pillar_x in [x, x + 56]:
+            pygame.draw.rect(canvas, (110, 110, 125), (pillar_x, block_y, 6, 1))
+            pygame.draw.rect(canvas, (170, 170, 185), (pillar_x, block_y + 1, 6, 1))
+    # The keystone at the top of the arch.
+    outlined_box(canvas, (165, 165, 180), x + 26, 112, 10, 8)
+
+    # The dark inside of the tunnel: darker at the edges, lighter
+    # towards the daylight in the middle.
+    pygame.draw.rect(canvas, (40, 44, 62), (x + 6, 136, 50, 64))
+    pygame.draw.ellipse(canvas, (40, 44, 62), (x + 6, 120, 50, 32))
+    pygame.draw.rect(canvas, (55, 60, 80), (x + 12, 140, 38, 60))
+    pygame.draw.ellipse(canvas, (55, 60, 80), (x + 12, 128, 38, 26))
 
     # Light at the end: sky and grass.
     pygame.draw.rect(canvas, (180, 225, 255), (x + 18, 150, 26, 10))
     pygame.draw.rect(canvas, (255, 250, 210), (x + 18, 160, 26, 16))
     pygame.draw.rect(canvas, (120, 210, 110), (x + 14, 176, 34, 24))
 
+    # Daylight spills out of the tunnel onto the floor.
+    spill = pygame.Surface((90, 16), pygame.SRCALPHA)
+    pygame.draw.polygon(spill, (255, 250, 210, 45), [(20, 0), (70, 0), (90, 16), (0, 16)])
+    canvas.blit(spill, (x - 14, FLOOR_Y))
+
 
 def draw_booth(canvas, pictures, progress, tick):
     # Draw the whole VAR Booth, from the back to the front.
     draw_wall(canvas)
-    draw_window(canvas)
-    draw_monitors(canvas)
-    draw_desk(canvas)
+    draw_floor(canvas)
+    draw_window(canvas, tick)
+    draw_monitors(canvas, tick)
     draw_door(canvas, 238, (250, 250, 250), (200, 200, 210))   # Referee's room
     draw_door(canvas, 296, (255, 210, 70), (215, 160, 40))     # Mascot room
     draw_door(canvas, 354, (110, 170, 255), (70, 120, 210))    # Press room
     draw_tunnel(canvas)
-    draw_floor(canvas)
 
     # The yanked-out camera cable: a socket on the wall, the plug hanging down.
     pygame.draw.rect(canvas, OUTLINE, (17, 135, 10, 9))
@@ -415,6 +513,8 @@ def draw_booth(canvas, pictures, progress, tick):
     pygame.draw.line(canvas, OUTLINE, (22, 144), (34, 156), 2)
     pygame.draw.rect(canvas, OUTLINE, (32, 155, 6, 6))
     pygame.draw.rect(canvas, (90, 90, 100), (33, 156, 4, 4))
+
+    draw_desk(canvas)
 
     # The lanyard hangs over the back of the desk until you take it.
     if "lanyard" not in progress["inventory"]:
@@ -430,9 +530,8 @@ def draw_booth(canvas, pictures, progress, tick):
 
     # The steward stands next to the tunnel to the pitch.
     steward = pictures["steward"]
+    draw_shadow(canvas, 450, FLOOR_Y + 1, steward.get_width() + 4)
     canvas.blit(steward, (452, FLOOR_Y - steward.get_height() - bob(tick, 7)))
-
-
 
 
 # ---------------------------------------------------------------- helpers for the rooms

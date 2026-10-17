@@ -646,6 +646,12 @@ def draw_note_text(window, lines, fonts, scale):
             x = NOTE_X + 90
         else:
             x = NOTE_X + 14
+        # Safety check: if a line is too wide for the note, make it
+        # smaller until it fits (smoothscale keeps handwriting smooth).
+        space = (NOTE_X + NOTE_WIDTH - 10 - x) * scale
+        if picture.get_width() > space:
+            new_height = picture.get_height() * space // picture.get_width()
+            picture = pygame.transform.smoothscale(picture, (space, new_height))
         window.blit(picture, (x * scale, y * scale))
         if i < 2:
             y = y + 28
