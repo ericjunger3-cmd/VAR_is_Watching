@@ -1622,6 +1622,7 @@ STRIKER_X = 196
 BALL_X = 258
 REFEREE_X = 296
 CAPTAIN_X = 322
+BUBBLE_Y = 136      # the top of the captain's "OFFSIDE!" speech bubble
 
 
 def draw_pitch(canvas, pictures, ball, tick):
@@ -1731,19 +1732,22 @@ def draw_pitch_people(canvas, pictures, ball, tick):
     draw_shadow(canvas, CAPTAIN_X + 2 + jump, FLOOR_Y + 1, captain.get_width() - 4 - jump * 2)
     canvas.blit(captain, (CAPTAIN_X, FLOOR_Y - captain.get_height() - jump))
 
-    # The linesman's flag, held up in his hand. It flutters a little.
-    flag_x = LINESMAN_X + 27
+    # The linesman's flag, held up in his right hand (next to his head).
+    # It flutters a little.
+    flag_x = LINESMAN_X + 31
     flutter = (tick // 5) % 2
-    pygame.draw.rect(canvas, OUTLINE, (flag_x, 140, 1, 42))
-    pygame.draw.rect(canvas, OUTLINE, (flag_x, 139, 11, 9 + flutter))
-    pygame.draw.rect(canvas, YELLOW, (flag_x + 1, 140, 9, 7 + flutter))
-    pygame.draw.rect(canvas, HOME_RED, (flag_x + 1, 140, 4, 3))
-    pygame.draw.rect(canvas, HOME_RED, (flag_x + 5, 143, 5, 4 + flutter))
+    pygame.draw.rect(canvas, OUTLINE, (flag_x, 146, 1, 44))
+    pygame.draw.rect(canvas, OUTLINE, (flag_x, 145, 11, 9 + flutter))
+    pygame.draw.rect(canvas, YELLOW, (flag_x + 1, 146, 9, 7 + flutter))
+    pygame.draw.rect(canvas, HOME_RED, (flag_x + 1, 146, 4, 3))
+    pygame.draw.rect(canvas, HOME_RED, (flag_x + 5, 149, 5, 4 + flutter))
+    outlined_box(canvas, SKIN, flag_x - 2, 184, 4, 3)                          # his hand
 
     # A speech bubble over the captain ("OFFSIDE!" is added as text).
-    outlined_box(canvas, WHITE, CAPTAIN_X - 14, 126, 34, 12)
-    pygame.draw.rect(canvas, (220, 225, 235), (CAPTAIN_X - 14, 136, 34, 2))
-    pygame.draw.polygon(canvas, OUTLINE, [(CAPTAIN_X - 2, 138), (CAPTAIN_X + 2, 144), (CAPTAIN_X + 4, 138)])
+    outlined_box(canvas, WHITE, CAPTAIN_X - 14, BUBBLE_Y, 34, 12)
+    pygame.draw.rect(canvas, (220, 225, 235), (CAPTAIN_X - 14, BUBBLE_Y + 10, 34, 2))
+    pygame.draw.polygon(canvas, OUTLINE, [(CAPTAIN_X - 2, BUBBLE_Y + 12), (CAPTAIN_X + 2, BUBBLE_Y + 18),
+                                          (CAPTAIN_X + 4, BUBBLE_Y + 12)])
 
     # The ball, with a little shadow. ball["x"] is where it is now.
     # While it rolls, the picture is turned in steps of 90 degrees
@@ -1954,6 +1958,6 @@ LABELS = {
         ("HOME", 195, 50, (255, 255, 255), False),
         ("1 - 0", 229, 50, (255, 255, 255), False),
         ("AWAY", 258, 50, (255, 255, 255), False),
-        ("OFFSIDE!", CAPTAIN_X - 12, 127, (230, 40, 40), True),
+        ("OFFSIDE!", CAPTAIN_X - 12, BUBBLE_Y + 1, (230, 40, 40), True),
     ],
 }
