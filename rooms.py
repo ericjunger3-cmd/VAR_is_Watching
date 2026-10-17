@@ -1646,58 +1646,103 @@ def draw_pitch_background(canvas, flashing, tick):
     # Everything on the pitch except the people and the ball:
     # the stadium, the boards, the grass, the tunnel, the flag and the goal.
     draw_stadium(canvas, flashing, tick)
+    draw_ad_boards(canvas, tick)
+    draw_grass(canvas)
 
-    # Advertising boards along the side of the pitch.
+    # The tunnel back inside: stone blocks, a red top and a dark inside
+    # that is even darker at the edges.
+    outlined_box(canvas, (140, 140, 155), 8, 130, 64, 70)
+    for block_y in range(140, 200, 8):
+        for pillar_x in [8, 64]:
+            pygame.draw.rect(canvas, (110, 110, 125), (pillar_x, block_y, 8, 1))
+            pygame.draw.rect(canvas, (170, 170, 185), (pillar_x, block_y + 1, 8, 1))
+    pygame.draw.rect(canvas, (30, 34, 48), (16, 138, 48, 62))
+    pygame.draw.rect(canvas, (45, 50, 66), (22, 142, 36, 58))
+    pygame.draw.rect(canvas, HOME_RED, (8, 130, 64, 6))
+    pygame.draw.rect(canvas, (255, 110, 100), (8, 130, 64, 1))
+    draw_shadow(canvas, 4, FLOOR_Y + 1, 72)
+
+    # A corner flag that flutters: the tip moves up and down a little.
+    flutter = (tick // 6) % 3
+    draw_shadow(canvas, 86, FLOOR_Y + 2, 10)
+    pygame.draw.rect(canvas, OUTLINE, (90, 176, 1, 26))
+    pygame.draw.polygon(canvas, OUTLINE, [(90, 175), (102, 178 + flutter), (90, 183)])
+    pygame.draw.polygon(canvas, YELLOW, [(91, 176), (100, 178 + flutter), (91, 182)])
+
+    draw_goal(canvas, tick)
+
+
+def draw_ad_boards(canvas, tick):
+    # LED advertising boards along the side of the pitch. They scroll to
+    # the left (1 pixel every 3 frames); % 240 starts again after 4 boards,
+    # when the pattern repeats.
     boards = [(YELLOW, OUTLINE), ((70, 110, 230), WHITE), (WHITE, HOME_RED), ((90, 180, 110), WHITE)]
-    for i in range(9):
+    scroll = (tick // 3) % 240
+    canvas.set_clip((0, 148, ROOM_WIDTH, 17))
+    for i in range(14):
         background, writing = boards[i % 4]
-        outlined_box(canvas, background, i * 60 + 1, 149, 58, 15)
-        pygame.draw.rect(canvas, writing, (i * 60 + 12, 154, 34, 4))
-        pygame.draw.rect(canvas, writing, (i * 60 + 6, 154, 4, 4))
+        x = i * 60 + 1 - scroll
+        outlined_box(canvas, background, x, 149, 58, 15)
+        pygame.draw.rect(canvas, (min(255, background[0] + 40), min(255, background[1] + 40),
+                                  min(255, background[2] + 40)), (x, 149, 58, 2))      # light top
+        pygame.draw.rect(canvas, darker(background, 0.75), (x, 161, 58, 3))          # dark bottom
+        pygame.draw.rect(canvas, writing, (x + 11, 154, 34, 4))
+        pygame.draw.rect(canvas, writing, (x + 5, 154, 4, 4))
+    canvas.set_clip(None)
+    pygame.draw.rect(canvas, OUTLINE, (0, 164, ROOM_WIDTH, 1))
 
-    # The grass with mowing stripes, all the way down, and the white lines.
+
+def draw_grass(canvas):
+    # The grass with mowing stripes, all the way down. Far away (at the
+    # top) the grass is darker, close to you (at the bottom) it is lighter,
+    # in four steps. Every stripe is made of those four bands.
+    dark_stripe = [(62, 160, 66), (72, 178, 74), (80, 190, 80), (88, 200, 86)]
+    light_stripe = [(80, 180, 80), (92, 198, 90), (100, 210, 95), (110, 220, 104)]
+    band_tops = [165, 180, 200, 230, CANVAS_HEIGHT]
     for i in range(0, ROOM_WIDTH, 30):
         if (i // 30) % 2 == 0:
-            colour = (80, 190, 80)
+            colours = dark_stripe
         else:
-            colour = (100, 210, 95)
-        pygame.draw.rect(canvas, colour, (i, 165, 30, CANVAS_HEIGHT - 165))
+            colours = light_stripe
+        for band in range(4):
+            top = band_tops[band]
+            pygame.draw.rect(canvas, colours[band], (i, top, 30, band_tops[band + 1] - top))
+    # Little light grass blades in the front, where you can see them.
+    for x in range(3, ROOM_WIDTH, 7):
+        blade_y = 212 + (x * 13) % 52
+        pygame.draw.rect(canvas, (140, 230, 120), (x, blade_y, 1, 2))
+    # The white lines: thin far away, thicker close to you.
     pygame.draw.rect(canvas, WHITE, (0, 172, ROOM_WIDTH, 1))
     pygame.draw.rect(canvas, WHITE, (0, FLOOR_Y + 2, ROOM_WIDTH, 2))
-
-    # The tunnel back inside.
-    outlined_box(canvas, (140, 140, 155), 8, 130, 64, 70)
-    pygame.draw.rect(canvas, (40, 45, 60), (16, 138, 48, 62))
-    pygame.draw.rect(canvas, HOME_RED, (8, 130, 64, 6))
-
-    # A corner flag.
-    pygame.draw.rect(canvas, OUTLINE, (90, 176, 1, 26))
-    pygame.draw.polygon(canvas, YELLOW, [(91, 176), (100, 179), (91, 182)])
-
-    draw_goal(canvas)
 
 
 def draw_pitch_people(canvas, pictures, ball, tick):
     # The people: linesman, striker, referee and the away captain.
     # They breathe (one pixel up and down); the angry captain jumps.
+    # Everyone has a shadow on the grass.
     for name, x, phase in [("linesman", LINESMAN_X, 3), ("striker", STRIKER_X, 11),
                            ("referee", REFEREE_X, 5)]:
         picture = pictures[name]
+        draw_shadow(canvas, x + 2, FLOOR_Y + 1, picture.get_width() - 4)
         canvas.blit(picture, (x, FLOOR_Y - picture.get_height() - bob(tick, phase)))
     captain = pictures["captain"]
     jump = ((tick // 6) % 2) * 2
+    # The shadow gets smaller when the captain jumps up.
+    draw_shadow(canvas, CAPTAIN_X + 2 + jump, FLOOR_Y + 1, captain.get_width() - 4 - jump * 2)
     canvas.blit(captain, (CAPTAIN_X, FLOOR_Y - captain.get_height() - jump))
 
-    # The linesman's flag, held up in his hand.
+    # The linesman's flag, held up in his hand. It flutters a little.
     flag_x = LINESMAN_X + 27
+    flutter = (tick // 5) % 2
     pygame.draw.rect(canvas, OUTLINE, (flag_x, 140, 1, 42))
-    pygame.draw.rect(canvas, OUTLINE, (flag_x, 139, 11, 9))
-    pygame.draw.rect(canvas, YELLOW, (flag_x + 1, 140, 9, 7))
+    pygame.draw.rect(canvas, OUTLINE, (flag_x, 139, 11, 9 + flutter))
+    pygame.draw.rect(canvas, YELLOW, (flag_x + 1, 140, 9, 7 + flutter))
     pygame.draw.rect(canvas, HOME_RED, (flag_x + 1, 140, 4, 3))
-    pygame.draw.rect(canvas, HOME_RED, (flag_x + 5, 143, 5, 4))
+    pygame.draw.rect(canvas, HOME_RED, (flag_x + 5, 143, 5, 4 + flutter))
 
     # A speech bubble over the captain ("OFFSIDE!" is added as text).
     outlined_box(canvas, WHITE, CAPTAIN_X - 14, 126, 34, 12)
+    pygame.draw.rect(canvas, (220, 225, 235), (CAPTAIN_X - 14, 136, 34, 2))
     pygame.draw.polygon(canvas, OUTLINE, [(CAPTAIN_X - 2, 138), (CAPTAIN_X + 2, 144), (CAPTAIN_X + 4, 138)])
 
     # The ball, with a little shadow. ball["x"] is where it is now.
@@ -1712,14 +1757,16 @@ def draw_pitch_people(canvas, pictures, ball, tick):
 
 def draw_stadium(canvas, celebrating, tick):
     # Sky, roof, two tiers of fans with the scoreboard, and floodlights.
-    pygame.draw.rect(canvas, (110, 190, 250), (0, 0, ROOM_WIDTH, 20))
-    pygame.draw.rect(canvas, (140, 205, 255), (0, 20, ROOM_WIDTH, 14))
-    draw_cloud(canvas, 40, 6)
-    draw_cloud(canvas, 250, 3)
+    draw_bands(canvas, [(100, 180, 245), (120, 195, 250), (145, 210, 255)], 0, 0, ROOM_WIDTH, 34)
+    # The clouds drift slowly; % 560 brings them back on the left side.
+    for start, cloud_y in [(40, 6), (250, 3), (400, 10)]:
+        cloud_x = (start + tick // 10) % 560 - 40
+        draw_cloud(canvas, cloud_x, cloud_y)
 
     # The roof.
     pygame.draw.rect(canvas, OUTLINE, (0, 33, ROOM_WIDTH, 9))
     pygame.draw.rect(canvas, (200, 205, 215), (0, 34, ROOM_WIDTH, 7))
+    pygame.draw.rect(canvas, (225, 230, 240), (0, 34, ROOM_WIDTH, 1))
     for x in range(0, ROOM_WIDTH, 16):
         pygame.draw.line(canvas, (150, 155, 170), (x, 34), (x + 8, 40))
 
@@ -1731,18 +1778,38 @@ def draw_stadium(canvas, celebrating, tick):
         for fan_x in range(1 + (fan_y // 4) % 2 * 2, ROOM_WIDTH, 4):
             colour = fan_colours[(fan_x * 7 + fan_y * 3) % 6]
             pygame.draw.rect(canvas, colour, (fan_x, fan_y, 2, 2))
+    # The roof throws a shadow on the upper tier: darkest right under the
+    # roof, fading out (three see-through bands).
+    draw_dark_band(canvas, 42, 30, 50)
+    draw_dark_band(canvas, 42, 18, 40)
+    draw_dark_band(canvas, 42, 8, 40)
 
-    # The scoreboard (the text is added later).
+    # Phone flashes in the crowd: every 7 frames one fan takes a photo.
+    # The position comes from a calculation, so it looks random.
+    if tick % 7 < 2:
+        flash_x = (tick * 37) % ROOM_WIDTH
+        flash_y = 46 + (tick * 13) % 96
+        pygame.draw.rect(canvas, WHITE, (flash_x, flash_y, 2, 2))
+        pygame.draw.rect(canvas, (255, 255, 200), (flash_x - 1, flash_y + 1, 4, 1))
+
+    # The scoreboard (the text is added later), with LED dots and a glow.
+    glow = pygame.Surface((120, 50), pygame.SRCALPHA)
+    pygame.draw.ellipse(glow, (255, 240, 180, 30), (0, 0, 120, 50))
+    canvas.blit(glow, (180, 38))
     shaded_box(canvas, (20, 20, 30), (60, 60, 75), (10, 10, 15), 190, 46, 100, 34)
     pygame.draw.rect(canvas, HOME_RED, (194, 50, 30, 10))
     pygame.draw.rect(canvas, AWAY_BLUE, (256, 50, 30, 10))
     pygame.draw.rect(canvas, (255, 200, 40), (194, 66, 92, 10))
     if celebrating:
         pygame.draw.rect(canvas, (230, 60, 60), (194, 66, 92, 10))
+    for dot_x in range(194, 286, 3):
+        canvas.set_at((dot_x, 62), (60, 60, 75))                               # LED dots
 
     # A red banner between the tiers.
     pygame.draw.rect(canvas, OUTLINE, (0, 92, ROOM_WIDTH, 3))
     pygame.draw.rect(canvas, HOME_RED, (0, 95, ROOM_WIDTH, 7))
+    pygame.draw.rect(canvas, (255, 110, 100), (0, 95, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (180, 40, 40), (0, 101, ROOM_WIDTH, 1))
     for x in range(0, ROOM_WIDTH, 40):
         pygame.draw.rect(canvas, WHITE, (x + 6, 97, 22, 3))
 
@@ -1753,12 +1820,24 @@ def draw_stadium(canvas, celebrating, tick):
             colour = fan_colours[(fan_x * 3 + fan_y) % 6]
             pygame.draw.rect(canvas, SKIN, (fan_x + 1, fan_y, 3, 3))
             pygame.draw.rect(canvas, colour, (fan_x, fan_y + 3, 5, 3))
+            pygame.draw.rect(canvas, darker(colour, 0.8), (fan_x + 3, fan_y + 3, 2, 3))
             if (fan_x + fan_y) % 3 == 0:
                 # Fans with their arms up jump: half of them up, half down,
                 # changing every 8 frames.
                 jump = (fan_x // 8 + tick // 8) % 2
                 pygame.draw.rect(canvas, SKIN, (fan_x - 1, fan_y - 2 - jump, 1, 3))
                 pygame.draw.rect(canvas, SKIN, (fan_x + 5, fan_y - 2 - jump, 1, 3))
+
+    # Fans waving red and white scarves above their heads: the scarf
+    # moves from left to right and back.
+    for scarf_x, scarf_y in [(60, 110), (230, 124), (350, 110), (440, 131)]:
+        swing = ((tick // 6 + scarf_x) % 4) - 2
+        for i in range(5):
+            if i % 2 == 0:
+                colour = HOME_RED
+            else:
+                colour = WHITE
+            pygame.draw.rect(canvas, colour, (scarf_x + i * 2 + swing, scarf_y - 4 + abs(i - 2), 2, 2))
 
     # A fan waving a red and white flag.
     # The tip of the flag moves up and down to make it wave.
@@ -1767,14 +1846,19 @@ def draw_stadium(canvas, celebrating, tick):
     pygame.draw.polygon(canvas, HOME_RED, [(151, 98), (166, 99 + wave), (151, 106)])
     pygame.draw.polygon(canvas, WHITE, [(151, 102), (166, 99 + wave), (151, 106)])
 
-    # Two floodlights.
+    # Two floodlights, with a soft glow around them.
     for light_x in [60, 420]:
+        halo = pygame.Surface((60, 34), pygame.SRCALPHA)
+        pygame.draw.ellipse(halo, (255, 250, 210, 60), (0, 0, 60, 34))
+        pygame.draw.ellipse(halo, (255, 250, 210, 60), (12, 6, 36, 22))
+        canvas.blit(halo, (light_x - 29, -8))
         outlined_box(canvas, (90, 90, 100), light_x - 14, 2, 30, 14)
         for i in range(3):
             pygame.draw.rect(canvas, (255, 250, 200), (light_x - 12 + i * 10, 4, 8, 10))
+            pygame.draw.rect(canvas, WHITE, (light_x - 12 + i * 10, 4, 8, 2))
 
 
-def draw_goal(canvas):
+def draw_goal(canvas, tick):
     # The goal seen from the side: a shadow, the net inside the frame,
     # the back post and ground bar (light grey, because they are further
     # away), then the white front post and crossbar.
@@ -1784,7 +1868,9 @@ def draw_goal(canvas):
     canvas.blit(shadow, (384, 196))
 
     # The net: a light area with a grid, only between the posts.
+    # The top part is a bit darker (in the shadow of the crossbar).
     pygame.draw.rect(canvas, (235, 240, 250), (393, 125, 98, 74))
+    pygame.draw.rect(canvas, (215, 222, 235), (393, 125, 98, 10))
     for net_x in range(395, 491, 4):
         pygame.draw.line(canvas, (195, 200, 215), (net_x, 125), (net_x, 198))
     for net_y in range(127, 199, 4):
@@ -1794,18 +1880,28 @@ def draw_goal(canvas):
     outlined_box(canvas, (200, 205, 215), 490, 122, 4, 78)
     outlined_box(canvas, (200, 205, 215), 393, 197, 101, 3)
 
-    # The white front post and the crossbar.
+    # The white front post and the crossbar, with a grey shadow side.
     outlined_box(canvas, WHITE, 388, 120, 106, 5)
+    pygame.draw.rect(canvas, (210, 215, 225), (388, 123, 106, 2))
     outlined_box(canvas, WHITE, 388, 120, 5, 80)
+    pygame.draw.rect(canvas, (210, 215, 225), (391, 120, 2, 80))
 
-    # A photographer kneeling next to the goal.
-    for photographer_x in [368]:
-        pygame.draw.rect(canvas, OUTLINE, (photographer_x, 186, 14, 14))
-        pygame.draw.rect(canvas, (60, 60, 80), (photographer_x + 1, 187, 12, 13))
-        pygame.draw.circle(canvas, OUTLINE, (photographer_x + 7, 182), 5)
-        pygame.draw.circle(canvas, (110, 75, 50), (photographer_x + 7, 182), 4)
-        outlined_box(canvas, (30, 30, 40), photographer_x - 7, 184, 9, 6)
-        pygame.draw.rect(canvas, (60, 60, 70), (photographer_x - 13, 185, 7, 4))
+    # A photographer kneeling next to the goal. Now and then the camera
+    # flashes (2 frames out of every 70).
+    photographer_x = 368
+    draw_shadow(canvas, photographer_x - 14, FLOOR_Y + 1, 30)
+    pygame.draw.rect(canvas, OUTLINE, (photographer_x, 186, 14, 14))
+    pygame.draw.rect(canvas, (60, 60, 80), (photographer_x + 1, 187, 12, 13))
+    pygame.draw.rect(canvas, (85, 85, 105), (photographer_x + 1, 187, 3, 13))
+    pygame.draw.circle(canvas, OUTLINE, (photographer_x + 7, 182), 5)
+    pygame.draw.circle(canvas, (110, 75, 50), (photographer_x + 7, 182), 4)
+    outlined_box(canvas, (30, 30, 40), photographer_x - 7, 184, 9, 6)
+    pygame.draw.rect(canvas, (60, 60, 70), (photographer_x - 13, 185, 7, 4))
+    if tick % 70 < 2:
+        flash = pygame.Surface((30, 30), pygame.SRCALPHA)
+        pygame.draw.circle(flash, (255, 255, 255, 120), (15, 15), 14)
+        canvas.blit(flash, (photographer_x - 28, 172))
+        pygame.draw.rect(canvas, WHITE, (photographer_x - 15, 186, 3, 1))
 
 
 # ---------------------------------------------------------------- choosing a room
