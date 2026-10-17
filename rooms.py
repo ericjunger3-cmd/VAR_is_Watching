@@ -2,6 +2,7 @@
 # Everything is drawn on a small 480 x 270 "canvas". The game scales the
 # canvas up 2x afterwards, so every pixel here becomes a 2 x 2 block.
 
+import math
 import random
 import pygame
 from sprites import OUTLINE
@@ -518,25 +519,6 @@ def draw_feather(canvas, x, y):
 
 # ---------------------------------------------------------------- floors
 
-def draw_tile_floor(canvas):
-    # Wet white tiles for the dressing room, with a puddle by the shower.
-    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, ROOM_WIDTH, 1))
-    pygame.draw.rect(canvas, (150, 165, 180), (0, FLOOR_Y, ROOM_WIDTH, CANVAS_HEIGHT - FLOOR_Y))
-    row = 0
-    for y in range(FLOOR_Y, CANVAS_HEIGHT, 10):
-        if row % 2 == 0:
-            shift = 0
-        else:
-            shift = 10
-        for x in range(-20 + shift, ROOM_WIDTH, 20):
-            pygame.draw.rect(canvas, (215, 225, 235), (x + 1, y + 1, 19, 9))
-            pygame.draw.rect(canvas, (240, 245, 250), (x + 1, y + 1, 19, 2))
-        row = row + 1
-    # The puddle: light blue with a white shine.
-    pygame.draw.ellipse(canvas, (140, 200, 240), (405, FLOOR_Y + 4, 60, 10))
-    pygame.draw.line(canvas, WHITE, (415, FLOOR_Y + 7), (430, FLOOR_Y + 7))
-
-
 def draw_carpet(canvas, colour, light, dark):
     # A wooden skirting board and a carpet with a dotted pattern.
     pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, ROOM_WIDTH, 1))
@@ -551,35 +533,87 @@ def draw_carpet(canvas, colour, light, dark):
 
 # ---------------------------------------------------------------- Referee's Dressing Room
 
+def draw_tile_floor(canvas, tick):
+    # Wet white floor tiles. Every row is a bit taller (and the tiles a bit
+    # wider) than the row behind it: things close to you look bigger, so
+    # the floor seems to go into the screen. The front rows are lighter.
+    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, ROOM_WIDTH, 1))
+    y = FLOOR_Y
+    height = 5
+    row = 0
+    while y < CANVAS_HEIGHT:
+        width = height * 3
+        # The colour gets lighter row by row (row * 7 more of each colour).
+        tile = (165 + row * 7, 178 + row * 7, 195 + row * 6)
+        grout = darker(tile, 0.75)
+        pygame.draw.rect(canvas, grout, (0, y, ROOM_WIDTH, height))
+        shift = (row % 2) * (width // 2)
+        for x in range(-width + shift, ROOM_WIDTH, width):
+            pygame.draw.rect(canvas, tile, (x + 1, y + 1, width - 1, height - 1))
+            pygame.draw.rect(canvas, (240, 245, 250), (x + 1, y + 1, width - 1, 1))   # shine
+        y = y + height
+        height = height + 1
+        row = row + 1
+
+    # The puddle by the shower, with a white shine and a ripple that
+    # grows (a drop falls in) and starts again: % 16 counts 0 ... 15.
+    pygame.draw.ellipse(canvas, (120, 185, 230), (405, FLOOR_Y + 4, 60, 11))
+    pygame.draw.ellipse(canvas, (150, 210, 245), (408, FLOOR_Y + 5, 54, 8))
+    pygame.draw.line(canvas, WHITE, (415, FLOOR_Y + 7), (430, FLOOR_Y + 7))
+    ripple = (tick // 3) % 16
+    if ripple > 2:
+        pygame.draw.ellipse(canvas, (220, 240, 255), (440 - ripple, FLOOR_Y + 9 - ripple // 4, ripple * 2, ripple // 2 + 2), 1)
+
+    # The drain of the shower.
+    pygame.draw.ellipse(canvas, OUTLINE, (432, FLOOR_Y + 1, 16, 5))
+    pygame.draw.ellipse(canvas, (120, 125, 140), (433, FLOOR_Y + 2, 14, 3))
+
+
+def draw_wall_tiles(canvas, top, bottom, tile, light, dark):
+    # Square wall tiles (14 x 14) with dark grout lines between them.
+    # Every tile has a light top and left edge and a dark bottom and
+    # right edge, so it looks like it sticks out a tiny bit.
+    pygame.draw.rect(canvas, darker(tile, 0.72), (0, top, ROOM_WIDTH, bottom - top))
+    for y in range(top, bottom, 14):
+        for x in range(0, ROOM_WIDTH, 14):
+            pygame.draw.rect(canvas, tile, (x + 1, y + 1, 13, 13))
+            pygame.draw.rect(canvas, light, (x + 1, y + 1, 13, 1))
+            pygame.draw.rect(canvas, light, (x + 1, y + 1, 1, 13))
+            pygame.draw.rect(canvas, dark, (x + 1, y + 13, 13, 1))
+            pygame.draw.rect(canvas, dark, (x + 13, y + 1, 1, 13))
+
+
+def draw_dark_band(canvas, y, height, alpha):
+    # A see-through dark stripe across the whole room. Used near the
+    # ceiling and just above the floor, where less light reaches.
+    band = pygame.Surface((ROOM_WIDTH, height), pygame.SRCALPHA)
+    band.fill((10, 20, 40, alpha))
+    canvas.blit(band, (0, y))
+
+
 def draw_dressing_room(canvas, pictures, progress, tick):
     # Tiled walls: light tiles on top, darker tiles below, a white strip between.
-    canvas.fill((120, 170, 185))
-    for y in range(0, FLOOR_Y, 14):
-        for x in range(0, ROOM_WIDTH, 14):
-            if y >= 120:
-                tile, shine = (95, 165, 185), (125, 190, 205)
-            else:
-                tile, shine = (175, 225, 235), (210, 242, 248)
-            pygame.draw.rect(canvas, tile, (x + 1, y + 1, 13, 13))
-            pygame.draw.rect(canvas, shine, (x + 1, y + 1, 13, 2))
+    draw_wall_tiles(canvas, 0, 117, (175, 225, 235), (215, 244, 250), (145, 200, 215))
+    draw_wall_tiles(canvas, 121, FLOOR_Y, (95, 165, 185), (130, 192, 208), (75, 140, 160))
     pygame.draw.rect(canvas, (235, 245, 250), (0, 117, ROOM_WIDTH, 2))
     pygame.draw.rect(canvas, OUTLINE, (0, 119, ROOM_WIDTH, 2))
+    # Less light near the ceiling and near the floor (two steps each).
+    draw_dark_band(canvas, 7, 12, 45)
+    draw_dark_band(canvas, 7, 6, 35)
+    draw_dark_band(canvas, 180, 20, 30)
+    draw_dark_band(canvas, 192, 8, 35)
+    # The ceiling.
     pygame.draw.rect(canvas, (215, 225, 235), (0, 0, ROOM_WIDTH, 6))
     pygame.draw.rect(canvas, OUTLINE, (0, 6, ROOM_WIDTH, 1))
     draw_ceiling_lamps(canvas, [90, 230, 370])
 
     draw_door(canvas, 20, (250, 250, 250), (200, 200, 210))     # back to the booth
-
-    # A wall clock: it is very late in the match.
-    pygame.draw.circle(canvas, OUTLINE, (95, 45), 13)
-    pygame.draw.circle(canvas, WHITE, (95, 45), 12)
-    pygame.draw.circle(canvas, HOME_RED, (95, 45), 12, 2)
-    pygame.draw.line(canvas, OUTLINE, (95, 45), (95, 37), 2)
-    pygame.draw.line(canvas, OUTLINE, (95, 45), (101, 47), 2)
+    draw_wall_clock(canvas, tick)
 
     # The tactics whiteboard with crosses, circles and arrows.
     shaded_box(canvas, (250, 252, 255), WHITE, (215, 220, 230), 120, 28, 70, 46)
     pygame.draw.rect(canvas, (170, 175, 190), (118, 74, 74, 3))
+    pygame.draw.rect(canvas, (120, 125, 140), (118, 76, 74, 1))
     for x, y in [(132, 40), (150, 58), (170, 44)]:
         pygame.draw.line(canvas, HOME_RED, (x - 3, y - 3), (x + 3, y + 3))
         pygame.draw.line(canvas, HOME_RED, (x - 3, y + 3), (x + 3, y - 3))
@@ -593,12 +627,16 @@ def draw_dressing_room(canvas, pictures, progress, tick):
     # Coat hooks with the referee's jacket and a towel.
     pygame.draw.rect(canvas, OUTLINE, (205, 30, 60, 4))
     pygame.draw.rect(canvas, (200, 160, 110), (205, 30, 60, 3))
+    pygame.draw.rect(canvas, (230, 195, 145), (205, 30, 60, 1))
     for hook_x in [212, 232, 252]:
         pygame.draw.rect(canvas, OUTLINE, (hook_x, 34, 2, 4))
     pygame.draw.polygon(canvas, OUTLINE, [(205, 37), (221, 37), (224, 78), (202, 78)])
     pygame.draw.polygon(canvas, (30, 30, 45), [(206, 38), (220, 38), (223, 77), (203, 77)])
+    pygame.draw.polygon(canvas, (50, 50, 68), [(206, 38), (210, 38), (208, 77), (203, 77)])  # light side
     pygame.draw.rect(canvas, YELLOW, (212, 40, 2, 30))
     outlined_box(canvas, (240, 120, 120), 246, 38, 12, 30)
+    pygame.draw.rect(canvas, (255, 160, 160), (246, 38, 3, 30))
+    pygame.draw.rect(canvas, (200, 90, 90), (255, 38, 3, 30))
     pygame.draw.rect(canvas, WHITE, (246, 46, 12, 2))
     pygame.draw.rect(canvas, WHITE, (246, 58, 12, 2))
 
@@ -607,71 +645,156 @@ def draw_dressing_room(canvas, pictures, progress, tick):
     pygame.draw.rect(canvas, HOME_RED, (290, 26, 62, 6))
     pygame.draw.circle(canvas, BLACK, (321, 68), 6)
     pygame.draw.rect(canvas, BLACK, (314, 74, 14, 6))
+    pygame.draw.polygon(canvas, (215, 205, 185), [(346, 26), (352, 26), (352, 32)])   # bent corner
 
-    # Six lockers. Number 3 is open, with a referee shirt and shin pads inside.
-    for i in range(6):
-        x = 116 + i * 30
-        y = FLOOR_Y - 78
-        if i == 3:
-            draw_open_locker(canvas, x, y)
-        else:
-            shaded_box(canvas, (90, 140, 210), (130, 175, 235), (60, 100, 170), x, y, 28, 78)
-            for vent_y in range(y + 6, y + 20, 4):
-                pygame.draw.rect(canvas, (60, 100, 170), (x + 7, vent_y, 14, 2))
-            pygame.draw.rect(canvas, OUTLINE, (x + 20, y + 36, 3, 10))       # handle
-            pygame.draw.rect(canvas, WHITE, (x + 6, y + 24, 16, 6))          # name tag
-            pygame.draw.rect(canvas, (150, 150, 170), (x + 8, y + 26, 10, 1))
-        if i == 1:
-            pygame.draw.circle(canvas, YELLOW, (x + 10, y + 55), 4)          # sticker
-        if i == 4:
-            pygame.draw.rect(canvas, HOME_RED, (x + 6, y + 50, 8, 6))        # sticker
+    draw_lockers(canvas)
 
     # The bench with a folded towel, a water bottle and the half-eaten orange.
+    draw_shadow(canvas, 136, 201, 158)
     shaded_box(canvas, (215, 150, 80), (245, 185, 110), (170, 110, 60), 140, 172, 150, 7)
     for leg_x in [148, 278]:
-        outlined_box(canvas, (160, 100, 55), leg_x, 180, 5, 19)
+        shaded_box(canvas, (160, 100, 55), (190, 125, 75), (120, 75, 40), leg_x, 180, 5, 19)
     outlined_box(canvas, WHITE, 160, 164, 22, 8)
     pygame.draw.rect(canvas, (120, 200, 230), (160, 167, 22, 2))
+    pygame.draw.rect(canvas, (215, 225, 235), (160, 170, 22, 2))
     outlined_box(canvas, (100, 180, 240), 200, 154, 7, 18)
+    pygame.draw.rect(canvas, (180, 225, 255), (201, 156, 1, 14))               # shine
     pygame.draw.rect(canvas, HOME_RED, (200, 152, 7, 3))
     pygame.draw.circle(canvas, OUTLINE, (255, 168), 6)
     pygame.draw.circle(canvas, (250, 150, 40), (255, 168), 5)
+    pygame.draw.circle(canvas, (255, 190, 90), (254, 167), 2)
     pygame.draw.rect(canvas, (255, 230, 170), (250, 162, 5, 6))                # the bite
     pygame.draw.rect(canvas, (250, 150, 40), (266, 169, 4, 2))                 # peel
     pygame.draw.rect(canvas, (250, 150, 40), (240, 170, 3, 2))
 
+    draw_shadow(canvas, 296, 201, 52)
     draw_kit_cabinet(canvas, pictures, progress)
 
     # Under the bench: muddy boots and a kit bag.
     for boot_x in [175, 191]:
+        draw_shadow(canvas, boot_x - 1, 201, 16)
         outlined_box(canvas, (40, 40, 45), boot_x, 191, 13, 9)
+        pygame.draw.rect(canvas, (70, 70, 80), (boot_x, 191, 13, 1))
         pygame.draw.rect(canvas, (120, 80, 50), (boot_x, 196, 13, 4))         # mud
+    draw_shadow(canvas, 212, 201, 46)
     outlined_box(canvas, (30, 30, 45), 215, 184, 40, 16)
+    pygame.draw.rect(canvas, (55, 55, 75), (215, 184, 40, 2))
     pygame.draw.rect(canvas, HOME_RED, (215, 189, 40, 3))
     pygame.draw.rect(canvas, OUTLINE, (228, 180, 14, 4))
 
-    # A bin with paper cups.
-    outlined_box(canvas, (120, 130, 150), 350, 180, 18, 20)
+    # A bin with paper cups, and a net bag full of footballs.
+    draw_shadow(canvas, 347, 201, 24)
+    shaded_box(canvas, (120, 130, 150), (155, 165, 185), (90, 98, 115), 350, 180, 18, 20)
     outlined_box(canvas, WHITE, 352, 175, 5, 6)
     outlined_box(canvas, WHITE, 360, 177, 5, 4)
+    draw_ball_bag(canvas)
 
     draw_shower(canvas, tick)
-    draw_tile_floor(canvas)
+
+    # The lamps shine down into the room.
+    for lamp_x in [90, 230, 370]:
+        draw_light_cone(canvas, lamp_x + 8, 13, FLOOR_Y, 14, 80)
+
+    draw_tile_floor(canvas, tick)
+
+
+# Where the dressing room clock hangs (its middle).
+WALL_CLOCK_X = 92
+WALL_CLOCK_Y = 82
+
+
+def draw_wall_clock(canvas, tick):
+    # A wall clock: it is very late in the match. The red second hand
+    # ticks once per second (every 30 frames) and goes round in a minute.
+    pygame.draw.circle(canvas, OUTLINE, (WALL_CLOCK_X, WALL_CLOCK_Y), 13)
+    pygame.draw.circle(canvas, WHITE, (WALL_CLOCK_X, WALL_CLOCK_Y), 12)
+    pygame.draw.circle(canvas, (225, 230, 240), (WALL_CLOCK_X + 1, WALL_CLOCK_Y + 1), 10)
+    pygame.draw.circle(canvas, WHITE, (WALL_CLOCK_X, WALL_CLOCK_Y), 9)
+    pygame.draw.circle(canvas, HOME_RED, (WALL_CLOCK_X, WALL_CLOCK_Y), 12, 2)
+    for mark_x, mark_y in [(WALL_CLOCK_X, WALL_CLOCK_Y - 10), (WALL_CLOCK_X + 10, WALL_CLOCK_Y), (WALL_CLOCK_X, WALL_CLOCK_Y + 10), (WALL_CLOCK_X - 10, WALL_CLOCK_Y)]:
+        canvas.set_at((mark_x, mark_y), OUTLINE)
+    pygame.draw.line(canvas, OUTLINE, (WALL_CLOCK_X, WALL_CLOCK_Y), (WALL_CLOCK_X, WALL_CLOCK_Y - 8), 2)
+    pygame.draw.line(canvas, OUTLINE, (WALL_CLOCK_X, WALL_CLOCK_Y), (WALL_CLOCK_X + 6, WALL_CLOCK_Y + 2), 2)
+    # The second hand: an angle from the seconds, then sin and cos turn the
+    # angle into an end point (6 degrees per second, 0 = straight up).
+    seconds = (tick // 30) % 60
+    angle = math.radians(seconds * 6)
+    end_x = WALL_CLOCK_X + round(9 * math.sin(angle))
+    end_y = WALL_CLOCK_Y - round(9 * math.cos(angle))
+    pygame.draw.line(canvas, HOME_RED, (WALL_CLOCK_X, WALL_CLOCK_Y), (end_x, end_y))
+    pygame.draw.rect(canvas, OUTLINE, (WALL_CLOCK_X - 1, WALL_CLOCK_Y - 1, 2, 2))
+
+
+def draw_lockers(canvas):
+    # Six lockers. Number 3 is open, with a referee shirt and shin pads inside.
+    y = FLOOR_Y - 78
+    # A dark top on the lockers, and a shadow on the wall above them.
+    draw_shadow(canvas, 110, y - 2, 192)
+    for i in range(6):
+        x = 116 + i * 30
+        if i == 3:
+            draw_open_locker(canvas, x, y)
+        else:
+            shaded_box(canvas, (90, 140, 210), (130, 175, 235), (60, 100, 170), x, y, 28, 78)
+            # Vents: a dark slot with a light line below it (it looks cut in).
+            for vent_y in range(y + 6, y + 20, 4):
+                pygame.draw.rect(canvas, (45, 75, 135), (x + 7, vent_y, 14, 2))
+                pygame.draw.rect(canvas, (125, 170, 230), (x + 7, vent_y + 2, 14, 1))
+            pygame.draw.rect(canvas, OUTLINE, (x + 20, y + 36, 3, 10))       # handle
+            pygame.draw.rect(canvas, (200, 205, 220), (x + 20, y + 36, 1, 10))
+            pygame.draw.rect(canvas, WHITE, (x + 6, y + 24, 16, 6))          # name tag
+            pygame.draw.rect(canvas, (150, 150, 170), (x + 8, y + 26, 10, 1))
+            # A thin shine line across the metal door.
+            pygame.draw.line(canvas, (125, 170, 232), (x + 5, y + 70), (x + 14, y + 52))
+        if i == 1:
+            pygame.draw.circle(canvas, OUTLINE, (x + 10, y + 55), 5)         # sticker
+            pygame.draw.circle(canvas, YELLOW, (x + 10, y + 55), 4)
+        if i == 4:
+            outlined_box(canvas, HOME_RED, x + 6, y + 50, 8, 6)               # sticker
+        if i == 5:
+            # A small padlock on the handle.
+            pygame.draw.circle(canvas, OUTLINE, (x + 21, y + 47), 3, 1)
+            outlined_box(canvas, (220, 180, 60), x + 18, y + 48, 7, 6)
+            canvas.set_at((x + 21, y + 50), OUTLINE)
+    # The base under the lockers, and dark gaps between the doors.
+    outlined_box(canvas, (40, 60, 110), 115, FLOOR_Y - 5, 181, 5)
+    for i in range(1, 6):
+        pygame.draw.rect(canvas, OUTLINE, (116 + i * 30 - 2, y, 2, 78))
+
+
+def draw_ball_bag(canvas):
+    # A net bag with three footballs, standing on the floor.
+    draw_shadow(canvas, 370, 201, 22)
+    for ball_x, ball_y in [(376, 194), (386, 194), (381, 186)]:
+        pygame.draw.circle(canvas, OUTLINE, (ball_x, ball_y), 6)
+        pygame.draw.circle(canvas, (230, 235, 245), (ball_x, ball_y), 5)
+        pygame.draw.circle(canvas, WHITE, (ball_x - 1, ball_y - 1), 3)
+        pygame.draw.rect(canvas, OUTLINE, (ball_x - 1, ball_y - 1, 2, 2))
+    # The net: thin lines over the balls.
+    for net_x in range(371, 393, 4):
+        pygame.draw.line(canvas, (90, 95, 110), (net_x, 182), (net_x + 2, 200))
+    pygame.draw.line(canvas, (90, 95, 110), (372, 190), (391, 190))
+    pygame.draw.rect(canvas, HOME_RED, (378, 178, 6, 3))                       # the knot
 
 
 def draw_open_locker(canvas, x, y):
     # An open locker: dark inside, a hanging referee shirt, yellow shin pads,
     # and the door sticking out to the right.
     outlined_box(canvas, (40, 50, 80), x, y, 28, 78)
+    pygame.draw.rect(canvas, (28, 35, 60), (x, y, 28, 6))                      # dark top inside
     pygame.draw.rect(canvas, (60, 75, 110), (x + 2, y + 2, 24, 3))             # shelf
     pygame.draw.rect(canvas, OUTLINE, (x + 12, y + 8, 4, 3))                   # hanger
     pygame.draw.rect(canvas, OUTLINE, (x + 4, y + 11, 20, 30))
     pygame.draw.rect(canvas, (30, 30, 42), (x + 5, y + 12, 18, 28))
+    pygame.draw.rect(canvas, (48, 48, 64), (x + 5, y + 12, 4, 28))
     pygame.draw.rect(canvas, WHITE, (x + 11, y + 12, 6, 2))
     outlined_box(canvas, YELLOW, x + 6, y + 56, 6, 12)
     outlined_box(canvas, YELLOW, x + 15, y + 56, 6, 12)
+    pygame.draw.rect(canvas, (255, 240, 150), (x + 6, y + 56, 2, 12))
+    pygame.draw.rect(canvas, (255, 240, 150), (x + 15, y + 56, 2, 12))
     pygame.draw.polygon(canvas, OUTLINE, [(x + 28, y - 1), (x + 40, y + 4), (x + 40, y + 74), (x + 28, y + 79)])
     pygame.draw.polygon(canvas, (110, 160, 225), [(x + 29, y + 1), (x + 39, y + 5), (x + 39, y + 73), (x + 29, y + 77)])
+    pygame.draw.polygon(canvas, (140, 185, 240), [(x + 29, y + 1), (x + 32, y + 2), (x + 32, y + 76), (x + 29, y + 77)])
 
 
 def draw_kit_cabinet(canvas, pictures, progress):
@@ -694,22 +817,40 @@ def draw_kit_cabinet(canvas, pictures, progress):
 
 
 def draw_shower(canvas, tick):
-    # The shower corner: tiles, a striped curtain, water drops and steam.
+    # The shower corner: tiles, a striped curtain, falling water and steam.
     outlined_box(canvas, (150, 200, 215), 392, 22, 84, 178)
     for y in range(22, 200, 12):
         for x in range(392, 476, 12):
             pygame.draw.rect(canvas, (170, 215, 230), (x + 1, y + 1, 11, 11))
-    pygame.draw.rect(canvas, OUTLINE, (392, 26, 84, 2))                      # curtain rail
+            pygame.draw.rect(canvas, (200, 235, 245), (x + 1, y + 1, 11, 1))
+            pygame.draw.rect(canvas, (150, 195, 212), (x + 1, y + 11, 11, 1))
+    # The curtain rail with rings, and the curtain with folds: every stripe
+    # has a light left edge and a dark right edge, and the stripes end at
+    # different heights, so the bottom looks wavy.
+    pygame.draw.rect(canvas, OUTLINE, (392, 26, 84, 2))
+    pygame.draw.rect(canvas, (200, 205, 215), (392, 26, 84, 1))
     for i in range(6):
         if i % 2 == 0:
-            stripe = WHITE
+            stripe, light, dark = WHITE, WHITE, (215, 220, 230)
         else:
-            stripe = (240, 120, 120)
-        pygame.draw.rect(canvas, stripe, (393 + i * 5, 28, 5, 150))
-    pygame.draw.rect(canvas, OUTLINE, (423, 28, 1, 150))
-    outlined_box(canvas, (200, 205, 215), 448, 34, 14, 5)                     # shower head
-    for drop_x, drop_y in [(450, 50), (456, 62), (452, 78), (459, 92), (449, 105)]:
-        pygame.draw.rect(canvas, (90, 160, 230), (drop_x, drop_y, 1, 3))
+            stripe, light, dark = (240, 120, 120), (255, 160, 160), (200, 90, 90)
+        length = 150 + (i % 2) * 2
+        pygame.draw.rect(canvas, stripe, (393 + i * 5, 28, 5, length))
+        pygame.draw.rect(canvas, light, (393 + i * 5, 28, 1, length))
+        pygame.draw.rect(canvas, dark, (397 + i * 5, 28, 1, length))
+        pygame.draw.circle(canvas, OUTLINE, (395 + i * 5, 27), 2, 1)          # ring
+    pygame.draw.rect(canvas, OUTLINE, (423, 28, 1, 152))
+    # The shower head and its pipe.
+    pygame.draw.rect(canvas, OUTLINE, (464, 22, 3, 14))
+    pygame.draw.rect(canvas, (200, 205, 215), (465, 22, 1, 13))
+    outlined_box(canvas, (200, 205, 215), 448, 34, 18, 5)
+    pygame.draw.rect(canvas, (235, 240, 248), (448, 34, 18, 1))
+    # Falling water: every drop moves down 4 pixels per frame and starts
+    # again at the top. % 150 keeps the drop between the head and the floor.
+    for drop_x, offset in [(450, 0), (454, 40), (458, 85), (462, 20), (452, 110), (460, 60)]:
+        drop_y = 40 + (tick * 4 + offset) % 150
+        pygame.draw.rect(canvas, (90, 160, 230), (drop_x, drop_y, 1, 4))
+        pygame.draw.rect(canvas, (180, 220, 250), (drop_x, drop_y, 1, 1))
 
     # See-through steam clouds (transparency 120 out of 255). Each cloud
     # slowly rises 60 pixels and then starts again at the bottom:
