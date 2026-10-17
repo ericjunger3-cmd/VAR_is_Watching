@@ -71,7 +71,7 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
   grids), `ui.py` (dialogue box, pundit TV, close-ups, inventory bar).
 - `story.json` – all story content, shared by both versions.
 - `save.json` – terminal progress, **saved after every accepted action**.
-  The 2D version will save to `save_2d.json` (same format).
+  The 2D version saves to `save_2d.json` (same format).
 - Run with `py game.py` / `py game_2d.py` (Python 3.15 on this PC; `python`
   points to the Microsoft Store alias).
 
