@@ -91,6 +91,7 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `story.json` | all the story content: scenes, actions, items and endings (shared by both versions) |
 | `save.json` | terminal progress; created by the game and saved after every accepted action |
 | `save_2d.json` | 2D progress, same format; saved after every accepted action |
+| `settings.json` | the 2D volume and mute setting (kept after a New Game) |
 | `sound.py` | loads and plays the sounds and music of the 2D game; remembers the volume |
 | `sounds/` | all sound effects, room sounds and music as .wav files |
 | `tools/make_sounds.py` | the tool that made the sounds (not part of the game): run `py tools/make_sounds.py` to make them again |

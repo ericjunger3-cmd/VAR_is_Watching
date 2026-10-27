@@ -73,7 +73,8 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
   grids), `ui.py` (dialogue box, pundit TV, close-ups, inventory bar).
 - `sound.py` – sounds and music for the 2D version (pygame.mixer); the .wav files
   are in `sounds/` and are made by `tools/make_sounds.py` (chiptune synthesis with
-  math/wave/random only; a tool, not part of the game). Volume slider 0-10 + M mute.
+  math/wave/random only; a tool, not part of the game). Volume slider 0-10 + M mute,
+  remembered in `settings.json` (separate from the save, so New Game keeps it).
 - `story.json` – all story content, shared by both versions.
 - `save.json` – terminal progress, **saved after every accepted action**.
   The 2D version saves to `save_2d.json` (same format).

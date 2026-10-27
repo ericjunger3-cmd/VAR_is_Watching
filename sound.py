@@ -2,9 +2,14 @@
 # The sounds are .wav files in the sounds folder (made by tools/make_sounds.py).
 # If the computer has no sound device, the game simply runs without sound.
 
+import json
 import pygame
 
 SOUND_FOLDER = "sounds/"
+
+# The volume is remembered in its own small file (not in the save file),
+# so it stays the same after a New Game and after closing the game.
+SETTINGS_FILE = "settings.json"
 
 # Short sounds (effects) and long sounds that repeat (the background of a room).
 EFFECTS = ["pickup", "door", "bonk", "blip", "confirm", "type", "whistle", "coo",
@@ -27,9 +32,29 @@ state = {
 }
 
 
+def load_settings():
+    # Read the volume from last time. If there is no settings file yet
+    # (first time playing) or it is broken, we keep the normal volume.
+    try:
+        with open(SETTINGS_FILE) as file:
+            settings = json.load(file)
+        state["volume"] = max(0, min(10, int(settings["volume"])))
+        state["muted"] = settings["muted"] == True
+    except (FileNotFoundError, ValueError, KeyError, TypeError):
+        return
+
+
+def save_settings():
+    # Write the volume to the settings file, so it is remembered next time.
+    settings = {"volume": state["volume"], "muted": state["muted"]}
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(settings, file)
+
+
 def start():
     # Switch the sound system on and load all sounds. If that fails
     # (for example: no speakers), the game works without sound.
+    load_settings()
     try:
         pygame.mixer.init()
         for name in EFFECTS + AMBIENCE:
@@ -100,6 +125,7 @@ def change_volume(step):
     state["volume"] = max(0, min(10, state["volume"] + step))
     state["muted"] = False
     apply_volume()
+    save_settings()
     play("blip")
 
 
@@ -107,6 +133,7 @@ def toggle_mute():
     # M: everything silent, or back to the slider's volume.
     state["muted"] = not state["muted"]
     apply_volume()
+    save_settings()
 
 
 def volume_text():

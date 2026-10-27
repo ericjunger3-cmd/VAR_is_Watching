@@ -224,3 +224,6 @@ save.json
 
 # Progress of the 2D game
 save_2d.json
+
+# Volume setting of the 2D game
+settings.json
