@@ -7,6 +7,7 @@ import game
 import sprites
 import rooms
 import ui
+import sound
 
 # Everything is drawn on a small canvas and then made 2x bigger,
 # so each pixel becomes a 2 x 2 block: the "chunky pixel" look.
@@ -31,6 +32,12 @@ FLY_FRAMES = 25
 
 # How many frames Dave's reveal (taking off the mask) takes.
 REVEAL_FRAMES = 60
+
+# The room sounds that play in the background of some rooms.
+ROOM_SOUNDS = {"pitch": "crowd", "dressing_room": "shower"}
+
+# The endings that get the happy jingle (all others get the sad one).
+GOOD_ENDINGS = ["var_is_watching", "justice_served", "clip_of_the_year"]
 
 
 
@@ -177,11 +184,13 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
     # 1. Blocked (locked door, steward, no proof ...): show why, change nothing.
     reason = game.blocked_reason(action, inventory, choices)
     if reason is not None:
+        sound.play("bonk")
         say(screen, reason, fonts)
         return
 
     # 2. The sticky note opens as a close-up.
     if "closeup" in action:
+        sound.play("blip")
         screen["closeup"] = action["closeup"]
         return
 
@@ -190,6 +199,7 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
     #    "line" is where the offside line is, in tenths of a metre (300 = 30.0 m).
     if "review" in action:
         screen["review"] = {"step": "time", "frame": 0, "line": 300}
+        sound.play("beep")
         # Holding an arrow key now repeats it (after 200 ms, every 30 ms),
         # so the sliders move smoothly.
         pygame.key.set_repeat(200, 30)
@@ -203,6 +213,7 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
         item_id = action["take_item"]
         if item_id not in inventory:
             inventory.append(item_id)
+            sound.play("pickup")
             # The item flies from where it was into its slot.
             screen["flying"] = {"item": item_id, "x": action["x"], "frame": 0}
 
@@ -212,6 +223,12 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
         # Talking to Pombo starts Dave's reveal (taking off the mask).
         if action["set_choice"] == "dave":
             screen["reveal"] = 0
+            sound.play("coo")
+        # The press: cameras click. The drawer: it squeaks open.
+        if action["set_choice"] == "press_answer":
+            sound.play("camera")
+        if action["set_choice"] == "drawer":
+            sound.play("door")
 
     # A ruling ends the game. The ending screen appears when the text is read.
     if "ruling" in action:
@@ -219,6 +236,11 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
 
     # Walk through a door into another room.
     if "go_to" in action:
+        # The mascot door opens with the Lucky Whistle; all others creak.
+        if action["go_to"] == "mascot_room":
+            sound.play("whistle")
+        else:
+            sound.play("door")
         came_from = progress["scene"]
         progress["scene"] = action["go_to"]
         new_scene = story["scenes"][progress["scene"]]
@@ -258,8 +280,10 @@ def handle_menu_key(key, progress, story, screen, fonts, player, player_width):
     count = len(menu["actions"])
     if key in [pygame.K_UP, pygame.K_w]:
         menu["selected"] = (menu["selected"] - 1) % count
+        sound.play("blip")
     elif key in [pygame.K_DOWN, pygame.K_s]:
         menu["selected"] = (menu["selected"] + 1) % count
+        sound.play("blip")
     elif key == pygame.K_ESCAPE:
         screen["menu"] = None
     else:
@@ -294,10 +318,13 @@ def handle_review_key(key, progress, story, screen, fonts):
         last = int(round(review["end"] / review["step"]))
         if key in [pygame.K_LEFT, pygame.K_a] and state["frame"] > 0:
             state["frame"] = state["frame"] - 1
+            sound.play("tick")
         elif key in [pygame.K_RIGHT, pygame.K_d] and state["frame"] < last:
             state["frame"] = state["frame"] + 1
+            sound.play("tick")
         elif key in [pygame.K_RETURN, pygame.K_SPACE, pygame.K_e]:
             state["step"] = "line"
+            sound.play("lock")
         elif key == pygame.K_ESCAPE:
             # Stop without deciding: nothing is remembered, try again later.
             close_review(screen)
@@ -306,8 +333,10 @@ def handle_review_key(key, progress, story, screen, fonts):
         # BIGGER, so LEFT adds 1 (0.1 m) and RIGHT subtracts 1.
         if key in [pygame.K_LEFT, pygame.K_a] and state["line"] < 400:
             state["line"] = state["line"] + 1
+            sound.play("tick")
         elif key in [pygame.K_RIGHT, pygame.K_d] and state["line"] > 0:
             state["line"] = state["line"] - 1
+            sound.play("tick")
         elif key == pygame.K_ESCAPE:
             state["step"] = "time"
         elif key in [pygame.K_RETURN, pygame.K_SPACE, pygame.K_e]:
@@ -317,6 +346,7 @@ def handle_review_key(key, progress, story, screen, fonts):
             result = game.judge_offside(striker, state["line"] / 10)
             progress["choices"]["review"] = result
             game.save_progress(progress, SAVE_FILE)
+            sound.play("lock")
             close_review(screen)
             if result == "offside":
                 say(screen, review["offside_text"], fonts)
@@ -382,6 +412,7 @@ def update_ball(ball, player, player_width):
     ball_right = ball["x"] + 7
     touching = feet_right >= ball_left and feet_left <= ball_right
     if walking and touching:
+        sound.play("kick")
         if player["facing_left"]:
             ball["speed"] = -KICK_SPEED
             ball["x"] = feet_left - 8          # push it out of the player's feet
@@ -405,6 +436,7 @@ def update_ball(ball, player, player_width):
         ball["x"] = 466.0
         ball["speed"] = 0.0
         ball["celebrate"] = CELEBRATION
+        sound.play("goal")
 
 
 # ---------------------------------------------------------------- what is on screen
@@ -467,7 +499,7 @@ def continue_game(story, fonts, player, progress, player_width):
 
 # ---------------------------------------------------------------- pause menu and yes/no box
 
-PAUSE_OPTIONS = ["Resume", "Fullscreen", "Restart", "Back to the title screen"]
+PAUSE_OPTIONS = ["Resume", "Volume", "Fullscreen", "Restart", "Back to the title screen"]
 
 
 def fullscreen_label():
@@ -481,14 +513,24 @@ def handle_pause_key(key, screen):
     # Up / down chooses, Enter confirms, Escape resumes the game.
     # Returns "title" when the player wants to go back to the title screen.
     pause = screen["pause"]
+    choice = PAUSE_OPTIONS[pause["selected"]]
     if key in [pygame.K_UP, pygame.K_w]:
         pause["selected"] = (pause["selected"] - 1) % len(PAUSE_OPTIONS)
+        sound.play("blip")
     elif key in [pygame.K_DOWN, pygame.K_s]:
         pause["selected"] = (pause["selected"] + 1) % len(PAUSE_OPTIONS)
+        sound.play("blip")
+    elif choice == "Volume" and key in [pygame.K_LEFT, pygame.K_a]:
+        sound.change_volume(-1)
+    elif choice == "Volume" and key in [pygame.K_RIGHT, pygame.K_d]:
+        sound.change_volume(1)
     elif key == pygame.K_ESCAPE:
         screen["pause"] = None
+    elif choice == "Volume":
+        # Enter on the volume slider does nothing (use left / right).
+        return None
     elif key in [pygame.K_RETURN, pygame.K_SPACE, pygame.K_e]:
-        choice = PAUSE_OPTIONS[pause["selected"]]
+        sound.play("confirm")
         if choice == "Fullscreen":
             # Switch, and keep the pause menu open (you see ON / OFF change).
             pygame.display.toggle_fullscreen()
@@ -562,8 +604,10 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         ui.draw_dialogue_box(overlay, screen["dialogue"][0])
     elif show_last:
         ui.draw_dialogue_box(overlay, screen["last"], True)
-    if screen["menu"] is not None or screen["pause"] is not None:
-        ui.draw_menu_box(overlay)
+    if screen["menu"] is not None:
+        ui.draw_menu_box(overlay, len(screen["menu"]["actions"]))
+    if screen["pause"] is not None:
+        ui.draw_menu_box(overlay, len(PAUSE_OPTIONS))
     if screen["closeup"] is not None:
         ui.draw_note_closeup(overlay)
     if screen["review"] is not None:
@@ -596,6 +640,8 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         for option in PAUSE_OPTIONS:
             if option == "Fullscreen":
                 option = fullscreen_label()
+            if option == "Volume":
+                option = sound.volume_text()
             pause_menu["actions"].append({"label": option})
         ui.draw_menu_text(window, pause_menu, fonts, SCALE)
     if screen["closeup"] is not None:
@@ -614,10 +660,12 @@ def title_screen(assets, story):
     # Show the title screen until the player chooses something.
     # Returns "play", "new" or "exit".
     clock = pygame.time.Clock()
-    labels = ["Play", "New Game", "Fullscreen", "Exit"]
+    labels = ["Play", "New Game", "Volume", "Fullscreen", "Exit"]
     selected = 0
     confirm = None      # the yes/no question, while it is open
     tick = 0    # the frame counter, for the animations
+    sound.play_music("title_theme")
+    sound.set_ambience(None)
 
     while True:
         has_save = game.load_progress(SAVE_FILE) is not None
@@ -632,6 +680,10 @@ def title_screen(assets, story):
             if event.key == pygame.K_F11:
                 pygame.display.toggle_fullscreen()
                 continue
+            # M mutes and unmutes all sound, at any moment.
+            if event.key == pygame.K_m:
+                sound.toggle_mute()
+                continue
 
             if confirm is not None:
                 # Only Y or N answer the question.
@@ -641,10 +693,18 @@ def title_screen(assets, story):
                     confirm = None
             elif event.key in [pygame.K_UP, pygame.K_w]:
                 selected = (selected - 1) % len(labels)
+                sound.play("blip")
             elif event.key in [pygame.K_DOWN, pygame.K_s]:
                 selected = (selected + 1) % len(labels)
+                sound.play("blip")
+            elif labels[selected] == "Volume" and event.key in [pygame.K_LEFT, pygame.K_a]:
+                sound.change_volume(-1)
+            elif labels[selected] == "Volume" and event.key in [pygame.K_RIGHT, pygame.K_d]:
+                sound.change_volume(1)
             elif event.key in [pygame.K_RETURN, pygame.K_SPACE, pygame.K_e]:
                 choice = labels[selected]
+                if choice != "Volume":
+                    sound.play("confirm")
                 if choice == "Play":
                     return "play"
                 if choice == "Exit":
@@ -673,7 +733,7 @@ def title_screen(assets, story):
             if label == "Fullscreen":
                 label = fullscreen_label()
             shown.append(label)
-        ui.draw_title_screen(overlay, shown, selected, tick, assets["pictures"])
+        ui.draw_title_screen(overlay, shown, selected, tick, assets["pictures"], sound.loudness())
         if confirm is not None:
             ui.draw_confirm_box(overlay)
         window.blit(pygame.transform.scale(overlay, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
@@ -698,6 +758,9 @@ def play(assets, story, progress, screen, player):
     # the frame counter (for animations), the ball (just for fun, not
     # saved) and the camera position.
     moving = {"tick": 0, "ball": new_ball(), "camera": 0.0}
+    # Has the ending jingle been played? (So it plays only once.)
+    jingle_played = False
+    sound.play_music("game_theme")
 
     while True:
         scene = story["scenes"][progress["scene"]]
@@ -721,6 +784,10 @@ def play(assets, story, progress, screen, player):
             # F11 switches between window and fullscreen, at any moment.
             if event.key == pygame.K_F11:
                 pygame.display.toggle_fullscreen()
+                continue
+            # M mutes and unmutes all sound, at any moment.
+            if event.key == pygame.K_m:
+                sound.toggle_mute()
                 continue
 
             # Only one thing reacts to a key: whatever is open on top.
@@ -753,6 +820,7 @@ def play(assets, story, progress, screen, player):
                     return "title"
             elif event.key == pygame.K_ESCAPE:
                 screen["pause"] = {"selected": 0}
+                sound.play("blip")
                 game.save_progress(progress, SAVE_FILE)
             else:
                 handle_walking_key(event.key, scene, nearby, progress, story, screen, fonts, player, player_width)
@@ -792,6 +860,26 @@ def play(assets, story, progress, screen, player):
 
         # Animations: the frame counter, the flying item and Dave's reveal.
         moving["tick"] = moving["tick"] + 1
+
+        # Sounds: the room sound (crowd, shower or nothing), the cameras
+        # when they flash (the same moments as in rooms.py), and the
+        # ending jingle, once, when the ending screen appears.
+        sound.set_ambience(ROOM_SOUNDS.get(progress["scene"]))
+        if progress["scene"] == "press_room" and moving["tick"] % 50 == 0:
+            sound.play("camera")
+        if progress["scene"] == "pitch" and moving["tick"] % 70 == 0:
+            sound.play("camera")
+        if ending_is_showing(progress, screen) and not jingle_played:
+            sound.stop_music()
+            if progress["ending"] in GOOD_ENDINGS:
+                sound.play("jingle_good")
+            else:
+                sound.play("jingle_bad")
+            jingle_played = True
+        if progress["ending"] is None and jingle_played:
+            # A new game was started after an ending: the music comes back.
+            jingle_played = False
+            sound.play_music("game_theme")
         if screen["flying"] is not None:
             screen["flying"]["frame"] = screen["flying"]["frame"] + 1
             if screen["flying"]["frame"] >= FLY_FRAMES:
@@ -808,8 +896,11 @@ def play(assets, story, progress, screen, player):
         target = player_middle - rooms.CANVAS_WIDTH // 2
         moving["camera"] = max(0, min(target, rooms.ROOM_WIDTH - rooms.CANVAS_WIDTH))
 
-        # The typing effect: a few more letters appear every frame.
+        # The typing effect: a few more letters appear every frame,
+        # with a soft blip every third frame while the text is typing.
         if len(screen["dialogue"]) > 0:
+            if screen["letters"] < ui.letters_on_page(screen["dialogue"][0]) and moving["tick"] % 3 == 0:
+                sound.play("type")
             screen["letters"] = screen["letters"] + TYPE_SPEED
 
         draw_game(assets, story, progress, screen, player, nearby, moving)
@@ -818,7 +909,10 @@ def play(assets, story, progress, screen, player):
 
 
 def main():
+    # A small sound buffer (512) makes the sounds play without delay.
+    pygame.mixer.pre_init(44100, -16, 2, 512)
     pygame.init()
+    sound.start()
     # The game's logo in the title bar and the taskbar (set it before
     # the window opens).
     pygame.display.set_icon(pygame.image.load("icon.png"))

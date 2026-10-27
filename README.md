@@ -62,6 +62,8 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `↑` `↓` (or `W` `S`) + `Enter` | choose in a menu (you can also press `1`, `2`, `3`) |
 | `Escape` | pause menu: Resume, Fullscreen on/off, Restart, Back to the title screen (also closes a menu or close-up) |
 | `F11` | switch between window and fullscreen (works everywhere) |
+| `M` | mute / unmute all sound (works everywhere) |
+| `←` `→` on *Volume* | turn the volume down / up (title menu and pause menu) |
 | `Y` / `N` | answer a yes/no question |
 
 - **Title screen:** *Play* continues your saved game (or starts one),
@@ -89,7 +91,24 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `story.json` | all the story content: scenes, actions, items and endings (shared by both versions) |
 | `save.json` | terminal progress; created by the game and saved after every accepted action |
 | `save_2d.json` | 2D progress, same format; saved after every accepted action |
+| `sound.py` | loads and plays the sounds and music of the 2D game; remembers the volume |
+| `sounds/` | all sound effects, room sounds and music as .wav files |
+| `tools/make_sounds.py` | the tool that made the sounds (not part of the game): run `py tools/make_sounds.py` to make them again |
 | `icon.png`, `var_is_watching.ico` | the game's logo: the window icon (png) and the desktop shortcut icon (ico) |
+
+## Sound and music (2D version)
+
+All sounds are original and made with code (`tools/make_sounds.py`), in the style of old
+game consoles: square waves, triangle waves and noise. No sound files from the internet.
+
+- **Music:** a chill theme on the title screen and a calmer mystery theme while you play.
+- **Effects:** doors, locked doors, picking up items, the Lucky Whistle, Pombo's coo,
+  cameras in the Press Room, the VAR Review beeps, kicking the ball, a goal cheer, menu
+  blips and a soft blip while the text appears.
+- **Room sounds:** the crowd on the pitch and the shower in the referee's room.
+- **Endings:** a happy jingle for the good endings and a sad one for the bad endings.
+- **Volume:** a slider in the title menu and the pause menu (0 to 10), and `M` to mute.
+  If the computer has no sound device, the game simply runs without sound.
 
 ## The game at a glance
 

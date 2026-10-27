@@ -235,11 +235,18 @@ def draw_timer(canvas, seconds_left, total_seconds, tick):
         pygame.draw.rect(canvas, colour, (TIMER_X + 3, TIMER_Y + 10, int((TIMER_WIDTH - 6) * part), 3))
 
 
-def draw_menu_box(canvas):
+def menu_extra(option_count):
+    # The dialogue box has room for 4 options. Every option more makes
+    # the menu box 11 pixels taller (it grows upwards).
+    return max(0, option_count - 4) * 11
+
+
+def draw_menu_box(canvas, option_count):
     # The dialogue box with a wider tab for the question of a menu.
-    framed_box(canvas, BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT,
+    extra = menu_extra(option_count)
+    framed_box(canvas, BOX_X, BOX_Y - extra, BOX_WIDTH, BOX_HEIGHT + extra,
                (255, 245, 220), (255, 255, 245), (220, 190, 140))
-    framed_box(canvas, BOX_X + 8, BOX_Y - 7, 200, 16,
+    framed_box(canvas, BOX_X + 8, BOX_Y - 7 - extra, 200, 16,
                (230, 120, 60), (255, 160, 100), (190, 90, 40))
 
 
@@ -349,7 +356,7 @@ LOGO_Y = 32         # "VAR" in big pixel letters
 LOGO_SIZE = 5       # each pixel of a letter becomes a 5 x 5 square
 SUBLOGO_Y = 78      # "IS WATCHING" in smaller pixel letters
 MENU_Y = 116        # the first option of the menu
-MENU_GAP = 22       # the distance between two options
+MENU_GAP = 19       # the distance between two options
 MENU_SIZE = 2       # the menu letters: 2 x 2 squares
 SHADE_END = 200     # the dark shade behind the logo fades out here
 
@@ -414,9 +421,10 @@ def draw_centred_pixel_text(canvas, text, y, size, row_colours):
     return x
 
 
-def draw_title_screen(canvas, labels, selected, tick, pictures):
+def draw_title_screen(canvas, labels, selected, tick, pictures, volume):
     # The logo (the VAR screen with the eye, "VAR", "IS WATCHING") and the
     # menu in pixel letters. The chosen option is gold and has an arrow.
+    # volume (0.0 to 1.0) is shown as a slider next to "VOLUME".
 
     # A shade that is dark at the top and fades out towards the grass,
     # so the busy crowd behind the logo gets calmer. Every row of pixels
@@ -449,15 +457,50 @@ def draw_title_screen(canvas, labels, selected, tick, pictures):
     for i in range(len(labels)):
         y = MENU_Y + i * MENU_GAP
         text = labels[i].upper()
-        if i == selected:
+        if text == "VOLUME":
+            x = draw_volume_slider(canvas, y, volume, i == selected)
+        elif i == selected:
             x = draw_centred_pixel_text(canvas, text, y, MENU_SIZE, GOLD_ROWS)
-            # The arrow sits left of the option and moves a little
+        else:
+            x = draw_centred_pixel_text(canvas, text, y, MENU_SIZE, CREAM_ROWS)
+        if i == selected:
+            # The arrow sits left of the chosen option and moves a little
             # back and forth, like it is pointing.
             arrow = pictures["arrow"]
             nudge = round(2 * math.sin(tick * 0.2))
             canvas.blit(arrow, (x - arrow.get_width() - 6 + nudge, y + 1))
+
+
+# The volume slider on the title screen: 10 blocks next to "VOLUME".
+SLIDER_BLOCKS = 10
+BLOCK_WIDTH = 6
+BLOCK_GAP = 2
+
+
+def draw_volume_slider(canvas, y, volume, chosen):
+    # "VOLUME" in pixel letters, then 10 blocks: filled blocks (gold)
+    # for the volume, empty blocks (dark) for the rest. Returns the x
+    # where it starts (for the arrow). The whole thing is centred.
+    if chosen:
+        colours = GOLD_ROWS
+    else:
+        colours = CREAM_ROWS
+    text_width = pixel_text_width("VOLUME", MENU_SIZE)
+    slider_width = SLIDER_BLOCKS * (BLOCK_WIDTH + BLOCK_GAP)
+    x = (canvas.get_width() - (text_width + 8 + slider_width)) // 2
+    draw_pixel_text(canvas, "VOLUME", x, y, MENU_SIZE, colours)
+    # round() turns e.g. 0.7 * 10 = 7.000001 into 7 blocks.
+    filled = round(volume * SLIDER_BLOCKS)
+    block_x = x + text_width + 8
+    for i in range(SLIDER_BLOCKS):
+        pygame.draw.rect(canvas, OUTLINE, (block_x - 1, y, BLOCK_WIDTH + 2, 15))
+        if i < filled:
+            pygame.draw.rect(canvas, colours[1], (block_x, y + 1, BLOCK_WIDTH, 6))
+            pygame.draw.rect(canvas, colours[5], (block_x, y + 7, BLOCK_WIDTH, 7))
         else:
-            draw_centred_pixel_text(canvas, text, y, MENU_SIZE, CREAM_ROWS)
+            pygame.draw.rect(canvas, (60, 60, 80), (block_x, y + 1, BLOCK_WIDTH, 13))
+        block_x = block_x + BLOCK_WIDTH + BLOCK_GAP
+    return x
 
 
 def draw_confirm_box(canvas):
@@ -490,7 +533,8 @@ def draw_title_text(window, has_save, fonts, scale):
     else:
         note = "No saved game yet: PLAY starts a new one."
     draw_centred_text(window, note, fonts["small"], CREAM, 214 * scale)
-    draw_centred_text(window, "UP / DOWN: choose    ENTER: select    F11: fullscreen", fonts["small"], CREAM, 228 * scale)
+    draw_centred_text(window, "UP / DOWN: choose   ENTER: select   LEFT / RIGHT: volume   M: mute   F11: fullscreen",
+                      fonts["small"], CREAM, 228 * scale)
 
 
 def draw_confirm_text(window, question, fonts, scale):
@@ -504,9 +548,10 @@ def draw_confirm_text(window, question, fonts, scale):
 def draw_menu_text(window, menu, fonts, scale):
     # The question in the tab, and the options below it. The selected
     # option gets an arrow and an orange colour.
+    extra = menu_extra(len(menu["actions"]))
     question = fonts["title"].render(menu["title"].upper(), False, CREAM)
-    window.blit(question, ((BOX_X + 14) * scale, (BOX_Y - 5) * scale))
-    y = BOX_Y + 12
+    window.blit(question, ((BOX_X + 14) * scale, (BOX_Y - 5 - extra) * scale))
+    y = BOX_Y + 12 - extra
     for i in range(len(menu["actions"])):
         label = str(i + 1) + ". " + menu["actions"][i]["label"]
         if i == menu["selected"]:
