@@ -39,6 +39,44 @@ def bob(tick, phase):
     return ((tick + phase) // 20) % 2
 
 
+def float_lift(tick):
+    # Returns 0, 1 or 2: how many pixels an item floats up right now, like
+    # the items in Zelda or Mario. math.sin goes smoothly from -1 to 1 and
+    # back, so +1 makes it 0 to 2 and the item rises and sinks slowly.
+    return int(round(math.sin(tick / 15) + 1))
+
+
+def draw_sparkle(canvas, x, y, tick, phase):
+    # A small white star that flashes on an item for a moment every two
+    # seconds (120 frames), so the eye notices the item. It grows and
+    # shrinks again. phase makes not every item sparkle at the same moment.
+    moment = (tick + phase) % 120
+    if moment >= 12:
+        return
+    if moment >= 4 and moment < 8:
+        size = 2      # the middle of the flash: the biggest star
+    else:
+        size = 1
+    pygame.draw.line(canvas, WHITE, (x - size, y), (x + size, y))
+    pygame.draw.line(canvas, WHITE, (x, y - size), (x, y + size))
+    canvas.set_at((x, y), (255, 250, 200))
+
+
+def draw_marker(canvas, x, y, tick):
+    # A yellow "!" floating above something you can use, like in many
+    # adventure games. (x, y) is the point just below the "!". It bounces:
+    # abs() makes the sine wave always positive, like a hopping ball.
+    bounce = int(abs(math.sin(tick / 10)) * 3)
+    top = y - 12 - bounce
+    # The stick of the "!": a dark outline, yellow inside, a light edge.
+    pygame.draw.rect(canvas, OUTLINE, (x - 2, top, 5, 8))
+    pygame.draw.rect(canvas, YELLOW, (x - 1, top + 1, 3, 6))
+    pygame.draw.rect(canvas, (255, 245, 170), (x - 1, top + 1, 1, 6))
+    # The dot of the "!".
+    pygame.draw.rect(canvas, OUTLINE, (x - 2, top + 8, 5, 4))
+    pygame.draw.rect(canvas, YELLOW, (x - 1, top + 9, 3, 2))
+
+
 def draw_wall(canvas):
     # Cream wallpaper with soft stripes and a darker strip at the top.
     canvas.fill((246, 224, 180))
@@ -215,7 +253,7 @@ def draw_cloud(canvas, x, y):
     pygame.draw.rect(canvas, (215, 235, 255), (x - 5, y + 9, 31, 3))
 
 
-def draw_monitors(canvas, tick):
+def draw_monitors(canvas, tick, progress):
     # Twelve monitors in two rows of six. Eleven show a camera angle,
     # the last one is broken and has Dave's sticky note on it.
     # First a soft blue glow on the wall behind them, from all the screens.
@@ -236,7 +274,7 @@ def draw_monitors(canvas, tick):
             pygame.draw.rect(canvas, (60, 64, 80), (x - 1, y + 18, 28, 1))
 
             if camera_number == 11:
-                draw_broken_screen(canvas, x + 1, y + 1)
+                draw_broken_screen(canvas, x + 1, y + 1, tick, progress)
                 led = (230, 50, 50)
             else:
                 draw_camera(canvas, camera_number, x + 1, y + 1)
@@ -250,14 +288,29 @@ def draw_monitors(canvas, tick):
             camera_number = camera_number + 1
 
 
-def draw_broken_screen(canvas, x, y):
-    # TV static: random grey dots, different every frame, so it flickers.
-    pygame.draw.rect(canvas, (40, 40, 48), (x, y, 24, 16))
-    for i in range(60):
-        dot_x = x + random.randint(0, 23)
-        dot_y = y + random.randint(0, 15)
-        brightness = random.randint(80, 240)
-        canvas.set_at((dot_x, dot_y), (brightness, brightness, brightness))
+def draw_broken_screen(canvas, x, y, tick, progress):
+    # The screen with the missing angle tells the player what to do:
+    # 1. After the review it works again and shows the pitch.
+    # 2. While you carry the USB Stick it glows green with a USB sign
+    #    ("plug me in!").
+    # 3. Before that it shows flickering static and a blinking red light.
+    if "review" in progress["choices"]:
+        draw_camera(canvas, 0, x, y)
+    elif "usb" in progress["inventory"]:
+        draw_usb_hint(canvas, x, y, tick)
+    else:
+        # TV static: random grey dots, different every frame, so it flickers.
+        pygame.draw.rect(canvas, (40, 40, 48), (x, y, 24, 16))
+        for i in range(60):
+            dot_x = x + random.randint(0, 23)
+            dot_y = y + random.randint(0, 15)
+            brightness = random.randint(80, 240)
+            canvas.set_at((dot_x, dot_y), (brightness, brightness, brightness))
+        # A red "no signal" light that blinks: on for half a second, off
+        # for half a second (30 frames each).
+        if tick % 60 < 30:
+            pygame.draw.rect(canvas, OUTLINE, (x + 1, y + 11, 9, 4))
+            pygame.draw.rect(canvas, (230, 50, 50), (x + 2, y + 12, 7, 2))
 
     # Dave's sticky note with two scribbled lines.
     pygame.draw.rect(canvas, OUTLINE, (x + 12, y, 11, 11))
@@ -265,6 +318,22 @@ def draw_broken_screen(canvas, x, y):
     pygame.draw.rect(canvas, (230, 190, 40), (x + 13, y + 8, 9, 2))
     pygame.draw.line(canvas, (150, 110, 40), (x + 14, y + 3), (x + 20, y + 3))
     pygame.draw.line(canvas, (150, 110, 40), (x + 14, y + 5), (x + 18, y + 5))
+
+
+def draw_usb_hint(canvas, x, y, tick):
+    # A dark green screen with a USB plug and an arrow pointing down
+    # (into the computer). The green gets brighter and darker (it pulses).
+    pulse = int((math.sin(tick / 8) + 1) * 40)      # 0 to 80
+    pygame.draw.rect(canvas, (20, 60 + pulse // 2, 30), (x, y, 24, 16))
+    green = (90, 170 + pulse, 100)
+    # The plug: a metal tip on top of a body (only the left half of the
+    # screen, because Dave's sticky note covers the right half).
+    pygame.draw.rect(canvas, green, (x + 4, y + 2, 3, 2))       # metal tip
+    pygame.draw.rect(canvas, green, (x + 3, y + 4, 5, 4))       # body
+    # The arrow below the plug: a stick and a pointed end.
+    pygame.draw.rect(canvas, green, (x + 5, y + 9, 1, 3))
+    pygame.draw.line(canvas, green, (x + 3, y + 12), (x + 5, y + 14))
+    pygame.draw.line(canvas, green, (x + 7, y + 12), (x + 5, y + 14))
 
 
 def box(canvas, colour, x, y, width, height):
@@ -499,7 +568,7 @@ def draw_booth(canvas, pictures, progress, tick):
     draw_wall(canvas)
     draw_floor(canvas)
     draw_window(canvas, tick)
-    draw_monitors(canvas, tick)
+    draw_monitors(canvas, tick, progress)
     draw_door(canvas, 238, (250, 250, 250), (200, 200, 210))   # Referee's room
     draw_door(canvas, 296, (255, 210, 70), (215, 160, 40))     # Mascot room
     draw_door(canvas, 354, (110, 170, 255), (70, 120, 210))    # Press room
@@ -517,12 +586,15 @@ def draw_booth(canvas, pictures, progress, tick):
     draw_desk(canvas)
 
     # The lanyard hangs over the back of the desk until you take it.
+    # It floats up and down a little and sparkles, so you notice it.
     if "lanyard" not in progress["inventory"]:
-        pygame.draw.line(canvas, YELLOW, (24, 150), (28, 162), 2)
-        pygame.draw.line(canvas, YELLOW, (36, 150), (32, 162), 2)
-        pygame.draw.rect(canvas, OUTLINE, (25, 157, 11, 8))
-        pygame.draw.rect(canvas, WHITE, (26, 158, 9, 6))
-        pygame.draw.rect(canvas, (230, 60, 60), (26, 158, 9, 2))
+        lift = float_lift(tick)
+        pygame.draw.line(canvas, YELLOW, (24, 150 - lift), (28, 162 - lift), 2)
+        pygame.draw.line(canvas, YELLOW, (36, 150 - lift), (32, 162 - lift), 2)
+        pygame.draw.rect(canvas, OUTLINE, (25, 157 - lift, 11, 8))
+        pygame.draw.rect(canvas, WHITE, (26, 158 - lift, 9, 6))
+        pygame.draw.rect(canvas, (230, 60, 60), (26, 158 - lift, 9, 2))
+        draw_sparkle(canvas, 34, 159 - lift, tick, 0)
 
     # The padlock hangs on the Mascot door until you have the whistle.
     if "whistle" not in progress["inventory"]:
@@ -757,7 +829,7 @@ def draw_dressing_room(canvas, pictures, progress, tick):
     pygame.draw.rect(canvas, (250, 150, 40), (240, 170, 3, 2))
 
     draw_shadow(canvas, 296, 201, 52)
-    draw_kit_cabinet(canvas, pictures, progress)
+    draw_kit_cabinet(canvas, pictures, progress, tick)
 
     # Under the bench: muddy boots and a kit bag.
     for boot_x in [175, 191]:
@@ -884,7 +956,7 @@ def draw_open_locker(canvas, x, y):
     pygame.draw.polygon(canvas, (140, 185, 240), [(x + 29, y + 1), (x + 32, y + 2), (x + 32, y + 76), (x + 29, y + 77)])
 
 
-def draw_kit_cabinet(canvas, pictures, progress):
+def draw_kit_cabinet(canvas, pictures, progress, tick):
     # A small wooden cabinet with a drawer. Once the drawer is opened it
     # sticks out, and the Lucky Whistle lies in it until you take it.
     shaded_box(canvas, (190, 125, 70), (225, 160, 100), (150, 95, 55), 300, 160, 44, 40)
@@ -892,7 +964,10 @@ def draw_kit_cabinet(canvas, pictures, progress):
         # The open drawer: the dark inside and the front pulled down a bit.
         outlined_box(canvas, (60, 40, 30), 303, 164, 38, 10)
         if "whistle" not in progress["inventory"]:
-            canvas.blit(pictures["whistle"], (306, 162))
+            # The whistle floats up out of the drawer and sparkles.
+            lift = float_lift(tick)
+            canvas.blit(pictures["whistle"], (306, 162 - lift))
+            draw_sparkle(canvas, 310, 163 - lift, tick, 40)
         shaded_box(canvas, (210, 145, 85), (240, 180, 120), (165, 105, 60), 302, 174, 40, 12)
         pygame.draw.rect(canvas, OUTLINE, (318, 179, 8, 2))
     else:
@@ -1408,13 +1483,16 @@ def draw_press_room(canvas, progress, tick):
 
     # A crumpled piece of paper (the betting slip) by the TV camera,
     # until you pick it up.
+    # It floats and sparkles; its shadow gets smaller when it floats higher.
     if "slip" not in progress["inventory"]:
-        draw_shadow(canvas, 424, 201, 13)
-        pygame.draw.circle(canvas, OUTLINE, (430, 197), 5)
-        pygame.draw.circle(canvas, (225, 225, 215), (430, 197), 4)
-        pygame.draw.circle(canvas, (250, 250, 240), (429, 196), 2)
-        pygame.draw.line(canvas, (180, 180, 170), (427, 195), (432, 199))
-        pygame.draw.line(canvas, (180, 180, 170), (431, 194), (428, 198))
+        lift = float_lift(tick)
+        draw_shadow(canvas, 424 + lift, 201, 13 - lift * 2)
+        pygame.draw.circle(canvas, OUTLINE, (430, 197 - lift), 5)
+        pygame.draw.circle(canvas, (225, 225, 215), (430, 197 - lift), 4)
+        pygame.draw.circle(canvas, (250, 250, 240), (429, 196 - lift), 2)
+        pygame.draw.line(canvas, (180, 180, 170), (427, 195 - lift), (432, 199 - lift))
+        pygame.draw.line(canvas, (180, 180, 170), (431, 194 - lift), (428, 198 - lift))
+        draw_sparkle(canvas, 433, 194 - lift, tick, 80)
 
 
 def draw_lighting_rig(canvas):

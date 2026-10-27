@@ -126,6 +126,28 @@ def find_nearby_actions(scene, progress, player_x, player_width):
     return nearby
 
 
+def find_markers(scene, progress, nearby, looked):
+    # Find where to draw a bouncing "!" right now. A spot gets one when its
+    # action (in story.json) has a "marker" position AND:
+    # - it is still visible (not done yet, e.g. the item is not taken),
+    # - it is not blocked (you can really do it right now),
+    # - the player is not standing there (then the "E" bubble shows instead),
+    # - it is not a close-up you have already read (the sticky note),
+    # - its "marker_after" choice is made, if it has one (the press answers
+    #   only get a "!" after talking to Pombo, so you collect clues first).
+    markers = []
+    actions = game.get_visible_actions(scene, progress["inventory"], progress["choices"])
+    for action in actions:
+        clues_ready = "marker_after" not in action or action["marker_after"] in progress["choices"]
+        if "marker" in action and action not in nearby and action["label"] not in looked and clues_ready:
+            if game.blocked_reason(action, progress["inventory"], progress["choices"]) is None:
+                # Several actions can share one spot (the press answers):
+                # draw the "!" there only once.
+                if action["marker"] not in markers:
+                    markers.append(action["marker"])
+    return markers
+
+
 def arrival_x(scene, came_from, player_width):
     # When entering a room, stand in front of the door that leads back
     # to the room we came from. Returns the new x position of the player.
@@ -192,6 +214,9 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
     if "closeup" in action:
         sound.play("blip")
         screen["closeup"] = action["closeup"]
+        # Remember that the note was read, so its "!" marker goes away.
+        if action["label"] not in screen["looked"]:
+            screen["looked"].append(action["label"])
         return
 
     # 3. The VAR Review opens its own screen (see handle_review_key).
@@ -470,6 +495,7 @@ def make_screen(dialogue):
         "last": None,       # the last page read (shown greyed out)
         "flying": None,     # an item flying into its slot
         "reveal": None,     # how far Dave's reveal is (in frames)
+        "looked": [],       # labels of the close-ups already read (sticky note)
     }
 
 
@@ -569,6 +595,10 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     rooms.draw_room(canvas, progress["scene"], assets["pictures"], progress, extras)
     picture = player_picture(player, assets["standing"], assets["walking"])
     canvas.blit(picture, (player["x"], player_y - walk_bounce(player)))
+    # The bouncing "!" markers above things you can use (not during an ending).
+    if not show_ending:
+        for marker_x, marker_y in find_markers(scene, progress, nearby, screen["looked"]):
+            rooms.draw_marker(canvas, marker_x, marker_y, tick)
     big_room = pygame.transform.scale(canvas, (rooms.ROOM_WIDTH * SCALE, WINDOW_HEIGHT))
     window.blit(big_room, (-offset, 0))
 
