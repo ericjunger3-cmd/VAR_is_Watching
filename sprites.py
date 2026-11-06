@@ -39,8 +39,10 @@ PALETTE = {
 
 # Some characters use the same letters with different colours.
 # These dictionaries say which colours change for that character.
+# The referee team wears turquoise shirts ("B", "b") with black details
+# ("W" is the collar trim), black shorts and black socks.
 REFEREE_COLOURS = {"h": (30, 25, 25), "H": (55, 45, 40), "j": (90, 75, 65),
-                   "B": (50, 52, 62), "b": (32, 33, 42)}
+                   "B": (70, 200, 215), "b": (40, 160, 180), "W": (25, 25, 30)}
 # The home team plays in Bayern colours: red with white numbers.
 STRIKER_COLOURS = {"h": (200, 150, 40), "H": (240, 200, 80), "j": (255, 235, 150),
                    "B": (220, 25, 55), "b": (170, 15, 45)}
@@ -57,6 +59,108 @@ CAPTAIN_COLOURS = {"h": (25, 20, 20), "H": (45, 35, 35), "j": (70, 60, 60),
 POLICE_COLOURS = {"D": (30, 45, 110), "F": (20, 28, 70), "R": (240, 200, 60),
                   "N": (30, 30, 45), "M": (20, 20, 30)}
 
+# The press pack on the pitch. All of them wear the same outfit: all
+# black with a blue press pass ("D", "W"), and the word PRESS (added as
+# text in the game). So they are easy to tell apart from the players, the
+# referees and you.
+# Photographers hold a camera with a long white lens in front of the face.
+# Interviewers hold a microphone out in the stretched hand.
+# Both look to the right; rooms.py flips them if needed.
+PHOTOGRAPHER = [
+    "................................",
+    "................................",
+    "...........hhhhhhhhhh...........",
+    "........hhhhHHHHHHHHhhhh........",
+    "......hhHHHHHHHHHHHHHHHHhh......",
+    ".....hHHHjHHHHHHHHHjHHHHHHh.....",
+    "....hHHHHHHHHHHHHHHHHHHHHHHh....",
+    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
+    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
+    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
+    "..hHHHHHHHHHHHHHHHHHHHHHHHHHHh..",
+    "..hHSSSSSSSSSSSSSSWWWSSSSSSSHh..",
+    "..hHSSSSSSSSSSSSSkkkkkSSSSSSHh..",
+    "..hHSSSeeeeSSkkkkkkkkkkkkSSSHh..",
+    "..sSSSSSEEESSkggggggggggkxxxxxxC",
+    ".ssSSSSSwEESSkggggggggggkxxxxxxC",
+    ".ssSSSSSEEESSkggggggggggkxxxxxxC",
+    "..sSSSSSEiESSkggggggggggkxxxxxxC",
+    "..sSSSSppSSSSkkkkkkkkkkkkSSSSs..",
+    "....sSSSSSSSSSSSSSSSSSSSSSSs....",
+    ".......sSSSSSBBBmmSSSSBBB.......",
+    ".........BBBssssssssss.BBB......",
+    "..........kBBBBSSBBBBk..........",
+    "......BBBBBBDBBBBBBDBBbbbb......",
+    "......BBBBBBBDBBBBDBBBbbbb......",
+    "......BBBBBBBDDDDDDBBBbbBB......",
+    "......BBBBBBBDWWWWDBBBbbBB......",
+    "......BBBBBBBDDDDDDBBBbbBB......",
+    "......bbBBBBBBBBBBBBBBbbbb......",
+    "........BBBBBBBBBBBBBBbb........",
+    "........kkkkkkkkkkkkkkkz........",
+    "........kkkkkkkzzkkkkkkz........",
+    ".........ZZZZZz..ZZZZZz.........",
+    ".........ZZZZZz..ZZZZZz.........",
+    ".........ZZZZZz..ZZZZZz.........",
+    ".........ZZZZZz..ZZZZZz.........",
+    ".........OOOOOO..OOOOOO.........",
+    "........OxxOOOO..OOOOxxO........",
+]
+INTERVIEWER = [
+    "................................",
+    "................................",
+    "...........hhhhhhhhhh...........",
+    "........hhhhHHHHHHHHhhhh........",
+    "......hhHHHHHHHHHHHHHHHHhh......",
+    ".....hHHHjHHHHHHHHHjHHHHHHh.....",
+    "....hHHHHHHHHHHHHHHHHHHHHHHh....",
+    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
+    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
+    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
+    "..hHHHHHHHHHHHHHHHHHHHHHHHHHHh..",
+    "..hHSSSSSSSSSSSSSSSSSSSSSSSSHh..",
+    "..hHSSSSSSSSSSSSSSSSSSSSSSSSHh..",
+    "..hHSSSeeeeSSSSSSSSSSeeeeSSSHh..",
+    "..sSSSSSEEESSSSSSSSSSEEESSSSSs..",
+    ".ssSSSSSwEESSSSSSSSSSwEESSSSSss.",
+    ".ssSSSSSEEESSSSSSSSSSEEESSSSgggg",
+    "..sSSSSSEiESSSSSSSSSSEiESSSSgwgg",
+    "..sSSSSppSSSSSSSSSSSSSppSSSSgggg",
+    "....sSSSSSSSSSSSSSSSSSSSSSSsRRRR",
+    ".......sSSSSSSSSmmSSSSSSs...RRRR",
+    "..........ssssssssssss........x.",
+    "..........kBBBBSSBBBBk........x.",
+    "......BBBBBBDBBBBBBDBBbbbbbbbSSS",
+    "......BBBBBBBDBBBBDBBBbbbbbbb...",
+    "......SSBBBBBDDDDDDBBBbb........",
+    "......SSBBBBBDWWWWDBBBbb........",
+    "......SSBBBBBDDDDDDBBBbb........",
+    "......ssBBBBBBBBBBBBBBbb........",
+    "........BBBBBBBBBBBBBBbb........",
+    "........kkkkkkkkkkkkkkkz........",
+    "........kkkkkkkzzkkkkkkz........",
+    ".........ZZZZZz..ZZZZZz.........",
+    ".........ZZZZZz..ZZZZZz.........",
+    ".........ZZZZZz..ZZZZZz.........",
+    ".........ZZZZZz..ZZZZZz.........",
+    ".........OOOOOO..OOOOOO.........",
+    "........OxxOOOO..OOOOxxO........",
+]
+
+PHOTOGRAPHER_COLOURS = {"B": (35, 35, 42), "b": (22, 22, 28), "D": (60, 110, 210),
+                        "k": (20, 20, 25), "g": (70, 72, 85), "x": (225, 228, 235), "C": (40, 50, 80),
+                        "W": (255, 255, 255), "Z": (30, 30, 36), "z": (20, 20, 26)}
+INTERVIEWER_COLOURS = {"B": (35, 35, 42), "b": (22, 22, 28), "k": (20, 20, 25), "D": (60, 110, 210),
+                       "W": (255, 255, 255), "g": (70, 70, 82), "x": (30, 30, 35), "R": (230, 55, 55),
+                       "Z": (30, 30, 36), "z": (20, 20, 26)}
+# Different hair colours, so the press people do not all look the same.
+PRESS_HAIR = [
+    {"h": (40, 30, 30), "H": (70, 55, 50), "j": (110, 90, 80)},
+    {"h": (200, 160, 60), "H": (240, 200, 100), "j": (255, 235, 160)},
+    {"h": (90, 90, 95), "H": (130, 130, 135), "j": (170, 170, 175)},
+    {"h": (110, 60, 30), "H": (150, 90, 50), "j": (190, 130, 80)},
+]
+
 # Two more players for the end clips: the home passer (red kit like the
 # striker, but dark brown hair) and an away defender (yellow kit like the
 # captain, but light skin and red hair).
@@ -70,14 +174,15 @@ DEFENDER_COLOURS.update({"h": (150, 60, 30), "H": (200, 95, 45), "j": (235, 140,
 # the same blue as the tie tip in the Server Room.
 PUNDIT_COLOURS = {"h": (25, 20, 22), "H": (45, 38, 40), "j": (120, 110, 125),
                   "u": (22, 26, 48), "U": (38, 45, 80), "l": (55, 70, 150)}
-# The linesman wears the same black shirt as the referee, so he does
-# not look like an away (yellow) player.
+# The linesman wears the same turquoise kit as the referee.
 LINESMAN_COLOURS = {"h": (160, 70, 30), "H": (210, 105, 45), "j": (240, 150, 80),
-                    "B": (50, 52, 62), "b": (32, 33, 42)}
-# The player wears a classic referee look: an all-black shirt with
-# white trim instead of yellow, and black trousers.
-PLAYER_COLOURS = {"b": (30, 30, 36), "B": (58, 58, 68), "k": (14, 14, 20),
-                  "Y": (245, 245, 250), "q": (255, 255, 255),
+                    "B": (70, 200, 215), "b": (40, 160, 180), "W": (25, 25, 30)}
+# The player (the VAR official) wears a plain orange shirt with dark
+# trousers: nobody else on the pitch wears orange. The stripes and the ID
+# card are orange too, so the word VAR (added as text) is easy to read.
+PLAYER_COLOURS = {"b": (235, 120, 35), "B": (255, 160, 75), "k": (170, 80, 20),
+                  "Y": (235, 120, 35), "q": (255, 160, 75), "W": (235, 120, 35),
+                  "R": (235, 120, 35), "C": (235, 120, 35),
                   "Z": (34, 34, 42), "z": (20, 20, 26)}
 
 # The player, standing and facing you: a junior VAR official with a
@@ -321,14 +426,14 @@ REFEREE = [
     "..sSSSSSEiESSSSSSSSSSEiESSSSSs..",
     "..sSSSSppSSShhhhhhhhSSppSSSSSs..",
     "....sSSSSSSShhSSSShhSSSSSSSs....",
-    ".......sSSSSSSSSmmSSSSSSs.......",
+    ".......sSSSSSSSScxSSSSSSs.......",
     "..........ssssssssssss..........",
     "..........kbBBWSSWBBbk..........",
     "......BBBBBBWBBBBBBBBBbbbb......",
     "......BBBBYBBWBBBBBYRBbbbb......",
     "......SSBBBBBBccBBkkkBbbSS......",
     "......SSBBBBBBBBBBBBBBbbSS......",
-    "......SSBBBBBBBBBBBBBBbbSS......",
+    "......kkBBBBBBBBBBBBBBbbSS......",
     "......ssBBBBBBBBBBBBBBbbss......",
     "........BBBBBBBBBBBBBBbb........",
     "........kkkkkkkkkkkkkkkz........",

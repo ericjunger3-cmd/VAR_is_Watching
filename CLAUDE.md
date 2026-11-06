@@ -22,7 +22,7 @@ narrates everything. It is 0:0 before the goal.
 
 Teams: home side in red (Bayern style: striker, passer), away side in yellow and
 black (Dortmund style: captain, defenders; the review goalkeeper is purple). The
-VAR team (player, referee, linesman) wears black. Scoreboard: FCB 1 - 0 BVB; home
+referee and linesman wear turquoise, the player (VAR) orange with "VAR". Scoreboard: FCB 1 - 0 BVB; home
 fans on the left half of the stands, away fans on the right (`fan_colour` in rooms.py).
 
 ### The pundit gives the hints
@@ -158,6 +158,27 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   serious police officers, `POLICE` + `POLICE_COLOURS`: checked cap band,
   hi-vis vest with "POLICE", walk in, handcuffs "CLICK!", they lead him away
   with his head down, then TV static and "[SIGNAL LOST]").
+- The press pack (2D): after the ruling text, the press storms out of the
+  tunnel on the left one after the other (`PRESS_PEOPLE`, `PRESS_DELAY`,
+  `PRESS_RUN`), trampling and kicking up dust (`draw_press_dust`), then they
+  spread out: 3 interviewers (`INTERVIEWER`: all black, blue press pass,
+  microphone in the stretched hand) right next to you, 10 photographers
+  (`PHOTOGRAPHER`: the same outfit, a camera with a long white lens,
+  flashing all the time) behind them in staggered rows (the 4th number in
+  `PRESS_PEOPLE` = how far back), partly hiding each other. All of them have "PRESS" on the
+  shirt. People right of you are flipped to look at you. When the press
+  comes, the striker walks to the corner flag and the captain to the goal
+  (`player_step_aside`),
+  and the captain's "OFFSIDE!" bubble goes away. `screen["press_rush"]` counts the frames
+  (`PRESS_RUSH_FRAMES` = 100), the screen shakes meanwhile, then the press
+  questions open. The words PRESS / VAR are sharp text
+  (`press_labels`, drawn in `draw_game`).
+- On the pitch the referee stands at x 264, left of where you stand to give
+  your call (x 295), so you never hide him.
+- Clothes on the pitch, so everyone is easy to tell apart: home red, away
+  yellow, referee and linesman turquoise with black (the referee has a
+  whistle in his mouth), you plain orange with "VAR", the press all black
+  with a blue press pass and "PRESS".
 - After the ruling the scoreboard shows FULL TIME and 1 - 0 (GOAL) or 0 - 0
   (OFFSIDE) (`draw_scoreboard_text`).
 - 2D pundit faces: `make_pundit(mood)` in sprites.py swaps rows

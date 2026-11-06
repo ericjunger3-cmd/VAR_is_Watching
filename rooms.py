@@ -1743,18 +1743,22 @@ def draw_cut_cable(canvas, progress, tick):
 # Where the people stand on the pitch (x positions on the canvas).
 LINESMAN_X = 110
 STRIKER_X = 196
-BALL_X = 258
-REFEREE_X = 296
+BALL_X = 218
+REFEREE_X = 264
 CAPTAIN_X = 322
 BUBBLE_Y = 136      # the top of the captain's "OFFSIDE!" speech bubble
 
 
-def draw_pitch(canvas, pictures, ball, tick):
+def draw_pitch(canvas, pictures, ball, tick, press):
     # During a goal celebration the scoreboard flashes (on for 8 frames,
     # off for 8 frames ...).
     flashing = ball["celebrate"] > 0 and (ball["celebrate"] // 8) % 2 == 0
     draw_pitch_background(canvas, flashing, tick)
-    draw_pitch_people(canvas, pictures, ball, tick)
+    draw_pitch_people(canvas, pictures, ball, tick, press)
+    # After your call the press storms the pitch. press is None before
+    # that, then it counts the frames since they started running.
+    if press is not None:
+        draw_press_pack(canvas, pictures, press, tick)
 
 
 def draw_title_background(canvas, pictures, tick):
@@ -1844,11 +1848,25 @@ def draw_grass(canvas):
     pygame.draw.rect(canvas, WHITE, (0, FLOOR_Y + 2, ROOM_WIDTH, 2))
 
 
-def draw_pitch_people(canvas, pictures, ball, tick):
+def player_step_aside(press):
+    # When the press comes, the striker and the captain step aside, so the
+    # interviewers have room around you. Returns how far they have gone,
+    # from 0.0 (still in place) to 1.0 (moved away), in the first 40 frames.
+    if press is None:
+        return 0.0
+    return min(press, 40) / 40
+
+
+def draw_pitch_people(canvas, pictures, ball, tick, press):
     # The people: linesman, striker, referee and the away captain.
     # They breathe (one pixel up and down); the angry captain jumps.
-    # Everyone has a shadow on the grass.
-    for name, x, phase in [("linesman", LINESMAN_X, 3), ("striker", STRIKER_X, 11),
+    # Everyone has a shadow on the grass. When the press comes, the
+    # striker walks left to the corner flag and the captain right to the
+    # goal, so they are not in the middle of the press.
+    aside = player_step_aside(press)
+    striker_x = STRIKER_X - int(122 * aside)
+    captain_x = CAPTAIN_X + int(144 * aside)
+    for name, x, phase in [("linesman", LINESMAN_X, 3), ("striker", striker_x, 11),
                            ("referee", REFEREE_X, 5)]:
         picture = pictures[name]
         draw_shadow(canvas, x + 2, FLOOR_Y + 1, picture.get_width() - 4)
@@ -1856,8 +1874,8 @@ def draw_pitch_people(canvas, pictures, ball, tick):
     captain = pictures["captain"]
     jump = ((tick // 6) % 2) * 2
     # The shadow gets smaller when the captain jumps up.
-    draw_shadow(canvas, CAPTAIN_X + 2 + jump, FLOOR_Y + 1, captain.get_width() - 4 - jump * 2)
-    canvas.blit(captain, (CAPTAIN_X, FLOOR_Y - captain.get_height() - jump))
+    draw_shadow(canvas, captain_x + 2 + jump, FLOOR_Y + 1, captain.get_width() - 4 - jump * 2)
+    canvas.blit(captain, (captain_x, FLOOR_Y - captain.get_height() - jump))
 
     # The linesman's flag, held up in his right hand (next to his head).
     # It flutters a little. The pole is 50 pixels long and the flag is
@@ -1871,11 +1889,13 @@ def draw_pitch_people(canvas, pictures, ball, tick):
     pygame.draw.rect(canvas, HOME_RED, (flag_x + 8, 145, 8, 6 + flutter))
     outlined_box(canvas, SKIN, flag_x - 2, 184, 4, 3)                          # his hand
 
-    # A speech bubble over the captain ("OFFSIDE!" is added as text).
-    outlined_box(canvas, WHITE, CAPTAIN_X - 14, BUBBLE_Y, 34, 12)
-    pygame.draw.rect(canvas, (220, 225, 235), (CAPTAIN_X - 14, BUBBLE_Y + 10, 34, 2))
-    pygame.draw.polygon(canvas, OUTLINE, [(CAPTAIN_X - 2, BUBBLE_Y + 12), (CAPTAIN_X + 2, BUBBLE_Y + 18),
-                                          (CAPTAIN_X + 4, BUBBLE_Y + 12)])
+    # A speech bubble over the captain ("OFFSIDE!" is added as text in
+    # game_2d.py). It goes away after your call.
+    if press is None:
+        outlined_box(canvas, WHITE, CAPTAIN_X - 14, BUBBLE_Y, 34, 12)
+        pygame.draw.rect(canvas, (220, 225, 235), (CAPTAIN_X - 14, BUBBLE_Y + 10, 34, 2))
+        pygame.draw.polygon(canvas, OUTLINE, [(CAPTAIN_X - 2, BUBBLE_Y + 12), (CAPTAIN_X + 2, BUBBLE_Y + 18),
+                                              (CAPTAIN_X + 4, BUBBLE_Y + 12)])
 
     # The ball, with a little shadow. ball["x"] is where it is now.
     # While it rolls, the picture is turned in steps of 90 degrees
@@ -2046,6 +2066,150 @@ def draw_goal(canvas, tick):
         pygame.draw.rect(canvas, WHITE, (photographer_x - 15, 186, 3, 1))
 
 
+# ---------------------------------------------------------------- the press pack
+
+# After your call the press storms out of the tunnel on the left: one
+# after the other, trampling and kicking up dust. Then they spread out:
+# the interviewers with microphones come close to you, the photographers
+# stay a bit further back and flash all the time.
+# Each person: (where they end up, "photo" or "mic", their hair number,
+# how far back they stand). "back" is how many pixels higher up they stand:
+# 0 is the front row, bigger numbers are further away. The photographers
+# stand in several rows behind each other and partly hide each other.
+# The interviewers stand in the front row, right next to you.
+PRESS_PEOPLE = [
+    (234, "mic", 3, 0), (328, "mic", 0, 0), (362, "mic", 1, 0),
+    (122, "photo", 0, 12), (140, "photo", 1, 5), (160, "photo", 2, 15),
+    (178, "photo", 3, 8), (204, "photo", 1, 13),
+    (356, "photo", 2, 13), (374, "photo", 0, 6), (392, "photo", 3, 15),
+    (410, "photo", 1, 9), (428, "photo", 2, 12),
+]
+# Where they come out of the tunnel, and where you stand (the middle).
+TUNNEL_X = 24
+PLAYER_MIDDLE = 311
+# Each person starts 4 frames after the one before, and needs 45 frames
+# to run to their place. All frames together: see PRESS_RUSH_FRAMES.
+PRESS_DELAY = 4
+PRESS_RUN = 45
+
+
+def press_place(number, frame):
+    # Where press person number "number" is at this frame of the rush.
+    # Returns (x, how far they have run from 0.0 to 1.0), or None if they
+    # have not come out of the tunnel yet.
+    end_x, kind, hair, back = PRESS_PEOPLE[number]
+    started = frame - number * PRESS_DELAY
+    if started < 0:
+        return None
+    part = min(1.0, started / PRESS_RUN)
+    run = 1 - (1 - part) * (1 - part)          # slows down at the end
+    x = int(TUNNEL_X + (end_x - TUNNEL_X) * run)
+    return x, part
+
+
+def press_floor(back):
+    # Where a press person's feet are: the further back, the higher up.
+    return FLOOR_Y - back
+
+
+def draw_press_pack(canvas, pictures, frame, tick):
+    # frame counts the frames since the rush started (a big number once
+    # everybody is there). First a dust cloud that settles, then the
+    # people from the back to the front: the ones furthest back first, so
+    # the ones in front cover them.
+    draw_press_dust(canvas, frame)
+    for back in range(20, -1, -1):
+        for number in range(len(PRESS_PEOPLE)):
+            if PRESS_PEOPLE[number][3] != back:
+                continue
+            place = press_place(number, frame)
+            if place is None:
+                continue
+            x, part = place
+            draw_press_person(canvas, pictures, number, x, part, tick)
+
+
+def draw_press_dust(canvas, frame):
+    # A big cloud of dust over the grass where the press ran: light brown
+    # puffs that grow and then fade away (the dust settles).
+    if frame > 110:
+        return
+    strength = 150
+    if frame > 60:
+        strength = 150 - (frame - 60) * 3         # it settles after frame 60
+    for i in range(16):
+        x = 30 + i * 28 + (frame * (i % 3 + 1)) % 10
+        size = 10 + (i * 7) % 9 + min(frame, 40) // 4
+        dust = pygame.Surface((size * 2, size), pygame.SRCALPHA)
+        pygame.draw.ellipse(dust, (200, 175, 130, max(0, strength - (i % 4) * 20)), (0, 0, size * 2, size))
+        canvas.blit(dust, (x - size, FLOOR_Y - size + 4))
+
+
+def draw_press_person(canvas, pictures, number, x, part, tick):
+    # One press person: running (trampling) while part < 1, then standing.
+    end_x, kind, hair, back = PRESS_PEOPLE[number]
+    if kind == "photo":
+        picture = pictures["photographers"][hair]
+    else:
+        picture = pictures["interviewers"][hair]
+    # People who end up right of you look to the left (flip the picture).
+    facing_left = end_x > PLAYER_MIDDLE and part >= 1
+    if facing_left:
+        picture = pygame.transform.flip(picture, True, False)
+    floor = press_floor(back)
+    width = picture.get_width()
+
+    if part < 1:
+        # Trampling: short fast steps (up and down every 2 frames) and a
+        # little puff of dust at every step.
+        lift = ((tick // 2 + number) % 2) * 3
+        if lift == 0:
+            dust = pygame.Surface((16, 8), pygame.SRCALPHA)
+            pygame.draw.ellipse(dust, (200, 175, 130, 170), (0, 0, 16, 8))
+            canvas.blit(dust, (x - 6, floor - 6))
+    else:
+        lift = bob(tick, number * 5)
+
+    draw_shadow(canvas, x + 2, floor + 1, width - 4)
+    top = floor - picture.get_height() - lift
+    canvas.blit(picture, (x, top))
+
+    # Photographers flash all the time (every 10 frames, each one at
+    # another moment). The flash is at the camera on the side they look to.
+    if kind == "photo" and (tick + number * 3) % 10 < 2:
+        if facing_left:
+            flash_x = x + 2
+        else:
+            flash_x = x + width - 2
+        flash_y = top + 16
+        flash = pygame.Surface((40, 40), pygame.SRCALPHA)
+        pygame.draw.circle(flash, (255, 255, 255, 130), (20, 20), 18)
+        canvas.blit(flash, (flash_x - 20, flash_y - 20))
+        for dx, dy in [(-12, 0), (12, 0), (0, -12), (0, 12)]:
+            pygame.draw.line(canvas, WHITE, (flash_x, flash_y), (flash_x + dx, flash_y + dy), 2)
+
+
+def press_labels(frame, tick):
+    # The word PRESS on every press person, as (text, middle x, y) in
+    # canvas positions. It is drawn later as sharp text, like the room labels.
+    labels = []
+    for number in range(len(PRESS_PEOPLE)):
+        end_x, kind, hair, back = PRESS_PEOPLE[number]
+        place = press_place(number, frame)
+        if place is None:
+            continue
+        x, part = place
+        if part < 1:
+            lift = ((tick // 2 + number) % 2) * 3
+        else:
+            lift = bob(tick, number * 5)
+        # The picture is 40 pixels high (38 rows + the outline);
+        # the chest is about 26 pixels below its top.
+        chest_y = press_floor(back) - 40 - lift + 26
+        labels.append(("PRESS", x + 16, chest_y + 3))
+    return labels
+
+
 # ---------------------------------------------------------------- choosing a room
 
 def draw_room(canvas, scene_id, pictures, progress, extras):
@@ -2053,7 +2217,8 @@ def draw_room(canvas, scene_id, pictures, progress, extras):
     # pictures holds the characters and objects that live in the rooms.
     # progress is needed for things that change (padlock, whistle, slip ...).
     # extras holds what moves: "tick" (the frame counter for animations),
-    # "ball" (the ball on the pitch) and "reveal" (Dave's reveal animation).
+    # "ball" (the ball on the pitch), "reveal" (Dave's reveal animation)
+    # and "press" (frames since the press pack started running, or None).
     tick = extras["tick"]
     if scene_id == "booth":
         draw_booth(canvas, pictures, progress, tick)
@@ -2064,7 +2229,7 @@ def draw_room(canvas, scene_id, pictures, progress, extras):
     elif scene_id == "server_room":
         draw_server_room(canvas, progress, tick)
     elif scene_id == "pitch":
-        draw_pitch(canvas, pictures, extras["ball"], tick)
+        draw_pitch(canvas, pictures, extras["ball"], tick, extras["press"])
 
 
 # Text labels for each room: (text, x, y, colour, small?) in canvas positions.
@@ -2101,6 +2266,5 @@ LABELS = {
         ("BOOTH", 25, 120, (255, 255, 255), False),
         ("FCB", 129, 50, (255, 255, 255), False),
         ("BVB", 191, 50, (30, 30, 40), False),
-        ("OFFSIDE!", CAPTAIN_X - 12, BUBBLE_Y + 1, (230, 40, 40), True),
     ],
 }

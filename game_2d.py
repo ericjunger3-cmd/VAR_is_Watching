@@ -45,6 +45,10 @@ ENDING_FRAMES = 60
 # How many frames the pundit's speech box flashes when he has a new hint.
 HINT_FLASH_FRAMES = 60
 
+# How long the press pack needs to run in after your call: 3.3 seconds
+# (the last one leaves the tunnel after 48 frames and runs for 45 more).
+PRESS_RUSH_FRAMES = 100
+
 # The circle between two end clips (and after the last one): 1 second.
 CLIP_CHANGE_FRAMES = 30
 
@@ -562,11 +566,12 @@ def start_circle(screen, frames):
 def text_box_is_open(screen):
     # True if a box with text or choices is open: dialogue, close-up,
     # menu, VAR Review, pause menu, a yes/no question or the tutorial,
-    # or an end clip is playing.
+    # or an end clip is playing, or the press pack is running in.
     return (len(screen["dialogue"]) > 0 or screen["closeup"] is not None
             or screen["menu"] is not None or screen["review"] is not None
             or screen["pause"] is not None or screen["confirm"] is not None
-            or screen["tutorial"] is not None or len(screen["clips"]) > 0)
+            or screen["tutorial"] is not None or len(screen["clips"]) > 0
+            or screen["press_rush"] is not None)
 
 
 def box_is_open(screen):
@@ -592,6 +597,7 @@ def make_screen(dialogue):
         "closeup": None,    # the lines of the sticky note while it is open
         "menu": None,       # the open menu (press answers, GOAL / OFFSIDE)
         "press_next": False,  # True: open the press questions when the text is read
+        "press_rush": None,   # while the press pack runs in: how far (in frames)
         "review": None,     # the VAR Review while it is open
         "pause": None,      # the pause menu (Escape) while it is open
         "confirm": None,    # a yes/no question while it is open
@@ -730,10 +736,24 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     # Because one canvas pixel is 2 window pixels, this lets the camera
     # move in smaller, smoother steps.
     offset = int(round(moving["camera"] * SCALE))
+    # While the press pack storms the pitch, the ground shakes: the
+    # picture jumps 3 window pixels left and right every other frame.
+    if screen["press_rush"] is not None:
+        if tick % 2 == 0:
+            offset = offset + 3
+        else:
+            offset = offset - 3
 
     # 1. The room and the player on the (wider) room canvas. The whole room
     #    is scaled up and placed so that the camera's part is in the window.
-    extras = {"tick": tick, "ball": ball, "reveal": screen["reveal"]}
+    # The press pack: None before your call, then the number of frames
+    # since they started running (a big number once they are all there).
+    press = None
+    if "ruling" in progress["choices"]:
+        press = 1000
+        if screen["press_rush"] is not None:
+            press = screen["press_rush"]
+    extras = {"tick": tick, "ball": ball, "reveal": screen["reveal"], "press": press}
     rooms.draw_room(canvas, progress["scene"], assets["pictures"], progress, extras)
     picture = player_picture(player, assets["standing"], assets["walking"])
     canvas.blit(picture, (player["x"], player_y - walk_bounce(player)))
@@ -746,6 +766,18 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
 
     # 2. The sharp room labels and the breathing "E" bubble.
     draw_labels(window, fonts["label"], fonts["label_small"], progress["scene"], offset)
+    # The captain shouts "OFFSIDE!" in his speech bubble, until your call.
+    if progress["scene"] == "pitch" and "ruling" not in progress["choices"]:
+        shout = fonts["label_small"].render("OFFSIDE!", False, (230, 40, 40))
+        window.blit(shout, ((rooms.CAPTAIN_X - 12) * SCALE - offset, (rooms.BUBBLE_Y + 1) * SCALE))
+    # The words on the clothes: VAR on your shirt, and PRESS on the press
+    # people (white letters, centred on the chest).
+    shirt_labels = [("VAR", player["x"] + player_width // 2, player_y - walk_bounce(player) + 26)]
+    if press is not None and progress["scene"] == "pitch":
+        shirt_labels = shirt_labels + rooms.press_labels(press, tick)
+    for text, middle_x, y in shirt_labels:
+        word = fonts["label_small"].render(text, False, (255, 255, 255))
+        window.blit(word, (middle_x * SCALE - offset - word.get_width() // 2, y * SCALE))
     if progress["scene"] == "pitch":
         draw_scoreboard_text(window, fonts["label"], ball, offset, progress["choices"])
     if len(nearby) > 0:
@@ -988,8 +1020,9 @@ def play(assets, story, progress, screen, player):
                 sound.toggle_mute()
                 continue
 
-            # During the circle animation all keys wait (it is short).
-            if screen["door"] is not None:
+            # During the circle animation and while the press pack runs in,
+            # all keys wait (both are short).
+            if screen["door"] is not None or screen["press_rush"] is not None:
                 continue
             # During an end clip, Space, Enter or E skips to its end.
             if len(screen["clips"]) > 0:
@@ -1035,10 +1068,19 @@ def play(assets, story, progress, screen, player):
                 handle_walking_key(event.key, scene, nearby, progress, story, screen, fonts, player, player_width)
 
         # After the ruling the press comes running: as soon as the text is
-        # read, their questions open (a menu you cannot close).
+        # read, the press pack storms the pitch (press_rush counts the
+        # frames). When they are all there, their questions open (a menu
+        # you cannot close). Cameras click all the time while they run.
         if screen["press_next"] and not box_is_open(screen) and progress["ending"] is None:
             screen["press_next"] = False
-            open_press_questions(story, progress, screen)
+            screen["press_rush"] = 0
+        if screen["press_rush"] is not None:
+            screen["press_rush"] = screen["press_rush"] + 1
+            if screen["press_rush"] % 6 == 0:
+                sound.play("camera")
+            if screen["press_rush"] >= PRESS_RUSH_FRAMES:
+                screen["press_rush"] = None
+                open_press_questions(story, progress, screen)
 
         # The game just ended and the last text is read: a slow circle
         # closes over the pitch and opens on the first end clip, so the
@@ -1225,6 +1267,10 @@ def main():
             "ball": sprites.make_sprite(sprites.BALL),
             "steward": sprites.make_sprite(sprites.STEWARD),
             "police": sprites.make_sprite(sprites.POLICE, sprites.POLICE_COLOURS),
+            # The press pack: photographers and interviewers, one picture
+            # for every hair colour (filled in below).
+            "photographers": [],
+            "interviewers": [],
             "padlock": sprites.make_sprite(sprites.PADLOCK),
             # Item pictures: the key is the item id from story.json.
             "whistle": sprites.make_sprite(sprites.WHISTLE),
@@ -1243,6 +1289,13 @@ def main():
 
     for frame in sprites.PLAYER_WALK:
         assets["walking"].append(sprites.make_sprite(frame, sprites.PLAYER_COLOURS))
+    for hair in sprites.PRESS_HAIR:
+        photo_colours = dict(sprites.PHOTOGRAPHER_COLOURS)
+        photo_colours.update(hair)
+        assets["pictures"]["photographers"].append(sprites.make_sprite(sprites.PHOTOGRAPHER, photo_colours))
+        mic_colours = dict(sprites.INTERVIEWER_COLOURS)
+        mic_colours.update(hair)
+        assets["pictures"]["interviewers"].append(sprites.make_sprite(sprites.INTERVIEWER, mic_colours))
     # The end clips in the TV studio show Infantini's whole body, in his
     # 5 moods (0 = calm ... 4 = furious).
     assets["pictures"]["infantini"] = []
