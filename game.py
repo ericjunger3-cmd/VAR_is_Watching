@@ -83,10 +83,15 @@ def current_hint(story, progress):
     # inventory (an item, e.g. "whistle") or in the choices (e.g. "dave").
     # The last hint has no "done_when": it stays until the game ends.
     for hint in story["hints"]:
-        if "done_when" not in hint:
-            return hint["pundit"]
-        done_id = hint["done_when"]
-        if done_id not in progress["inventory"] and done_id not in progress["choices"]:
+        done = False
+        if "done_when" in hint:
+            done_id = hint["done_when"]
+            done = done_id in progress["inventory"] or done_id in progress["choices"]
+        if not done:
+            # Some hints change once you found a certain clue (e.g. the
+            # pundit stops asking for his lanyard once you have found it).
+            if "if_clue" in hint and hint["if_clue"] in progress["choices"]:
+                return hint["pundit_if_clue"]
             return hint["pundit"]
     return ""
 

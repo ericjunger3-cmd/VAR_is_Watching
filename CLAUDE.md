@@ -18,6 +18,25 @@ https://nova-sbe-introduction-to-programming.github.io/intro-to-programming-2026
 and the key VAR angle is missing. The player is a junior VAR official on their
 first day. A smug TV pundit narrates everything.
 
+Teams: home side in red (Bayern style: striker, passer), away side in yellow and
+black (Dortmund style: captain, defenders; the review goalkeeper is purple). The
+VAR team (player, referee, linesman) wears black. Scoreboard: FCB 1 - 0 BVB; home
+fans on the left half of the stands, away fans on the right (`fan_colour` in rooms.py).
+
+### The pundit gives the hints
+
+- Rex always says (rudely, but clearly) what to do next: the `"hints"` list in
+  story.json, each with a `"done_when"` id (item or choice); `current_hint` in
+  game.py shows the first one not done. A hint can have `"if_clue"` /
+  `"pundit_if_clue"` for a different line once that clue is found.
+- His mood shows in his name, from `"pundit_moods"` by clue count:
+  PUNDIT, PUNDIT (nervous), (sweating), (panicking) (`pundit_line`).
+- 2D: a new line makes his speech box flash yellow and beep (`HINT_FLASH_FRAMES`).
+- Clues are secret: no counter anywhere. Exposing Rex stays hidden until all
+  clues are found (`needs_choices` + `hide_if_blocked`).
+- Every ending shows the truth (`ending_summary`, `"truth"`).
+- Dialogue texts are kept short: every text fits on one page of the text box.
+
 ### The twist (optional to discover)
 
 - **Pombo is Dave**, the missing VAR operator from the sticky note, working a
@@ -45,6 +64,8 @@ first day. A smug TV pundit narrates everything.
 
 ### VAR Review
 
+It starts with a "rules" step that explains offside in plain words (`"rules"` in
+story.json, also printed in the terminal); Enter starts the footage.
 A timeline of 3.0 s in 0.1 s steps (no names, no hints). Find the last moment
 the passer's boot touches the ball (1.2 s), lock it, then move a free offside
 line in 0.1 m steps (2D: no number shown; terminal: type metres).
@@ -79,6 +100,10 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
 - `story.json` – all story content, shared by both versions.
 - `save.json` – terminal progress, **saved after every accepted action**.
   The 2D version saves to `save_2d.json` (same format).
+- Time limit: 40 actions (terminal) or 300 seconds (2D). In 2D the timer only
+  runs while no box is open (`box_is_open`), so reading never costs time.
+- `test_game.py` – automatic tests for A1-A6 and the main rules, plain asserts,
+  no extra libraries: `py test_game.py`.
 - Run with `py game.py` / `py game_2d.py` (Python 3.15 on this PC; `python`
   points to the Microsoft Store alias).
 
@@ -143,4 +168,4 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
 - A1/A2: the Lucky Whistle is the "key" for the Mascot Changing Room.
 - A3: every item can be collected only once (taken items disappear).
 - PT04: the review result and the press answer are remembered and change the
-  ending; exposing Rex needs earlier clues (needs_items + needs_choice).
+  ending; exposing Rex needs earlier clues (needs_choices).

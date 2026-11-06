@@ -3,7 +3,7 @@
   "start_scene": "booth",
 
   "action_limit": 40,
-  "time_limit_seconds": 420,
+  "time_limit_seconds": 300,
 
   "items": {
     "whistle": "Lucky Whistle",
@@ -17,7 +17,8 @@
   "hints": [
     { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. Thrilling.", "done_when": "whistle" },
     { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a pigeon. Live on my show. I'm crying.", "done_when": "dave" },
-    { "pundit": "A USB stick from a pigeon. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review" },
+    { "pundit": "A USB stick from a pigeon. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review",
+      "if_clue": "lanyard", "pundit_if_clue": "A USB stick from a pigeon. Plug it into your VAR computer, genius. And that lanyard? Never seen it. Never." },
     { "pundit": "Press Room next. One quote, rookie. And don't touch any crumpled paper by my camera. Totally normal paper.", "done_when": "press_answer" },
     { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. Trust me. I'm on TV." }
   ],
