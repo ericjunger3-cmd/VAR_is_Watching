@@ -755,3 +755,77 @@ def draw_note_text(window, lines, fonts, scale):
             y = y + 15
     hint = fonts["small"].render("E: put the note back", False, CREAM)
     window.blit(hint, ((NOTE_X + 40) * scale, (NOTE_Y + NOTE_HEIGHT + 14) * scale))
+
+
+# ---------------------------------------------------------------- the tutorial
+
+# A short tour of the screen at the start of a new game (and from the pause
+# menu). Every step lights up one part of the screen ("area") and explains
+# it in one or two sentences. game_2d.py works out where each area is right
+# now (tutorial_area). None means no area: the whole screen stays dark.
+TUTORIAL_STEPS = [
+    {"area": None, "title": "WELCOME, ROOKIE",
+     "text": "Your first day as VAR. Here is a quick tour of the screen."},
+    {"area": "pundit", "title": "REX ON TV",
+     "text": "Rex always tells you what to do next. When his box flashes, he has a new tip."},
+    {"area": "items", "title": "YOUR ITEMS",
+     "text": "Everything you pick up lands here."},
+    {"area": "timer", "title": "STADIUM WAITS",
+     "text": "The fans won't wait forever. The time only runs while you walk."},
+    {"area": "player", "title": "THIS IS YOU",
+     "text": "Walk with LEFT / RIGHT. A \"!\" shows where to go next. Stand there and press E."},
+    {"area": "textbox", "title": "THE STORY",
+     "text": "What happens is written down here. SPACE shows the next page."},
+    {"area": None, "title": "YOUR GOAL",
+     "text": "Find the missing camera angle and give the referee the right call: GOAL or OFFSIDE."},
+]
+
+# The size of the box that explains a step (canvas pixels).
+CAPTION_WIDTH = 236
+CAPTION_HEIGHT = 58
+
+
+def draw_tutorial(window, step_number, area, fonts, scale):
+    # One step of the tutorial, drawn on top of everything: the screen gets
+    # dark except the area (x, y, width, height in canvas pixels), which gets
+    # a yellow frame, and a box next to it explains it.
+    step = TUTORIAL_STEPS[step_number]
+    canvas_width = window.get_width() // scale
+    canvas_height = window.get_height() // scale
+
+    # The dark layer. fill((0, 0, 0, 0), rect) makes the area see-through.
+    shade = pygame.Surface(window.get_size(), pygame.SRCALPHA)
+    shade.fill((10, 10, 20, 205))
+    if area is not None:
+        x, y, width, height = area
+        shade.fill((0, 0, 0, 0), (x * scale, y * scale, width * scale, height * scale))
+    window.blit(shade, (0, 0))
+
+    # Where the box goes: in the middle when there is no area; under an
+    # area in the top half of the screen, above an area in the bottom half.
+    if area is None:
+        box_x = (canvas_width - CAPTION_WIDTH) // 2
+        box_y = (canvas_height - CAPTION_HEIGHT) // 2
+    else:
+        x, y, width, height = area
+        pygame.draw.rect(window, (255, 215, 60), (x * scale, y * scale, width * scale, height * scale), 3)
+        box_x = x + width // 2 - CAPTION_WIDTH // 2
+        # max / min keep the box inside the screen.
+        box_x = max(6, min(box_x, canvas_width - CAPTION_WIDTH - 6))
+        if y + height // 2 < canvas_height // 2:
+            box_y = y + height + 6
+        else:
+            box_y = y - CAPTION_HEIGHT - 6
+
+    # The box: a dark outline with cream inside, the title, the text and
+    # which keys to press (with the step number, e.g. 2/7).
+    pygame.draw.rect(window, OUTLINE, (box_x * scale, box_y * scale, CAPTION_WIDTH * scale, CAPTION_HEIGHT * scale))
+    pygame.draw.rect(window, (255, 245, 220), (box_x * scale + 4, box_y * scale + 4,
+                                               CAPTION_WIDTH * scale - 8, CAPTION_HEIGHT * scale - 8))
+    window.blit(fonts["title"].render(step["title"], False, ORANGE), ((box_x + 8) * scale, (box_y + 6) * scale))
+    y = box_y + 18
+    for line in wrap_text(step["text"], fonts["small"], (CAPTION_WIDTH - 16) * scale):
+        window.blit(fonts["small"].render(line, False, BROWN), ((box_x + 8) * scale, y * scale))
+        y = y + 8
+    hint = "SPACE: next   ESC: skip   (" + str(step_number + 1) + "/" + str(len(TUTORIAL_STEPS)) + ")"
+    window.blit(fonts["tiny"].render(hint, False, ORANGE), ((box_x + 8) * scale, (box_y + CAPTION_HEIGHT - 11) * scale))

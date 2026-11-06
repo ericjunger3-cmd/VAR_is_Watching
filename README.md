@@ -60,7 +60,7 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `E` | use what is in front of you (a door, an item, a person): an "E" bubble shows where you can |
 | `E`, `Space` or `Enter` | next page of the text box (or show the whole page at once) |
 | `↑` `↓` (or `W` `S`) + `Enter` | choose in a menu (you can also press `1`, `2`, `3`) |
-| `Escape` | pause menu: Resume, Fullscreen on/off, Restart, Back to the title screen (also closes a menu or close-up) |
+| `Escape` | pause menu: Resume, Tutorial, Volume, Fullscreen on/off, Restart, Back to the title screen (also closes a menu or close-up) |
 | `F11` | switch between window and fullscreen (works everywhere) |
 | `M` | mute / unmute all sound (works everywhere) |
 | `←` `→` on *Volume* | turn the volume down / up (title menu and pause menu) |
@@ -79,7 +79,9 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 - **After an ending:** `N` = new game (asks first), `Q` = back to the title screen.
 - **Timer:** the "STADIUM WAITS" clock in the top left counts down from 5 minutes. It only
   runs while you walk around: it stops while a text, the sticky note, a menu, the VAR Review,
-  the pause menu or a yes/no question is open.
+  the pause menu, a yes/no question or the tutorial is open.
+- **Tutorial:** a new game starts with a short tour of the screen (7 steps). `Space`
+  shows the next step, `Escape` skips it. You can watch it again from the pause menu.
 
 ## Files
 
@@ -116,6 +118,15 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 
 ## Help for new players
 
+- **Tutorial (2D):** a new game starts with a tour of the screen. Each step lights
+  up one part and explains it: Rex on the TV (the hints), your items, the timer,
+  you and the "!" markers, the story text, and the goal of the game. The steps are
+  `TUTORIAL_STEPS` in `ui.py`; `tutorial_area` in `game_2d.py` finds each part.
+  The terminal version prints the goal of the game at the start.
+- **Follow the "!":** besides the things you can use, the door on the way to
+  Rex's current hint also gets a bouncing "!" (terminal: a "(!)" after the
+  action). Each hint has a `"room"` in `story.json`; `door_to_hint` in `game.py`
+  finds the door.
 - **The pundit gives the hints.** Rex Smugworth always says (rudely, but clearly)
   what to do next, e.g. "Sticky note on your desk, rookie. Read it!". The hints are
   the `"hints"` list in `story.json`; the first one that is not done yet is shown.
@@ -127,7 +138,8 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 - **Proof counter:** "PROOF FOUND: 1 of 3" appears after the first clue.
   Trying to expose Rex too early lists which kind of proof is still missing.
 - **The truth at the end:** every ending shows the right call (GOAL, onside by
-  30 cm) and how much proof you found.
+  30 cm), how much proof you found, and a tip for the next game.
+- **The Press Room** reminds you that a VAR never picks a side.
 
 ## The game at a glance
 
@@ -163,15 +175,15 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 
 ## Automatic tests
 
-`test_game.py` checks A1-A6 (and the offside rule, the proof for exposing Rex and
-the pundit's hints) with the functions from `game.py`. It uses its own save file,
+`test_game.py` checks A1-A6 (and the offside rule, the proof for exposing Rex,
+the pundit's hints, the "!" door and the ending summary) with the functions from `game.py`. It uses its own save file,
 so your saved game is never touched.
 
 ```
 py test_game.py
 ```
 
-It prints PASS or FAIL for every test and "9 of 9 tests passed." at the end.
+It prints PASS or FAIL for every test and "11 of 11 tests passed." at the end.
 The checklists below test the same scenarios by hand, in the real game.
 
 ## Acceptance test checklist (A1-A6): terminal version
@@ -198,7 +210,8 @@ in the start menu. Type the inputs one at a time, pressing Enter after each one.
 ## Acceptance test checklist (A1-A6): 2D version
 
 Start each test with **New Game** on the title screen (and `Y` if it asks),
-or delete `save_2d.json` first.
+or delete `save_2d.json` first. A new game starts with the tutorial: press
+`Escape` to skip it.
 
 **Where things are.**
 - **VAR Booth**, from left to right: the desk, the VAR computer, the sticky note,

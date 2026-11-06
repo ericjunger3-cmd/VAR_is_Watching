@@ -34,8 +34,21 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 - 2D: a new line makes his speech box flash yellow and beep (`HINT_FLASH_FRAMES`).
 - "PROOF FOUND: n of 3" (`proof_text`) appears after the first clue; trying to
   expose Rex too early lists the missing kinds of proof (`proof_list`).
-- Every ending shows the truth and the proof found (`ending_summary`, `"truth"`).
+- Each hint has a `"room"`; `door_to_hint` finds the door on the way there
+  (from the booth: that room's door, elsewhere: the door back to the booth).
+  2D draws a "!" at its `"door_marker"`; the terminal adds "(!)" to the action.
+- Every ending shows the truth, the proof found and its `"tip"` (`ending_summary`).
 - Dialogue texts are kept short: every text fits on one page of the text box.
+
+### Tutorial (2D)
+
+- A new game starts with a tour of the screen: `TUTORIAL_STEPS` in ui.py (7 steps:
+  welcome, Rex on TV, items, timer, the player and the "!", the story text, the
+  goal). Each step darkens the screen except one area (`tutorial_area` in
+  game_2d.py) and explains it in a caption box (`draw_tutorial`).
+- `screen["tutorial"]` is the current step (None = closed). Space = next,
+  Escape = skip; it counts as an open box, so the timer stops. It can be
+  replayed from the pause menu ("Tutorial"). The terminal prints `"goal"`.
 
 ### The twist (optional to discover)
 

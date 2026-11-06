@@ -17,13 +17,15 @@
 
   "truth": "THE RIGHT CALL: GOAL. When the ball was passed, the striker was onside by 30 cm.",
 
+  "goal": "Your goal: give the referee the right call, GOAL or OFFSIDE. Rex on the TV always tells you what to do next.",
+
   "hints": [
-    { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. Thrilling.", "done_when": "whistle" },
-    { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a pigeon. Live on my show. I'm crying.", "done_when": "dave" },
-    { "pundit": "A USB stick from a pigeon. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review",
+    { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. Thrilling.", "done_when": "whistle", "room": "dressing_room" },
+    { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a pigeon. Live on my show. I'm crying.", "done_when": "dave", "room": "mascot_room" },
+    { "pundit": "A USB stick from a pigeon. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review", "room": "booth",
       "if_item": "lanyard", "pundit_if_item": "A USB stick from a pigeon. Plug it into your VAR computer, genius. And that lanyard? Never seen it. Never." },
-    { "pundit": "Press Room next. One quote, rookie. And don't touch any crumpled paper by my camera. Totally normal paper.", "done_when": "press_answer" },
-    { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. Trust me. I'm on TV." }
+    { "pundit": "Press Room next. One quote, rookie. And don't touch any crumpled paper by my camera. Totally normal paper.", "done_when": "press_answer", "room": "press_room" },
+    { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. Trust me. I'm on TV.", "room": "pitch" }
   ],
   "pundit_moods": ["", "nervous", "sweating", "panicking"],
   "ball_goal_pundit": "PUNDIT: Did the VAR official just score?! Somebody check the VAR! Oh wait... that's you. Doesn't count, rookie.",
@@ -33,15 +35,15 @@
       "name": "VAR Booth",
       "text": "94th minute, cup final. Home side scores, away captain screams \"OFFSIDE!\" at the sky. Day one as VAR, and the key camera shows static. Find the angle, make the call. But first: one quote for the Press Room (Rex's TV deal).",
       "actions": [
-        { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258,
+        { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258, "door_marker": [258, 104],
           "text": "You sprint down the tunnel, past a trolley of orange slices." },
-        { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room", "x": 316,
+        { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room", "x": 316, "door_marker": [316, 104],
           "needs_item": "whistle",
           "blocked_text": "Locked. Sign: \"MASCOTS ONLY. Whistle for entry.\" The ref keeps a spare whistle in his room.",
           "text": "You blow the Lucky Whistle. A pigeon coos. The door clicks open." },
-        { "label": "Go to the Press Room", "go_to": "press_room", "x": 374,
+        { "label": "Go to the Press Room", "go_to": "press_room", "x": 374, "door_marker": [374, 104],
           "text": "You follow the sound of camera shutters and bad decisions." },
-        { "label": "Go to the Pitch", "go_to": "pitch", "x": 443,
+        { "label": "Go to the Pitch", "go_to": "pitch", "x": 443, "door_marker": [443, 112],
           "text": "Floodlights. Sixty thousand heads turn. Your knees remember they are knees." },
         { "label": "Look at the sticky note", "x": 185, "marker": [190, 110],
           "text": "Dave's note says: \"Back in 5 min - Dave. P.S. Angle cuts out? Ask Pombo, our mascot. He films EVERYTHING.\"",
@@ -65,7 +67,7 @@
           "needs_choice": "drawer", "hide_if_blocked": true,
           "blocked_text": "The drawer is closed.",
           "text": "Someone wrote LUCKY on it in marker pen, so it must be true." },
-        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 104],
           "text": "Back to the booth. The static is still there." }
       ]
     },
@@ -76,7 +78,7 @@
       "actions": [
         { "label": "Ask Pombo what he saw", "take_item": "usb", "set_choice": "dave", "value": "talked", "x": 345, "marker": [384, 127],
           "text": "Pombo pulls off his head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you his head-cam USB: \"At 93:30 a shiny suit ran out of your booth.\"" },
-        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 104],
           "text": "You leave Dave to put his head back on." }
       ]
     },
@@ -84,7 +86,7 @@
     "press_room": {
       "name": "Press Room",
       "menu_title": "What do you tell the press?",
-      "text": "Cameras, microphones and every journalist in the country. Rex's TV deal: one live quote from you. Only one. No take-backs.",
+      "text": "Cameras, microphones and every journalist in the country. Rex's TV deal: one live quote from you. Only one. Careful: a VAR never picks a side.",
       "actions": [
         { "label": "Say: 'Clearly a goal!'", "set_choice": "press_answer", "value": "goal", "x": 330, "marker": [330, 130], "marker_after": "dave",
           "text": "Cameras flash. The headline is written before you finish. A VAR rulebook bursts into flames." },
@@ -101,7 +103,7 @@
           "text": "\"Rex pulled the cable. Here's his lanyard, his betting slip and a pigeon witness.\" Every camera turns to the TV studio." },
         { "label": "Pick up the crumpled paper by the TV camera", "take_item": "slip", "x": 436, "marker": [430, 188],
           "text": "A betting slip: \"500 pounds - AWAY WIN - late offside drama\". Signed: R. Smugworth. The pundit?!" },
-        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 104],
           "text": "You leave. A journalist keeps shouting at the door." }
       ]
     },
@@ -119,7 +121,7 @@
           "needs_choice": "press_answer",
           "blocked_text": "The ref shakes his head: \"TV contract, VAR. Press Room first, then your call.\"",
           "text": "You give the signal: OFFSIDE!" },
-        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 114],
           "text": "You walk back inside. Sixty thousand people boo at once. Impressive." }
       ]
     }
@@ -163,32 +165,38 @@
     "daylight_robbery": {
       "title": "Daylight Robbery",
       "show_epilogue": true,
-      "text": "You signal OFFSIDE and the goal is gone. Within minutes, freeze-frames all over the internet show the striker was onside by 30 centimetres. The home fans chant your name in a way you will never forget. PUNDIT: What a call! Clearly offside! ...Right? RIGHT?"
+      "text": "You signal OFFSIDE and the goal is gone. Within minutes, freeze-frames all over the internet show the striker was onside by 30 centimetres. The home fans chant your name in a way you will never forget. PUNDIT: What a call! Clearly offside! ...Right? RIGHT?",
+      "tip": "TIP: In the VAR Review, freeze the exact moment the ball leaves the boot, then line up the second-last defender."
     },
     "clip_of_the_year": {
       "title": "Clip of the Year",
       "show_epilogue": true,
-      "text": "You never studied the footage, so you make the call on pure vibes. GOAL! You happen to be right, but the broadcast cuts to your face at the exact moment you decide, and it is not a good face. By morning the clip has 40 million views and its own song. PUNDIT: Absolute cinema. That clip will outlive us all."
+      "text": "You never studied the footage, so you make the call on pure vibes. GOAL! You happen to be right, but the broadcast cuts to your face at the exact moment you decide, and it is not a good face. By morning the clip has 40 million views and its own song. PUNDIT: Absolute cinema. That clip will outlive us all.",
+      "tip": "TIP: Check the footage first. Pombo the mascot has it."
     },
     "right_call_wrong_mouth": {
       "title": "Right Call, Wrong Mouth",
       "show_epilogue": true,
-      "text": "Your review was right: onside, the goal stands. But you told the press \"Clearly a goal!\" before the referee had even made the call, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. PUNDIT: Right call, wrong mouth. They'll teach this one at VAR school."
+      "text": "Your review was right: onside, the goal stands. But you told the press \"Clearly a goal!\" before the referee had even made the call, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. PUNDIT: Right call, wrong mouth. They'll teach this one at VAR school.",
+      "tip": "TIP: A VAR stays neutral. Say \"No comment\", or expose Rex with all 3 pieces of proof."
     },
     "justice_served": {
       "title": "Justice Served",
       "show_epilogue": true,
-      "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you picked a side before the official decision. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. PUNDIT: Fine. Correct AND professional. Absolutely terrible for my ratings."
+      "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you picked a side before the official decision. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. PUNDIT: Fine. Correct AND professional. Absolutely terrible for my ratings.",
+      "tip": "TIP: Find all 3 pieces of proof and expose Rex in the Press Room for the best ending."
     },
     "time_up": {
       "title": "The Stadium Went Home",
       "show_epilogue": true,
-      "text": "You took too long. After all that waiting, the referee shrugs, decides the goal with a coin toss and walks off. Half the stadium has already gone home; the other half is booing you personally. PUNDIT: That long for one decision? Even the pigeon left."
+      "text": "You took too long. After all that waiting, the referee shrugs, decides the goal with a coin toss and walks off. Half the stadium has already gone home; the other half is booing you personally. PUNDIT: That long for one decision? Even the pigeon left.",
+      "tip": "TIP: Rex on the TV always tells you the next step. Follow the \"!\" markers."
     },
     "var_is_watching": {
       "title": "VAR Is Watching",
       "show_epilogue": false,
-      "text": "You give the goal and the stadium explodes. On every TV in the country, Rex Smugworth freezes mid-grin as two stewards walk into his studio holding a lanyard and a betting slip. In the stands, a pigeon takes off its head and bows. The goal stands. Rex does not. PUNDIT: This is an outrage! I want my lawy-- [SIGNAL LOST]"
+      "text": "You give the goal and the stadium explodes. On every TV in the country, Rex Smugworth freezes mid-grin as two stewards walk into his studio holding a lanyard and a betting slip. In the stands, a pigeon takes off its head and bows. The goal stands. Rex does not. PUNDIT: This is an outrage! I want my lawy-- [SIGNAL LOST]",
+      "tip": "PERFECT GAME: the right call, and Rex is exposed. You are a natural."
     }
   },
 

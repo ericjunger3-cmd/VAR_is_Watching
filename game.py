@@ -83,7 +83,7 @@ def proof_text(story, progress):
     return "PROOF FOUND: " + str(found) + " of " + str(total)
 
 
-def current_hint(story, progress):
+def find_current_hint(story, progress):
     # The pundit's hint for the next step: the first hint in story.json
     # that is not done yet. A hint is done when its "done_when" id is in the
     # inventory (an item, e.g. "whistle") or in the choices (e.g. "dave").
@@ -94,12 +94,38 @@ def current_hint(story, progress):
             done_id = hint["done_when"]
             done = done_id in progress["inventory"] or done_id in progress["choices"]
         if not done:
-            # Some hints change once you carry a certain item (e.g. the
-            # pundit stops asking for his lanyard once you have found it).
-            if "if_item" in hint and hint["if_item"] in progress["inventory"]:
-                return hint["pundit_if_item"]
-            return hint["pundit"]
-    return ""
+            return hint
+    return story["hints"][-1]
+
+
+def current_hint(story, progress):
+    # What the pundit says for the current hint. Some hints change once you
+    # carry a certain item (e.g. he stops asking for his lanyard once you
+    # have found it).
+    hint = find_current_hint(story, progress)
+    if "if_item" in hint and hint["if_item"] in progress["inventory"]:
+        return hint["pundit_if_item"]
+    return hint["pundit"]
+
+
+def door_to_hint(story, progress):
+    # The door the player should take next, to reach the room of the current
+    # hint ("room" in story.json). From the booth it is the door to that room;
+    # from any other room it is the door back to the booth, because every
+    # room is reached through the booth. Returns None when the player is
+    # already in that room.
+    target = find_current_hint(story, progress)["room"]
+    here = progress["scene"]
+    if here == target:
+        return None
+    if here == story["start_scene"]:
+        wanted = target
+    else:
+        wanted = story["start_scene"]
+    for action in story["scenes"][here]["actions"]:
+        if "go_to" in action and action["go_to"] == wanted:
+            return action
+    return None
 
 
 def pundit_line(story, progress):
@@ -213,13 +239,14 @@ def choose_ending(ruling, choices):
 
 
 def ending_summary(story, progress):
-    # Two lines for the end of the game, so every player understands the
-    # result: what the right call was, and how much proof against Rex
-    # they found.
+    # Three lines for the end of the game, so every player understands the
+    # result: what the right call was, how much proof against Rex they
+    # found, and a tip from the ending in story.json (what to try next time).
     found = count_clues(story, progress)
     total = len(story["clue_items"]) + len(story["clue_choices"])
     proof_line = "Proof that Rex pulled the cable: " + str(found) + " of " + str(total) + " found."
-    return [story["truth"], proof_line]
+    tip = story["endings"][progress["ending"]]["tip"]
+    return [story["truth"], proof_line, tip]
 
 
 def show_ending(story, progress):
@@ -410,12 +437,16 @@ def after_ending_menu(story, progress):
             print("Please type v, n or q.")
 
 
-def show_actions(actions):
+def show_actions(actions, door):
     # Print every action with a number in front, starting at 1.
+    # The door Rex's hint leads to (from door_to_hint) gets a "(!)".
     print()
     number = 1
     for action in actions:
-        print(str(number) + ". " + action["label"])
+        if action == door:
+            print(str(number) + ". " + action["label"] + "  (!)")
+        else:
+            print(str(number) + ". " + action["label"])
         number = number + 1
     print("i. Inventory")
     print("r. Restart")
@@ -463,7 +494,7 @@ def play_game(story, progress):
         # Only the visible actions get a number in the menu.
         actions = get_visible_actions(scene, inventory, choices)
         print("(The stadium is waiting: " + str(progress["actions_left"]) + " actions left)")
-        show_actions(actions)
+        show_actions(actions, door_to_hint(story, progress))
 
         # strip() removes spaces, lower() turns "Q" into "q".
         choice = input("> ").strip().lower()
@@ -549,6 +580,9 @@ def play_game(story, progress):
 def main():
     story = load_story()
     print("*** " + story["title"] + " ***")
+    # The goal of the game and how to play, so beginners know what to do.
+    print(story["goal"])
+    print("Type the number of an action. (!) marks the way Rex tells you to go.")
 
     # Ask the player: new game or continue?
     progress = start_menu(story)

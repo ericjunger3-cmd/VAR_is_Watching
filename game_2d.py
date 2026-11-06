@@ -129,7 +129,7 @@ def find_nearby_actions(scene, progress, player_x, player_width):
     return nearby
 
 
-def find_markers(scene, progress, nearby, looked):
+def find_markers(story, scene, progress, nearby, looked):
     # Find where to draw a bouncing "!" right now. A spot gets one when its
     # action (in story.json) has a "marker" position AND:
     # - it is still visible (not done yet, e.g. the item is not taken),
@@ -148,6 +148,12 @@ def find_markers(scene, progress, nearby, looked):
                 # draw the "!" there only once.
                 if action["marker"] not in markers:
                     markers.append(action["marker"])
+
+    # The door on the way to the pundit's current hint also gets a "!",
+    # so a new player can simply follow the "!" markers.
+    door = game.door_to_hint(story, progress)
+    if door is not None and door not in nearby:
+        markers.append(door["door_marker"])
     return markers
 
 
@@ -300,6 +306,18 @@ def handle_dialogue_key(key, screen):
             if len(screen["dialogue"]) == 0:
                 screen["last"] = page
             screen["letters"] = 0
+
+
+def handle_tutorial_key(key, screen):
+    # Space, E or Enter: the next step of the tutorial (after the last
+    # step it closes). Escape skips the rest of the tutorial.
+    if key in [pygame.K_SPACE, pygame.K_e, pygame.K_RETURN]:
+        sound.play("blip")
+        screen["tutorial"] = screen["tutorial"] + 1
+        if screen["tutorial"] >= len(ui.TUTORIAL_STEPS):
+            screen["tutorial"] = None
+    elif key == pygame.K_ESCAPE:
+        screen["tutorial"] = None
 
 
 def handle_menu_key(key, progress, story, screen, fonts, player, player_width):
@@ -480,10 +498,11 @@ def update_ball(ball, player, player_width):
 
 def box_is_open(screen):
     # True if any box is open: dialogue, close-up, menu, VAR Review,
-    # pause menu or a yes/no question.
+    # pause menu, a yes/no question or the tutorial.
     return (len(screen["dialogue"]) > 0 or screen["closeup"] is not None
             or screen["menu"] is not None or screen["review"] is not None
-            or screen["pause"] is not None or screen["confirm"] is not None)
+            or screen["pause"] is not None or screen["confirm"] is not None
+            or screen["tutorial"] is not None)
 
 
 def ending_is_showing(progress, screen):
@@ -508,17 +527,20 @@ def make_screen(dialogue):
         "flying": None,     # an item flying into its slot
         "reveal": None,     # how far Dave's reveal is (in frames)
         "looked": [],       # labels of the close-ups already read (sticky note)
+        "tutorial": None,   # the step of the tutorial while it is open (0, 1, 2 ...)
     }
 
 
 def new_game(story, fonts, player):
     # A fresh game: new progress (like game.py), saved right away, the player
-    # in the middle of the booth and the booth's description on screen.
+    # in the middle of the booth. First the tutorial (a short tour of the
+    # screen), then the booth's description.
     progress = game.new_progress(story)
     progress["visited"].append(progress["scene"])
     game.save_progress(progress, SAVE_FILE)
     player["x"] = 245
     screen = make_screen(room_pages(story["scenes"][progress["scene"]], fonts))
+    screen["tutorial"] = 0
     return progress, screen
 
 
@@ -537,7 +559,7 @@ def continue_game(story, fonts, player, progress, player_width):
 
 # ---------------------------------------------------------------- pause menu and yes/no box
 
-PAUSE_OPTIONS = ["Resume", "Volume", "Fullscreen", "Restart", "Back to the title screen"]
+PAUSE_OPTIONS = ["Resume", "Tutorial", "Volume", "Fullscreen", "Restart", "Back to the title screen"]
 
 
 def fullscreen_label():
@@ -574,7 +596,10 @@ def handle_pause_key(key, screen):
             pygame.display.toggle_fullscreen()
             return None
         screen["pause"] = None
-        if choice == "Restart":
+        if choice == "Tutorial":
+            # Show the tour of the screen again, from the first step.
+            screen["tutorial"] = 0
+        elif choice == "Restart":
             # Restarting deletes the progress, so ask first.
             screen["confirm"] = "Restart? Your current progress will be lost."
         elif choice == "Back to the title screen":
@@ -583,6 +608,27 @@ def handle_pause_key(key, screen):
 
 
 # ---------------------------------------------------------------- drawing
+
+def tutorial_area(name, player, assets, moving):
+    # Where a part of the screen is right now, for the tutorial:
+    # (x, y, width, height) in canvas pixels, or None for no area.
+    if name == "pundit":
+        return (ui.SPEECH_X - 6, 2, rooms.CANVAS_WIDTH - ui.SPEECH_X + 4, 66)
+    if name == "items":
+        return (3, 3, 108, 28)
+    if name == "timer":
+        return (3, 29, 108, 22)
+    if name == "player":
+        # The player moves and the camera too, so we use the position on
+        # the screen (room position minus the camera), plus the space
+        # above the player where the "!" and the "E" bubble appear.
+        player_width = assets["standing"].get_width()
+        x = player["x"] - int(round(moving["camera"]))
+        return (x - 16, 86, player_width + 32, rooms.FLOOR_Y + 6 - 86)
+    if name == "textbox":
+        return (ui.BOX_X - 3, ui.BOX_Y - 10, ui.BOX_WIDTH + 6, ui.BOX_HEIGHT + 13)
+    return None
+
 
 def draw_game(assets, story, progress, screen, player, nearby, moving):
     # Draw one picture of the game, in layers from the back to the front.
@@ -609,7 +655,7 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     canvas.blit(picture, (player["x"], player_y - walk_bounce(player)))
     # The bouncing "!" markers above things you can use (not during an ending).
     if not show_ending:
-        for marker_x, marker_y in find_markers(scene, progress, nearby, screen["looked"]):
+        for marker_x, marker_y in find_markers(story, scene, progress, nearby, screen["looked"]):
             rooms.draw_marker(canvas, marker_x, marker_y, tick)
     big_room = pygame.transform.scale(canvas, (rooms.ROOM_WIDTH * SCALE, WINDOW_HEIGHT))
     window.blit(big_room, (-offset, 0))
@@ -704,6 +750,12 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         ui.draw_ending_text(window, story, progress["ending"], game.ending_summary(story, progress), fonts, SCALE)
     if screen["confirm"] is not None:
         ui.draw_confirm_text(window, screen["confirm"], fonts, SCALE)
+
+    # 5. The tutorial, on top of everything else.
+    if screen["tutorial"] is not None:
+        name = ui.TUTORIAL_STEPS[screen["tutorial"]]["area"]
+        area = tutorial_area(name, player, assets, moving)
+        ui.draw_tutorial(window, screen["tutorial"], area, fonts, SCALE)
 
 
 # ---------------------------------------------------------------- the title screen
@@ -851,6 +903,8 @@ def play(assets, story, progress, screen, player):
                 elif event.key in [pygame.K_n, pygame.K_ESCAPE]:
                     # No: close the question, nothing changes.
                     screen["confirm"] = None
+            elif screen["tutorial"] is not None:
+                handle_tutorial_key(event.key, screen)
             elif len(screen["dialogue"]) > 0:
                 handle_dialogue_key(event.key, screen)
             elif screen["closeup"] is not None:
@@ -965,7 +1019,8 @@ def play(assets, story, progress, screen, player):
 
         # The typing effect: a few more letters appear every frame,
         # with a soft blip every third frame while the text is typing.
-        if len(screen["dialogue"]) > 0:
+        # It waits while the tutorial is open (the text is behind it).
+        if len(screen["dialogue"]) > 0 and screen["tutorial"] is None:
             if screen["letters"] < ui.letters_on_page(screen["dialogue"][0]) and moving["tick"] % 3 == 0:
                 sound.play("type")
             screen["letters"] = screen["letters"] + TYPE_SPEED

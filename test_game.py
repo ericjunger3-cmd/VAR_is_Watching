@@ -133,11 +133,35 @@ def test_pundit_hints(story):
     assert game.pundit_line(story, progress).startswith("PUNDIT (nervous): ")
 
 
+def test_door_to_hint(story):
+    # The "!" door: from the booth the door to the hint's room, from any
+    # other room the door back to the booth, and none in the hint's room.
+    progress = game.new_progress(story)
+    assert game.door_to_hint(story, progress)["go_to"] == "dressing_room"
+    progress["scene"] = "dressing_room"
+    assert game.door_to_hint(story, progress) is None
+    progress["inventory"].append("whistle")
+    assert game.door_to_hint(story, progress)["go_to"] == "booth"
+    progress["scene"] = "booth"
+    assert game.door_to_hint(story, progress)["go_to"] == "mascot_room"
+
+
+def test_ending_summary(story):
+    # Every ending explains the result: the truth, the proof and a tip.
+    progress = game.new_progress(story)
+    for ending_id in story["endings"]:
+        progress["ending"] = ending_id
+        summary = game.ending_summary(story, progress)
+        assert len(summary) == 3
+        assert summary[0] == story["truth"]
+
+
 def run_all_tests():
     story = game.load_story()
     tests = [test_a1_locked_route, test_a2_unlocked_route, test_a3_no_duplicate,
              test_a4_resume, test_a5_two_outcomes, test_a6_restart,
-             test_offside_rule, test_expose_needs_all_proof, test_pundit_hints]
+             test_offside_rule, test_expose_needs_all_proof, test_pundit_hints,
+             test_door_to_hint, test_ending_summary]
     failed = 0
     for test in tests:
         # try / except: if an assert fails, we count it and keep going.
