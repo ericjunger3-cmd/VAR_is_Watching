@@ -33,6 +33,9 @@ FLY_FRAMES = 25
 # How many frames Dave's reveal (taking off the mask) takes.
 REVEAL_FRAMES = 60
 
+# How many frames the pundit's speech box flashes when he has a new hint.
+HINT_FLASH_FRAMES = 60
+
 # The room sounds that play in the background of some rooms.
 ROOM_SOUNDS = {"pitch": "crowd", "dressing_room": "shower"}
 
@@ -177,10 +180,10 @@ def draw_scoreboard_text(window, font, ball, offset):
     # "GOAL?!" while the player's goal is celebrated.
     if ball["celebrate"] > 0:
         text = "GOAL?!"
-        x = 226
+        x = 156
     else:
         text = "VAR CHECK"
-        x = 210
+        x = 140
     window.blit(font.render(text, False, (30, 20, 20)), (x * SCALE - offset, 66 * SCALE))
 
 
@@ -623,7 +626,11 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     #    clean every frame (the 4th number 0 means fully transparent).
     #    The pundit's TV and the inventory are always there.
     overlay.fill((0, 0, 0, 0))
-    ui.draw_pundit_tv(overlay, assets["pundit"])
+    # While the flash counts down, the speech box is lit every other
+    # 8 frames: on, off, on, off ...
+    flash = moving["hint_flash"]
+    lit = 0 < flash < HINT_FLASH_FRAMES and (flash // 8) % 2 == 0
+    ui.draw_pundit_tv(overlay, assets["pundit"], lit)
     flying_item = None
     if screen["flying"] is not None:
         flying_item = screen["flying"]["item"]
@@ -801,8 +808,9 @@ def play(assets, story, progress, screen, player):
     player_width = assets["standing"].get_width()
     # Everything that moves on screen but is not part of the story:
     # the frame counter (for animations), the ball (just for fun, not
-    # saved) and the camera position.
-    moving = {"tick": 0, "ball": new_ball(), "camera": 0.0}
+    # saved), the camera position, and the pundit's last line with the
+    # frames his speech box still flashes (when he says something new).
+    moving = {"tick": 0, "ball": new_ball(), "camera": 0.0, "pundit_line": "", "hint_flash": 0}
     # Has the ending jingle been played? (So it plays only once.)
     jingle_played = False
     sound.play_music("game_theme")
@@ -935,6 +943,18 @@ def play(assets, story, progress, screen, player):
             screen["reveal"] = screen["reveal"] + 1
             if screen["reveal"] >= REVEAL_FRAMES:
                 screen["reveal"] = None
+
+        # A new pundit line (a new hint or a new mood): his speech box
+        # flashes and beeps, so the player notices it. The flash waits
+        # until every box is closed, so nobody misses it while reading.
+        line = game.pundit_line(story, progress)
+        if line != moving["pundit_line"]:
+            moving["pundit_line"] = line
+            moving["hint_flash"] = HINT_FLASH_FRAMES
+        if moving["hint_flash"] > 0 and not box_is_open(screen):
+            if moving["hint_flash"] == HINT_FLASH_FRAMES:
+                sound.play("beep")
+            moving["hint_flash"] = moving["hint_flash"] - 1
 
         # The camera follows the player exactly: it keeps the player in the
         # middle of the window, but never shows anything outside the room.

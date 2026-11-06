@@ -29,6 +29,22 @@ YELLOW = (250, 210, 60)
 SKY = (150, 200, 240)
 NOTE_YELLOW = (255, 225, 70)
 
+# The shirt colours of the fans in the stadium: home fans (left half) in
+# red and white, away fans (right half) in yellow and black.
+HOME_FANS = [WHITE, HOME_RED, (255, 120, 120), WHITE, (235, 70, 70), HOME_RED]
+AWAY_FANS = [AWAY_YELLOW, YELLOW, BLACK, AWAY_YELLOW, (255, 235, 120), YELLOW]
+
+
+def fan_colour(fan_x, number):
+    # The shirt colour of one fan. Fans on the left half of the room are
+    # home fans, on the right half away fans. number comes from a small
+    # calculation, so the crowd looks mixed but always stays the same.
+    if fan_x < ROOM_WIDTH // 2:
+        colours = HOME_FANS
+    else:
+        colours = AWAY_FANS
+    return colours[number % len(colours)]
+
 
 # ---------------------------------------------------------------- shared parts
 
@@ -1714,17 +1730,18 @@ def draw_pitch(canvas, pictures, ball, tick):
 def draw_title_background(canvas, pictures, tick):
     # The title screen: the empty pitch, with the VAR official on the left
     # and Pombo on the right, like decorations next to the menu.
-    draw_pitch_background(canvas, False, tick)
+    draw_pitch_background(canvas, False, tick, False)
     player = pictures["player"]
     canvas.blit(player, (112, FLOOR_Y - player.get_height() - bob(tick, 0)))
     pombo = pictures["pombo"]
     canvas.blit(pombo, (340, FLOOR_Y - pombo.get_height() - bob(tick, 10)))
 
 
-def draw_pitch_background(canvas, flashing, tick):
+def draw_pitch_background(canvas, flashing, tick, scoreboard=True):
     # Everything on the pitch except the people and the ball:
     # the stadium, the boards, the grass, the tunnel, the flag and the goal.
-    draw_stadium(canvas, flashing, tick)
+    # scoreboard=False leaves the scoreboard out (for the title screen).
+    draw_stadium(canvas, flashing, tick, scoreboard)
     draw_ad_boards(canvas, tick)
     draw_grass(canvas)
 
@@ -1838,8 +1855,9 @@ def draw_pitch_people(canvas, pictures, ball, tick):
     canvas.blit(ball_picture, (ball_x, FLOOR_Y - ball_picture.get_height() + 1))
 
 
-def draw_stadium(canvas, celebrating, tick):
+def draw_stadium(canvas, celebrating, tick, scoreboard=True):
     # Sky, roof, two tiers of fans with the scoreboard, and floodlights.
+    # scoreboard=False leaves the scoreboard out (for the title screen).
     draw_bands(canvas, [(100, 180, 245), (120, 195, 250), (145, 210, 255)], 0, 0, ROOM_WIDTH, 34)
     # The clouds drift slowly; % 560 brings them back on the left side.
     for start, cloud_y in [(40, 6), (250, 3), (400, 10)]:
@@ -1853,13 +1871,12 @@ def draw_stadium(canvas, celebrating, tick):
     for x in range(0, ROOM_WIDTH, 16):
         pygame.draw.line(canvas, (150, 155, 170), (x, 34), (x + 8, 40))
 
-    # Upper tier: small fans. The colour of each fan comes from a calculation,
-    # so the crowd looks mixed but always the same.
-    fan_colours = [WHITE, YELLOW, (255, 120, 120), SKIN, AWAY_YELLOW, (235, 70, 70)]
+    # Upper tier: small fans, home fans on the left, away fans on the right
+    # (see fan_colour).
     pygame.draw.rect(canvas, (60, 60, 80), (0, 42, ROOM_WIDTH, 50))
     for fan_y in range(44, 90, 4):
         for fan_x in range(1 + (fan_y // 4) % 2 * 2, ROOM_WIDTH, 4):
-            colour = fan_colours[(fan_x * 7 + fan_y * 3) % 6]
+            colour = fan_colour(fan_x, fan_x * 7 + fan_y * 3)
             pygame.draw.rect(canvas, colour, (fan_x, fan_y, 2, 2))
     # The roof throws a shadow on the upper tier: darkest right under the
     # roof, fading out (three see-through bands).
@@ -1876,17 +1893,20 @@ def draw_stadium(canvas, celebrating, tick):
         pygame.draw.rect(canvas, (255, 255, 200), (flash_x - 1, flash_y + 1, 4, 1))
 
     # The scoreboard (the text is added later), with LED dots and a glow.
-    glow = pygame.Surface((120, 50), pygame.SRCALPHA)
-    pygame.draw.ellipse(glow, (255, 240, 180, 30), (0, 0, 120, 50))
-    canvas.blit(glow, (180, 38))
-    shaded_box(canvas, (20, 20, 30), (60, 60, 75), (10, 10, 15), 190, 46, 100, 34)
-    pygame.draw.rect(canvas, HOME_RED, (194, 50, 30, 10))
-    pygame.draw.rect(canvas, AWAY_YELLOW, (256, 50, 30, 10))
-    pygame.draw.rect(canvas, (255, 200, 40), (194, 66, 92, 10))
-    if celebrating:
-        pygame.draw.rect(canvas, (230, 60, 60), (194, 66, 92, 10))
-    for dot_x in range(194, 286, 3):
-        canvas.set_at((dot_x, 62), (60, 60, 75))                               # LED dots
+    # It stands left of the middle, so the pundit's speech box does not
+    # cover it. The title screen leaves it out (the logo is there).
+    if scoreboard:
+        glow = pygame.Surface((120, 50), pygame.SRCALPHA)
+        pygame.draw.ellipse(glow, (255, 240, 180, 30), (0, 0, 120, 50))
+        canvas.blit(glow, (110, 38))
+        shaded_box(canvas, (20, 20, 30), (60, 60, 75), (10, 10, 15), 120, 46, 100, 34)
+        pygame.draw.rect(canvas, HOME_RED, (124, 50, 30, 10))
+        pygame.draw.rect(canvas, AWAY_YELLOW, (186, 50, 30, 10))
+        pygame.draw.rect(canvas, (255, 200, 40), (124, 66, 92, 10))
+        if celebrating:
+            pygame.draw.rect(canvas, (230, 60, 60), (124, 66, 92, 10))
+        for dot_x in range(124, 216, 3):
+            canvas.set_at((dot_x, 62), (60, 60, 75))                           # LED dots
 
     # A red banner between the tiers.
     pygame.draw.rect(canvas, OUTLINE, (0, 92, ROOM_WIDTH, 3))
@@ -1900,7 +1920,7 @@ def draw_stadium(canvas, celebrating, tick):
     pygame.draw.rect(canvas, (70, 70, 95), (0, 102, ROOM_WIDTH, 46))
     for fan_y in range(105, 146, 7):
         for fan_x in range(2 + (fan_y // 7) % 2 * 4, ROOM_WIDTH, 8):
-            colour = fan_colours[(fan_x * 3 + fan_y) % 6]
+            colour = fan_colour(fan_x, fan_x * 3 + fan_y)
             pygame.draw.rect(canvas, SKIN, (fan_x + 1, fan_y, 3, 3))
             pygame.draw.rect(canvas, colour, (fan_x, fan_y + 3, 5, 3))
             pygame.draw.rect(canvas, darker(colour, 0.8), (fan_x + 3, fan_y + 3, 2, 3))
@@ -1911,15 +1931,22 @@ def draw_stadium(canvas, celebrating, tick):
                 pygame.draw.rect(canvas, SKIN, (fan_x - 1, fan_y - 2 - jump, 1, 3))
                 pygame.draw.rect(canvas, SKIN, (fan_x + 5, fan_y - 2 - jump, 1, 3))
 
-    # Fans waving red and white scarves above their heads: the scarf
-    # moves from left to right and back.
+    # Fans waving scarves above their heads: the scarf moves from left to
+    # right and back. Red and white on the home side, yellow and black on
+    # the away side.
     for scarf_x, scarf_y in [(60, 110), (230, 124), (350, 110), (440, 131)]:
         swing = ((tick // 6 + scarf_x) % 4) - 2
+        if scarf_x < ROOM_WIDTH // 2:
+            first = HOME_RED
+            second = WHITE
+        else:
+            first = AWAY_YELLOW
+            second = BLACK
         for i in range(5):
             if i % 2 == 0:
-                colour = HOME_RED
+                colour = first
             else:
-                colour = WHITE
+                colour = second
             pygame.draw.rect(canvas, colour, (scarf_x + i * 2 + swing, scarf_y - 4 + abs(i - 2), 2, 2))
 
     # A fan waving a red and white flag.
@@ -2034,9 +2061,9 @@ LABELS = {
     ],
     "pitch": [
         ("BOOTH", 25, 120, (255, 255, 255), False),
-        ("HOME", 195, 50, (255, 255, 255), False),
-        ("1 - 0", 229, 50, (255, 255, 255), False),
-        ("AWAY", 258, 50, (255, 255, 255), False),
+        ("FCB", 129, 50, (255, 255, 255), False),
+        ("1 - 0", 159, 50, (255, 255, 255), False),
+        ("BVB", 191, 50, (30, 30, 40), False),
         ("OFFSIDE!", CAPTAIN_X - 12, BUBBLE_Y + 1, (230, 40, 40), True),
     ],
 }

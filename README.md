@@ -69,15 +69,17 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 - **Title screen:** *Play* continues your saved game (or starts one),
   *New Game* starts again (asks first if there is a save), *Fullscreen* switches
   between window and fullscreen, *Exit* closes the game. The game always starts in a window.
-- **Inventory:** the bar at the bottom of the screen always shows your items.
+- **Inventory:** the slots in the top left corner always show your items.
   A new item flies into its slot when you pick it up.
-- **The VAR Review:** `←` `→` move through the footage in 0.1 s steps, `Enter`
+- **The VAR Review:** it starts with a short explanation of the offside rule;
+  `Enter` starts the footage. `←` `→` move through the footage in 0.1 s steps, `Enter`
   locks the moment. Then `←` `→` move the offside line in 0.1 m steps, `Enter`
-  locks it. `Escape` goes back one step (from the first step it closes the
-  review without deciding).
+  locks it. `Escape` goes back one step (from the explanation or the first step
+  it closes the review without deciding).
 - **After an ending:** `N` = new game (asks first), `Q` = back to the title screen.
-- **Timer:** the "STADIUM WAITS" clock in the top left counts down from 7 minutes. It stops in the
-  pause menu and during yes/no questions.
+- **Timer:** the "STADIUM WAITS" clock in the top left counts down from 5 minutes. It only
+  runs while you walk around: it stops while a text, the sticky note, a menu, the VAR Review,
+  the pause menu or a yes/no question is open.
 
 ## Files
 
@@ -88,7 +90,8 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `rooms.py` | draws the five rooms and the people in them |
 | `sprites.py` | the pixel art (player, characters, items) as grids of colours |
 | `ui.py` | the text box, the pundit's TV, close-ups, menus, the VAR Review screen and the inventory bar |
-| `story.json` | all the story content: scenes, actions, items and endings (shared by both versions) |
+| `story.json` | all the story content: scenes, actions, items, the pundit's hints and the endings (shared by both versions) |
+| `test_game.py` | automatic tests for the acceptance scenarios A1-A6 and the main rules: run `py test_game.py` |
 | `save.json` | terminal progress; created by the game and saved after every accepted action |
 | `save_2d.json` | 2D progress, same format; saved after every accepted action |
 | `settings.json` | the 2D volume and mute setting (kept after a New Game) |
@@ -111,8 +114,26 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 - **Volume:** a slider in the title menu and the pause menu (0 to 10), and `M` to mute.
   If the computer has no sound device, the game simply runs without sound.
 
+## Help for new players
+
+- **The pundit gives the hints.** Rex Smugworth always says (rudely, but clearly)
+  what to do next, e.g. "Sticky note on your desk, rookie. Read it!". The hints are
+  the `"hints"` list in `story.json`; the first one that is not done yet is shown.
+  He even gives himself away (his lanyard, the paper by his camera).
+- **He gets nervous.** With every clue against him his name changes:
+  PUNDIT, PUNDIT (nervous), (sweating), (panicking).
+- **New hint signal (2D):** when he says something new, his speech box flashes
+  yellow and beeps.
+- **Proof counter:** "PROOF FOUND: 1 of 3" appears after the first clue.
+  Trying to expose Rex too early lists which kind of proof is still missing.
+- **The truth at the end:** every ending shows the right call (GOAL, onside by
+  30 cm) and how much proof you found.
+
 ## The game at a glance
 
+- **The teams:** the home side plays in red (Bayern style), the away side in
+  yellow and black (Dortmund style). The VAR team (you, the referee and the
+  linesman) wears black. The scoreboard says FCB 1 - 0 BVB.
 - **5 scenes:** VAR Booth (start), Referee's Dressing Room, Mascot Changing Room,
   Press Room, The Pitch.
 - **4 items:** the Lucky Whistle opens the Mascot Changing Room; Pombo the pigeon
@@ -130,8 +151,8 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
   answer to the press ("Clearly a goal!", "No comment", or exposing Rex, which
   needs the lanyard, the slip and Dave's statement). The referee only takes
   your call after you have spoken to the press.
-- **The stadium is waiting:** you have 40 actions (terminal) or 7 minutes
-  (2D version). Run out and you get a sixth ending.
+- **The stadium is waiting:** you have 40 actions (terminal) or 5 minutes of
+  walking around (2D version). Run out and you get a sixth ending.
 - **5 endings + 1:**
   - *Daylight Robbery*: you rule OFFSIDE
   - *Clip of the Year*: GOAL without doing the review
@@ -139,6 +160,19 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
   - *Justice Served*: GOAL after the review + "No comment"
   - *VAR Is Watching*: GOAL after the review + you exposed Rex
   - *The Stadium Went Home*: you ran out of time
+
+## Automatic tests
+
+`test_game.py` checks A1-A6 (and the offside rule, the proof for exposing Rex and
+the pundit's hints) with the functions from `game.py`. It uses its own save file,
+so your saved game is never touched.
+
+```
+py test_game.py
+```
+
+It prints PASS or FAIL for every test and "9 of 9 tests passed." at the end.
+The checklists below test the same scenarios by hand, in the real game.
 
 ## Acceptance test checklist (A1-A6): terminal version
 
@@ -179,5 +213,5 @@ or delete `save_2d.json` first.
 | **A2 Unlocked route** | Dressing Room door, `E`. Walk to the kit cabinet, `E` (open drawer), `E` (take whistle). Back door, `E`. Mascot Room door, `E` | The door opens and you are in the Mascot Changing Room. The Lucky Whistle is still in the inventory bar. |
 | **A3 No duplicate** | Take the whistle as in A2, press `E` at the cabinet again, then leave and come back to the Dressing Room | The drawer is open and empty, and there is nothing more to take. The whistle is in the bar only once. |
 | **A4 Resume** | Take the whistle, go to the Mascot Room, talk to Pombo (USB Stick), go to the Press Room and answer "No comment". `Escape`, *Back to the title screen*, close the window. Run `py game_2d.py` again and choose *Play* | You continue in the Press Room and the reporters do not ask again. The bar shows the whistle and the USB Stick. On the Pitch the referee takes your call. |
-| **A5 Two outcomes** | Game 1: Press Room, answer, Pitch, referee, **GOAL** gives **Clip of the Year**. Press `N`, `Y`. Game 2: get the whistle and the USB Stick, then use the VAR computer: move to 1.2 s, `Enter`, put the line on defender number 4, `Enter`. Press Room, "No comment", Pitch, **GOAL** gives **Justice Served**. Close the window, run again, *Play* | Two different endings. Reopening a finished game shows the same ending again, with only `N` and `Q`. |
-| **A6 Restart safely** | Take the whistle. `Escape`, *Restart*, `N`. Then `Escape`, *Restart*, `Y` | After `N`: you are still in the Dressing Room with the whistle. After `Y`: you are back in the VAR Booth, the bar is empty, the timer is back at 7:00, and the Press Room asks its question again. |
+| **A5 Two outcomes** | Game 1: Press Room, answer, Pitch, referee, **GOAL** gives **Clip of the Year**. Press `N`, `Y`. Game 2: get the whistle and the USB Stick, then use the VAR computer: `Enter` after the explanation, move to 1.2 s, `Enter`, put the line on defender number 4, `Enter`. Press Room, "No comment", Pitch, **GOAL** gives **Justice Served**. Close the window, run again, *Play* | Two different endings. Reopening a finished game shows the same ending again, with only `N` and `Q`. |
+| **A6 Restart safely** | Take the whistle. `Escape`, *Restart*, `N`. Then `Escape`, *Restart*, `Y` | After `N`: you are still in the Dressing Room with the whistle. After `Y`: you are back in the VAR Booth, the bar is empty, the timer is back at 5:00, and the Press Room asks its question again. |
