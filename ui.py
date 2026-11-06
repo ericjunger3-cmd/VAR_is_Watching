@@ -771,13 +771,15 @@ CAPTION_WIDTH = 236
 CAPTION_HEIGHT = 58
 
 
-def draw_door_transition(window, door, total_frames):
+def draw_door_transition(window, door):
     # The scene change when you walk through a door: a black screen with a
     # round hole in the middle. In the first half the hole gets smaller
     # (the old room disappears), in the second half it gets bigger again
     # (the new room appears).
+    # door["frames"] is how long it takes (fast for a door, slow before
+    # the ending).
     width, height = window.get_size()
-    half = total_frames // 2
+    half = door["frames"] // 2
     frame = door["frame"]
 
     # In the first half we still show the photo of the old room.

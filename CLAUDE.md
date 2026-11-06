@@ -135,6 +135,9 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   a black circle closes over it and opens again on the new room
   (`screen["door"]`, `DOOR_FRAMES` = 16, `draw_door_transition` in ui.py).
   The room changes (and is saved) at once; keys and the timer wait meanwhile.
+  The same circle, much slower (`ENDING_FRAMES` = 60, 2 s), plays once when
+  the last text is read, and opens on the ending screen (`start_circle`,
+  `screen["ending_circle"]`). The ending jingle waits until it is finished.
 - 2D pundit faces: `make_pundit(mood)` in sprites.py swaps rows
   (`PUNDIT_MOOD_ROWS`) and skin colours (`PUNDIT_MOOD_SKIN`) per clue count.
 - `test_game.py` – automatic tests for A1-A6 and the main rules, plain asserts,

@@ -37,6 +37,10 @@ REVEAL_FRAMES = 60
 # 16 frames at 30 frames per second = about half a second.
 DOOR_FRAMES = 16
 
+# The same circle animation before the ending screen, but much slower,
+# so the player sees that a new scene begins: 60 frames = 2 seconds.
+ENDING_FRAMES = 60
+
 # How many frames the pundit's speech box flashes when he has a new hint.
 HINT_FLASH_FRAMES = 60
 
@@ -289,10 +293,7 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
             sound.play("whistle")
         else:
             sound.play("door")
-        # Start the door animation. It needs a "photo" of the old room
-        # (a copy of what is on the screen right now) for its first half.
-        photo = pygame.display.get_surface().copy()
-        screen["door"] = {"frame": 0, "photo": photo}
+        start_circle(screen, DOOR_FRAMES)
         came_from = progress["scene"]
         progress["scene"] = action["go_to"]
         new_scene = story["scenes"][progress["scene"]]
@@ -531,19 +532,34 @@ def update_ball(ball, player, player_width):
 
 # ---------------------------------------------------------------- what is on screen
 
-def box_is_open(screen):
-    # True if any box is open: dialogue, close-up, menu, VAR Review,
-    # pause menu, a yes/no question, the tutorial or the door animation.
+def start_circle(screen, frames):
+    # Start the circle animation (a door, or the scene change before the
+    # ending). It needs a "photo" of the old scene (a copy of what is on
+    # the screen right now) for its first half. frames is how long it takes.
+    photo = pygame.display.get_surface().copy()
+    screen["door"] = {"frame": 0, "photo": photo, "frames": frames}
+
+
+def text_box_is_open(screen):
+    # True if a box with text or choices is open: dialogue, close-up,
+    # menu, VAR Review, pause menu, a yes/no question or the tutorial.
     return (len(screen["dialogue"]) > 0 or screen["closeup"] is not None
             or screen["menu"] is not None or screen["review"] is not None
             or screen["pause"] is not None or screen["confirm"] is not None
-            or screen["tutorial"] is not None or screen["door"] is not None)
+            or screen["tutorial"] is not None)
+
+
+def box_is_open(screen):
+    # True if a text box is open or the circle animation is running.
+    # Then the player cannot walk and the timer stops.
+    return text_box_is_open(screen) or screen["door"] is not None
 
 
 def ending_is_showing(progress, screen):
     # The ending screen appears once the game has an ending and the last
-    # text has been read (no box open any more).
-    return progress["ending"] is not None and not box_is_open(screen)
+    # text has been read. The circle animation does not count here: the
+    # slow circle before the ending opens ON the ending screen.
+    return progress["ending"] is not None and not text_box_is_open(screen)
 
 
 # ---------------------------------------------------------------- starting a game
@@ -564,7 +580,8 @@ def make_screen(dialogue):
         "reveal": None,     # how far Dave's reveal is (in frames)
         "looked": [],       # labels of the close-ups already read (sticky note)
         "tutorial": None,   # the step of the tutorial while it is open (0, 1, 2 ...)
-        "door": None,       # the door animation while it runs (frame and photo)
+        "door": None,       # the circle animation while it runs (frame, photo, frames)
+        "ending_circle": False,  # True once the slow circle before the ending has started
     }
 
 
@@ -596,6 +613,9 @@ def continue_game(story, fonts, player, progress, player_width):
     # still waiting for you.
     if "ruling" in progress["choices"] and progress["ending"] is None:
         screen["press_next"] = True
+    # A finished game shows its ending at once, without the slow circle.
+    if progress["ending"] is not None:
+        screen["ending_circle"] = True
     return screen
 
 
@@ -798,7 +818,7 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
 
     # 6. The door animation, on top of everything.
     if screen["door"] is not None:
-        ui.draw_door_transition(window, screen["door"], DOOR_FRAMES)
+        ui.draw_door_transition(window, screen["door"])
 
 
 # ---------------------------------------------------------------- the title screen
@@ -938,7 +958,7 @@ def play(assets, story, progress, screen, player):
                 sound.toggle_mute()
                 continue
 
-            # During the door animation all keys wait (it is very short).
+            # During the circle animation all keys wait (it is short).
             if screen["door"] is not None:
                 continue
 
@@ -985,6 +1005,13 @@ def play(assets, story, progress, screen, player):
             screen["press_next"] = False
             open_press_questions(story, progress, screen)
 
+        # The game just ended and the last text is read: a slow circle
+        # closes over the pitch and opens on the ending screen, so the
+        # player sees that a new scene begins. It runs only once.
+        if ending_is_showing(progress, screen) and not screen["ending_circle"]:
+            screen["ending_circle"] = True
+            start_circle(screen, ENDING_FRAMES)
+
         # The keys may have changed what is open (e.g. a new game started),
         # so we check again before walking and drawing.
         free_to_walk = not box_is_open(screen) and not ending_is_showing(progress, screen)
@@ -1029,7 +1056,8 @@ def play(assets, story, progress, screen, player):
         sound.set_ambience(ROOM_SOUNDS.get(progress["scene"]))
         if progress["scene"] == "pitch" and moving["tick"] % 70 == 0:
             sound.play("camera")
-        if ending_is_showing(progress, screen) and not jingle_played:
+        # The ending's jingle waits until the slow circle has finished.
+        if ending_is_showing(progress, screen) and screen["door"] is None and not jingle_played:
             sound.stop_music()
             if progress["ending"] in GOOD_ENDINGS:
                 sound.play("jingle_good")
@@ -1050,7 +1078,7 @@ def play(assets, story, progress, screen, player):
                 screen["reveal"] = None
         if screen["door"] is not None:
             screen["door"]["frame"] = screen["door"]["frame"] + 1
-            if screen["door"]["frame"] >= DOOR_FRAMES:
+            if screen["door"]["frame"] >= screen["door"]["frames"]:
                 screen["door"] = None
 
         # A new pundit line (a new hint or a new mood): his speech box
