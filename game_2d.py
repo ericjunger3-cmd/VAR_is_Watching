@@ -633,7 +633,6 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         ui.draw_flying_item(overlay, assets["pictures"][flying_item], screen["flying"]["x"] - offset // SCALE,
                             160, slot, screen["flying"]["frame"], FLY_FRAMES)
     ui.draw_timer(overlay, progress["seconds_left"], story["time_limit_seconds"], tick)
-    ui.draw_task_box(overlay)
     # The proof counter only appears once the first clue is found.
     proof = game.proof_text(story, progress)
     if proof != "":
@@ -665,7 +664,6 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     # 4. The text inside the boxes.
     if not full_screen:
         ui.draw_timer_text(window, progress["seconds_left"], fonts, SCALE)
-        ui.draw_task_text(window, game.current_task(story, progress), fonts, SCALE)
         if proof != "":
             ui.draw_proof_text(window, proof, fonts, SCALE)
     if not full_screen and screen["confirm"] is None:
@@ -673,7 +671,7 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         if progress["scene"] == "pitch" and ball["celebrate"] > 0:
             pundit_text = story["ball_goal_pundit"]
         else:
-            pundit_text = game.pundit_line(story, scene, progress)
+            pundit_text = game.pundit_line(story, progress)
         ui.draw_pundit_text(window, pundit_text, fonts, SCALE)
     if len(screen["dialogue"]) > 0:
         ui.draw_dialogue_text(window, screen["dialogue"][0], screen["letters"], fonts, SCALE)

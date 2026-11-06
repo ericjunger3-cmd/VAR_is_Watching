@@ -83,28 +83,30 @@ def proof_text(story, progress):
     return "PROOF FOUND: " + str(found) + " of " + str(total)
 
 
-def current_task(story, progress):
-    # The task the player should do next: the first task in story.json that
-    # is not done yet. A task is done when its "done_when" id is in the
+def current_hint(story, progress):
+    # The pundit's hint for the next step: the first hint in story.json
+    # that is not done yet. A hint is done when its "done_when" id is in the
     # inventory (an item, e.g. "whistle") or in the choices (e.g. "dave").
-    # The last task has no "done_when": it stays until the game ends.
-    for task in story["tasks"]:
-        if "done_when" not in task:
-            return task["text"]
-        done_id = task["done_when"]
+    # The last hint has no "done_when": it stays until the game ends.
+    for hint in story["hints"]:
+        if "done_when" not in hint:
+            return hint["pundit"]
+        done_id = hint["done_when"]
         if done_id not in progress["inventory"] and done_id not in progress["choices"]:
-            return task["text"]
+            return hint["pundit"]
     return ""
 
 
-def pundit_line(story, scene, progress):
-    # The pundit says his normal line for the scene, but the more clues
-    # the player has found, the more nervous he gets.
-    clues = count_clues(story, progress)
-    if clues == 0:
-        return scene["pundit"]
-    # 1 clue -> the first nervous line (index 0), 2 clues -> index 1, ...
-    return story["pundit_nervous"][clues - 1]
+def pundit_line(story, progress):
+    # The pundit always says (rudely, but clearly) what to do next.
+    # The more clues against him the player has found, the more nervous
+    # he gets: his name shows his mood, e.g. "PUNDIT (sweating)".
+    # 0 clues -> mood "" (index 0), 1 clue -> "nervous" (index 1), ...
+    mood = story["pundit_moods"][count_clues(story, progress)]
+    name = "PUNDIT"
+    if mood != "":
+        name = "PUNDIT (" + mood + ")"
+    return name + ": " + current_hint(story, progress)
 
 
 def show_scene(story, scene_id, first_visit, pundit_text):
@@ -449,8 +451,7 @@ def play_game(story, progress):
         if first_visit:
             progress["visited"].append(progress["scene"])
         scene = story["scenes"][progress["scene"]]
-        show_scene(story, progress["scene"], first_visit, pundit_line(story, scene, progress))
-        print("YOUR TASK: " + current_task(story, progress))
+        show_scene(story, progress["scene"], first_visit, pundit_line(story, progress))
         if proof_text(story, progress) != "":
             print(proof_text(story, progress))
 

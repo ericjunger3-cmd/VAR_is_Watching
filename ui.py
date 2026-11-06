@@ -235,29 +235,6 @@ def draw_timer(canvas, seconds_left, total_seconds, tick):
         pygame.draw.rect(canvas, colour, (TIMER_X + 3, TIMER_Y + 10, int((TIMER_WIDTH - 6) * part), 3))
 
 
-TASK_X = 112
-TASK_Y = 6
-TASK_WIDTH = 114
-TASK_HEIGHT = 42
-
-
-def draw_task_box(canvas):
-    # The "YOUR TASK" box at the top, between the timer and the pundit.
-    framed_box(canvas, TASK_X, TASK_Y, TASK_WIDTH, TASK_HEIGHT,
-               (255, 245, 220), (255, 255, 245), (220, 190, 140))
-
-
-def draw_task_text(window, task, fonts, scale):
-    # What the player should do next (from game.current_task), in small
-    # letters, at most 4 lines.
-    window.blit(fonts["tiny"].render("YOUR TASK", False, ORANGE), ((TASK_X + 5) * scale, (TASK_Y + 4) * scale))
-    lines = wrap_text(task, fonts["tiny"], (TASK_WIDTH - 10) * scale)
-    y = TASK_Y + 12
-    for line in lines[:4]:
-        window.blit(fonts["tiny"].render(line, False, BROWN), ((TASK_X + 5) * scale, y * scale))
-        y = y + 7
-
-
 PROOF_Y = 52
 
 
@@ -734,12 +711,14 @@ def draw_dialogue_text(window, page, letters_shown, fonts, scale, faded=False):
 
 
 def draw_pundit_text(window, pundit_line, fonts, scale):
-    # The pundit's line in his speech box. story.json writes it as
-    # "PUNDIT: ...", so we cut off the first 8 letters ("PUNDIT: ").
-    if pundit_line.startswith("PUNDIT: "):
-        pundit_line = pundit_line[8:]
-    window.blit(fonts["small"].render("PUNDIT", False, ORANGE), ((SPEECH_X + 8) * scale, (SPEECH_Y + 5) * scale))
-    lines = wrap_text(pundit_line, fonts["small"], (SPEECH_WIDTH - 16) * scale)
+    # The pundit's line in his speech box. It looks like "PUNDIT: ..." or
+    # "PUNDIT (sweating): ...": the part before ": " is his name (in orange),
+    # the part after it is what he says.
+    position = pundit_line.index(": ")
+    name = pundit_line[:position]
+    said = pundit_line[position + 2:]
+    window.blit(fonts["small"].render(name, False, ORANGE), ((SPEECH_X + 8) * scale, (SPEECH_Y + 5) * scale))
+    lines = wrap_text(said, fonts["small"], (SPEECH_WIDTH - 16) * scale)
     y = SPEECH_Y + 14
     for line in lines[:4]:
         window.blit(fonts["small"].render(line, False, BROWN), ((SPEECH_X + 8) * scale, y * scale))

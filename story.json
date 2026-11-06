@@ -17,118 +17,109 @@
 
   "truth": "THE RIGHT CALL: GOAL. When the ball was passed, the striker was onside by 30 cm.",
 
-  "tasks": [
-    { "text": "Read Dave's sticky note on the desk, then find Pombo the mascot. His door needs a whistle.", "done_when": "whistle" },
-    { "text": "Open the Mascot Changing Room with the Lucky Whistle and talk to Pombo.", "done_when": "dave" },
-    { "text": "Plug the USB Stick into the VAR computer in the booth and check the goal.", "done_when": "review" },
-    { "text": "Go to the Press Room and give the journalists one quote.", "done_when": "press_answer" },
-    { "text": "Go to the Pitch and give the referee your call: GOAL or OFFSIDE." }
+  "hints": [
+    { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. Thrilling.", "done_when": "whistle" },
+    { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a pigeon. Live on my show. I'm crying.", "done_when": "dave" },
+    { "pundit": "A USB stick from a pigeon. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review" },
+    { "pundit": "Press Room next. One quote, rookie. And don't touch any crumpled paper by my camera. Totally normal paper.", "done_when": "press_answer" },
+    { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. Trust me. I'm on TV." }
   ],
+  "pundit_moods": ["", "nervous", "sweating", "panicking"],
   "ball_goal_pundit": "PUNDIT: Did the VAR official just score?! Somebody check the VAR! Oh wait... that's you. Doesn't count, rookie.",
-  "pundit_nervous": [
-    "PUNDIT: Why are you poking around, rookie? Eyes on the football, please.",
-    "PUNDIT: Haha... lovely weather tonight. Has anyone seen my lanyard? Not that it matters.",
-    "PUNDIT: I want my lawyer. I mean... back to the studio! Quick! Cut to the adverts!"
-  ],
 
   "scenes": {
     "booth": {
       "name": "VAR Booth",
-      "text": "94th minute of the cup final. The home side has just scored and the stadium is shaking. The away captain is screaming \"OFFSIDE!\" at the linesman, a ball boy and the sky. You sit in the VAR Booth in front of twelve screens. Eleven work. The one with the key angle shows only static. On the TV in the corner, star pundit Rex Smugworth is loving every second. It is your first day. Your job: find the missing angle and give the referee your call. And thanks to a new deal with Rex's TV channel, the VAR must give the Press Room one live quote before every decision.",
-      "pundit": "PUNDIT: Day one, a missing camera angle and sixty thousand people waiting. Honestly? Best night of my career.",
+      "text": "94th minute, cup final. Home side scores, away captain screams \"OFFSIDE!\" at the sky. Day one as VAR, and the key camera shows static. Find the angle, make the call. But first: one quote for the Press Room (Rex's TV deal).",
       "actions": [
         { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258,
-          "text": "You sprint down the tunnel, past a confused steward and a trolley of orange slices." },
+          "text": "You sprint down the tunnel, past a trolley of orange slices." },
         { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room", "x": 316,
           "needs_item": "whistle",
-          "blocked_text": "The door is locked. A laminated sign says: \"MASCOTS ONLY. Whistle for entry.\" The referee always keeps a spare whistle in his dressing room.",
-          "text": "You blow the Lucky Whistle. Somewhere inside, a pigeon coos. The door clicks open." },
+          "blocked_text": "Locked. Sign: \"MASCOTS ONLY. Whistle for entry.\" The ref keeps a spare whistle in his room.",
+          "text": "You blow the Lucky Whistle. A pigeon coos. The door clicks open." },
         { "label": "Go to the Press Room", "go_to": "press_room", "x": 374,
           "text": "You follow the sound of camera shutters and bad decisions." },
         { "label": "Go to the Pitch", "go_to": "pitch", "x": 443,
-          "text": "You walk out under the floodlights. Sixty thousand heads turn. Your knees suddenly remember they are knees." },
+          "text": "Floodlights. Sixty thousand heads turn. Your knees remember they are knees." },
         { "label": "Look at the sticky note", "x": 185, "marker": [190, 110],
           "text": "Dave's note says: \"Back in 5 min - Dave. P.S. Angle cuts out? Ask Pombo, our mascot. He films EVERYTHING.\"",
           "closeup": ["Back in 5 min", "- Dave", "P.S. Angle cuts out?", "Ask Pombo, our mascot.", "He films EVERYTHING."] },
         { "label": "Look behind the desk", "take_item": "lanyard", "x": 30, "marker": [30, 145],
-          "text": "Behind the desk, the cable of the key camera has been yanked out of the wall. Somebody did this on purpose! Tangled in the cable is a lanyard: \"PRESS - TV STUDIO\"." },
+          "text": "The key camera's cable is yanked out of the wall. On purpose! Tangled in it: a \"PRESS - TV STUDIO\" lanyard." },
         { "label": "Plug the USB Stick into the VAR computer", "review": true, "set_choice": "review", "x": 104, "marker": [104, 154],
           "needs_item": "usb",
-          "blocked_text": "The VAR computer has a USB port, but you have nothing to plug in.",
+          "blocked_text": "Nice USB port. Shame you have nothing to plug in.",
           "text": "You plug in the USB Stick. Pombo's head-cam footage fills the screen." }
       ]
     },
 
     "dressing_room": {
       "name": "Referee's Dressing Room",
-      "text": "Steam, muddy boots and a half-eaten orange. A poster on the wall says \"TRUST THE PROCESS\". The referee left in a hurry. It smells of deep heat and fear.",
-      "pundit": "PUNDIT: Snooping in the ref's room on day one. Bold. Pointless, but bold.",
+      "text": "Steam, muddy boots, half an orange. A poster: \"TRUST THE PROCESS\". Smells of deep heat and fear.",
       "actions": [
         { "label": "Open the drawer of the kit cabinet", "set_choice": "drawer", "value": "open", "x": 322, "marker": [322, 155],
-          "text": "You pull the drawer open. It squeaks. Inside, between spare shoelaces and a half-eaten energy bar, lies a whistle." },
+          "text": "The drawer squeaks open. Inside: shoelaces, an energy bar and a whistle." },
         { "label": "Take the Lucky Whistle from the drawer", "take_item": "whistle", "x": 322, "marker": [322, 155],
           "needs_choice": "drawer", "hide_if_blocked": true,
           "blocked_text": "The drawer is closed.",
-          "text": "You pick up the Lucky Whistle. Someone has written LUCKY on it in marker pen, so it must be true." },
+          "text": "Someone wrote LUCKY on it in marker pen, so it must be true." },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
-          "text": "You hurry back to the booth. The static is still there." }
+          "text": "Back to the booth. The static is still there." }
       ]
     },
 
     "mascot_room": {
       "name": "Mascot Changing Room",
-      "text": "Feathers everywhere. Pombo, the club's pigeon mascot, sits on a bench in his giant costume, head in his wings. He was standing right next to the corner flag when the goal went in.",
-      "pundit": "PUNDIT: The rookie is interviewing a pigeon. I could not have scripted this.",
+      "text": "Feathers everywhere. Pombo the pigeon mascot sulks on a bench. He stood right by the corner flag when the goal went in.",
       "actions": [
         { "label": "Ask Pombo what he saw", "take_item": "usb", "set_choice": "dave", "value": "talked", "x": 345, "marker": [384, 127],
-          "text": "Pombo pulls off his pigeon head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you a USB Stick: \"Filmed the whole thing on my head-cam. Plug it into the VAR computer in your booth.\" Then he whispers: \"At 93:30 a guy in a shiny suit ran out of your booth. Smelled of hair gel.\"" },
+          "text": "Pombo pulls off his head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you his head-cam USB: \"At 93:30 a shiny suit ran out of your booth.\"" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
-          "text": "You leave Dave to put his head back on and run back to the booth." }
+          "text": "You leave Dave to put his head back on." }
       ]
     },
 
     "press_room": {
       "name": "Press Room",
       "menu_title": "What do you tell the press?",
-      "text": "A wall of microphones and flashing cameras. Every journalist in the country wants one quote from the new VAR official, and they want it now. Rex's TV channel paid for this: one live quote from the VAR before the decision. You only get to say one thing. Choose carefully: once you've spoken, you can't take it back.",
-      "pundit": "PUNDIT: Just tell them it's offside, rookie. Easiest quote of your life.",
+      "text": "Cameras, microphones and every journalist in the country. Rex's TV deal: one live quote from you. Only one. No take-backs.",
       "actions": [
         { "label": "Say: 'Clearly a goal!'", "set_choice": "press_answer", "value": "goal", "x": 330, "marker": [330, 130], "marker_after": "dave",
-          "text": "Cameras flash. The headline is written before you finish the sentence. Somewhere, a VAR rulebook bursts into flames." },
+          "text": "Cameras flash. The headline is written before you finish. A VAR rulebook bursts into flames." },
         { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment", "x": 330, "marker": [330, 130], "marker_after": "dave",
-          "text": "\"No comment.\" Calm. Professional. Boring. The journalists sigh and put their phones away." },
+          "text": "\"No comment.\" Calm. Professional. Boring. The journalists sigh." },
         { "label": "Say: 'Rex Smugworth cut the camera feed. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "x": 330, "marker": [330, 130], "marker_after": "dave",
           "needs_items": ["lanyard", "slip"], "needs_choice": "dave",
-          "blocked_text": "You can't accuse someone on live TV without proof.",
+          "blocked_text": "No proof, no accusation.",
           "proof_list": [
-            { "id": "lanyard", "what": "Who was in the booth", "name": "the Press Lanyard" },
-            { "id": "slip", "what": "Why he did it", "name": "the Betting Slip" },
-            { "id": "dave", "what": "A witness", "name": "Dave's statement" }
+            { "id": "lanyard", "what": "Who", "name": "the Press Lanyard" },
+            { "id": "slip", "what": "Why", "name": "the Betting Slip" },
+            { "id": "dave", "what": "Witness", "name": "Dave's statement" }
           ],
-          "text": "\"Rex Smugworth pulled the camera cable. Here is his lanyard, his betting slip, and a witness in a pigeon costume.\" The room goes silent. Then every camera turns towards the TV studio." },
+          "text": "\"Rex pulled the cable. Here's his lanyard, his betting slip and a pigeon witness.\" Every camera turns to the TV studio." },
         { "label": "Pick up the crumpled paper by the TV camera", "take_item": "slip", "x": 436, "marker": [430, 188],
-          "text": "It's a betting slip: \"500 pounds - AWAY WIN - late offside drama\". Signed: R. Smugworth. Wait... isn't that the pundit on TV?" },
+          "text": "A betting slip: \"500 pounds - AWAY WIN - late offside drama\". Signed: R. Smugworth. The pundit?!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
-          "text": "You leave the Press Room. A journalist is still shouting questions at the closed door." }
+          "text": "You leave. A journalist keeps shouting at the door." }
       ]
     },
 
     "pitch": {
       "name": "The Pitch",
       "menu_title": "VAR, what's your call?",
-      "text": "Sixty thousand fans are on their feet. The linesman has his flag up. The away captain is screaming. The referee holds a hand to his earpiece and stares at you: \"VAR, what's your call?\"",
-      "pundit": "PUNDIT: Clearly offside! Draw the line on the high defender, rookie. Everyone knows that.",
+      "text": "Sixty thousand fans on their feet. Flag up, captain screaming. The ref stares at you: \"VAR, what's your call?\"",
       "actions": [
         { "label": "Rule: GOAL", "ruling": "goal", "x": 311, "marker": [313, 156],
           "needs_choice": "press_answer",
-          "blocked_text": "The referee shakes his head: \"TV contract, VAR. Press Room first, then your call. I'll wait.\"",
+          "blocked_text": "The ref shakes his head: \"TV contract, VAR. Press Room first, then your call.\"",
           "text": "You give the signal: GOAL!" },
         { "label": "Rule: OFFSIDE", "ruling": "offside", "x": 311, "marker": [313, 156],
           "needs_choice": "press_answer",
-          "blocked_text": "The referee shakes his head: \"TV contract, VAR. Press Room first, then your call. I'll wait.\"",
+          "blocked_text": "The ref shakes his head: \"TV contract, VAR. Press Room first, then your call.\"",
           "text": "You give the signal: OFFSIDE!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
-          "text": "You walk back inside. Sixty thousand people boo at the same time. Impressive, really." }
+          "text": "You walk back inside. Sixty thousand people boo at once. Impressive." }
       ]
     }
   },
