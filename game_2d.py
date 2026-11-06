@@ -33,6 +33,10 @@ FLY_FRAMES = 25
 # How many frames Dave's reveal (taking off the mask) takes.
 REVEAL_FRAMES = 60
 
+# How many frames the door animation takes (half closing, half opening).
+# 16 frames at 30 frames per second = about half a second.
+DOOR_FRAMES = 16
+
 # How many frames the pundit's speech box flashes when he has a new hint.
 HINT_FLASH_FRAMES = 60
 
@@ -279,6 +283,10 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
             sound.play("whistle")
         else:
             sound.play("door")
+        # Start the door animation. It needs a "photo" of the old room
+        # (a copy of what is on the screen right now) for its first half.
+        photo = pygame.display.get_surface().copy()
+        screen["door"] = {"frame": 0, "photo": photo}
         came_from = progress["scene"]
         progress["scene"] = action["go_to"]
         new_scene = story["scenes"][progress["scene"]]
@@ -501,11 +509,11 @@ def update_ball(ball, player, player_width):
 
 def box_is_open(screen):
     # True if any box is open: dialogue, close-up, menu, VAR Review,
-    # pause menu, a yes/no question or the tutorial.
+    # pause menu, a yes/no question, the tutorial or the door animation.
     return (len(screen["dialogue"]) > 0 or screen["closeup"] is not None
             or screen["menu"] is not None or screen["review"] is not None
             or screen["pause"] is not None or screen["confirm"] is not None
-            or screen["tutorial"] is not None)
+            or screen["tutorial"] is not None or screen["door"] is not None)
 
 
 def ending_is_showing(progress, screen):
@@ -531,6 +539,7 @@ def make_screen(dialogue):
         "reveal": None,     # how far Dave's reveal is (in frames)
         "looked": [],       # labels of the close-ups already read (sticky note)
         "tutorial": None,   # the step of the tutorial while it is open (0, 1, 2 ...)
+        "door": None,       # the door animation while it runs (frame and photo)
     }
 
 
@@ -756,6 +765,10 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         area = tutorial_area(name, player, assets, moving)
         ui.draw_tutorial(window, screen["tutorial"], area, fonts, SCALE)
 
+    # 6. The door animation, on top of everything.
+    if screen["door"] is not None:
+        ui.draw_door_transition(window, screen["door"], DOOR_FRAMES)
+
 
 # ---------------------------------------------------------------- the title screen
 
@@ -894,6 +907,10 @@ def play(assets, story, progress, screen, player):
                 sound.toggle_mute()
                 continue
 
+            # During the door animation all keys wait (it is very short).
+            if screen["door"] is not None:
+                continue
+
             # Only one thing reacts to a key: whatever is open on top.
             if screen["confirm"] is not None:
                 if event.key == pygame.K_y:
@@ -996,6 +1013,10 @@ def play(assets, story, progress, screen, player):
             screen["reveal"] = screen["reveal"] + 1
             if screen["reveal"] >= REVEAL_FRAMES:
                 screen["reveal"] = None
+        if screen["door"] is not None:
+            screen["door"]["frame"] = screen["door"]["frame"] + 1
+            if screen["door"]["frame"] >= DOOR_FRAMES:
+                screen["door"] = None
 
         # A new pundit line (a new hint or a new mood): his speech box
         # flashes and beeps, so the player notices it. The flash waits
@@ -1018,8 +1039,9 @@ def play(assets, story, progress, screen, player):
 
         # The typing effect: a few more letters appear every frame,
         # with a soft blip every third frame while the text is typing.
-        # It waits while the tutorial is open (the text is behind it).
-        if len(screen["dialogue"]) > 0 and screen["tutorial"] is None:
+        # It waits while the tutorial is open (the text is behind it) and
+        # while the door animation runs.
+        if len(screen["dialogue"]) > 0 and screen["tutorial"] is None and screen["door"] is None:
             if screen["letters"] < ui.letters_on_page(screen["dialogue"][0]) and moving["tick"] % 3 == 0:
                 sound.play("type")
             screen["letters"] = screen["letters"] + TYPE_SPEED

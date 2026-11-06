@@ -118,6 +118,12 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
   The 2D version saves to `save_2d.json` (same format).
 - Time limit: 40 actions (terminal) or 300 seconds (2D). In 2D the timer only
   runs while no box is open (`box_is_open`), so reading never costs time.
+- 2D door animation: walking through a door takes a "photo" of the old room,
+  a black circle closes over it and opens again on the new room
+  (`screen["door"]`, `DOOR_FRAMES` = 16, `draw_door_transition` in ui.py).
+  The room changes (and is saved) at once; keys and the timer wait meanwhile.
+- 2D pundit faces: `make_pundit(mood)` in sprites.py swaps rows
+  (`PUNDIT_MOOD_ROWS`) and skin colours (`PUNDIT_MOOD_SKIN`) per clue count.
 - `test_game.py` – automatic tests for A1-A6 and the main rules, plain asserts,
   no extra libraries: `py test_game.py`.
 - Run with `py game.py` / `py game_2d.py` (Python 3.15 on this PC; `python`

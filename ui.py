@@ -772,6 +772,38 @@ CAPTION_WIDTH = 236
 CAPTION_HEIGHT = 58
 
 
+def draw_door_transition(window, door, total_frames):
+    # The scene change when you walk through a door: a black screen with a
+    # round hole in the middle. In the first half the hole gets smaller
+    # (the old room disappears), in the second half it gets bigger again
+    # (the new room appears).
+    width, height = window.get_size()
+    half = total_frames // 2
+    frame = door["frame"]
+
+    # In the first half we still show the photo of the old room.
+    if frame < half:
+        window.blit(door["photo"], (0, 0))
+
+    # The biggest hole: from the middle to a corner (Pythagoras), so the
+    # whole screen is visible when the hole is this big.
+    biggest = math.sqrt(width * width + height * height) / 2
+    if frame < half:
+        # Closing: from the biggest hole down to nothing.
+        radius = biggest * (half - frame) / half
+    else:
+        # Opening: from nothing up to the biggest hole.
+        radius = biggest * (frame - half) / half
+
+    # A black sheet with a see-through circle cut out of it.
+    # (0, 0, 0, 0) is "fully see-through"; draw.circle replaces the pixels.
+    sheet = pygame.Surface((width, height), pygame.SRCALPHA)
+    sheet.fill((0, 0, 0, 255))
+    if radius > 0:
+        pygame.draw.circle(sheet, (0, 0, 0, 0), (width // 2, height // 2), int(radius))
+    window.blit(sheet, (0, 0))
+
+
 def draw_tutorial(window, step_number, area, fonts, scale):
     # One step of the tutorial, drawn on top of everything: the screen gets
     # dark except the area (x, y, width, height in canvas pixels), which gets
