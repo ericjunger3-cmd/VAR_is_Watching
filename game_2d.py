@@ -203,7 +203,7 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
     inventory = progress["inventory"]
     choices = progress["choices"]
 
-    # 1. Blocked (locked door, steward, no proof ...): show why, change nothing.
+    # 1. Blocked (locked door, steward ...): show why, change nothing.
     reason = game.blocked_reason(action, inventory, choices)
     if reason is not None:
         sound.play("bonk")
@@ -255,6 +255,9 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
             sound.play("camera")
         if action["set_choice"] == "drawer":
             sound.play("door")
+        # Finding a clue sounds like a pick-up, but it does not become an item.
+        if action["set_choice"] == "lanyard" or action["set_choice"] == "slip":
+            sound.play("pickup")
 
     # A ruling ends the game. The ending screen appears when the text is read.
     if "ruling" in action:
@@ -633,10 +636,6 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         ui.draw_flying_item(overlay, assets["pictures"][flying_item], screen["flying"]["x"] - offset // SCALE,
                             160, slot, screen["flying"]["frame"], FLY_FRAMES)
     ui.draw_timer(overlay, progress["seconds_left"], story["time_limit_seconds"], tick)
-    # The proof counter only appears once the first clue is found.
-    proof = game.proof_text(story, progress)
-    if proof != "":
-        ui.draw_proof_box(overlay)
 
     # The text bar: the current page, or (greyed out) the last page read.
     menu_open = screen["menu"] is not None or screen["pause"] is not None
@@ -664,8 +663,6 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     # 4. The text inside the boxes.
     if not full_screen:
         ui.draw_timer_text(window, progress["seconds_left"], fonts, SCALE)
-        if proof != "":
-            ui.draw_proof_text(window, proof, fonts, SCALE)
     if not full_screen and screen["confirm"] is None:
         # After a goal with the ball, the pundit comments on that instead.
         if progress["scene"] == "pitch" and ball["celebrate"] > 0:

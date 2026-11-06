@@ -235,19 +235,6 @@ def draw_timer(canvas, seconds_left, total_seconds, tick):
         pygame.draw.rect(canvas, colour, (TIMER_X + 3, TIMER_Y + 10, int((TIMER_WIDTH - 6) * part), 3))
 
 
-PROOF_Y = 52
-
-
-def draw_proof_box(canvas):
-    # A small box under the timer for the proof counter.
-    framed_box(canvas, TIMER_X, PROOF_Y, TIMER_WIDTH, 14, (60, 40, 30), (90, 60, 40), (40, 25, 20))
-
-
-def draw_proof_text(window, text, fonts, scale):
-    # "PROOF FOUND: 1 of 3" in the box under the timer.
-    window.blit(fonts["tiny"].render(text, False, CREAM), ((TIMER_X + 4) * scale, (PROOF_Y + 2) * scale))
-
-
 def menu_extra(option_count):
     # The dialogue box has room for 4 options. Every option more makes
     # the menu box 11 pixels taller (it grows upwards).
@@ -659,8 +646,8 @@ def draw_e_bubble(window, middle_x, top_y, tick, font):
 
 def draw_ending_text(window, story, ending_id, summary, fonts, scale):
     # The ending: its title, its text, the epilogue (for most endings),
-    # the summary (the right call and the proof found, from
-    # game.ending_summary) and what the player can do now.
+    # the summary (the right call, from game.ending_summary) and what the
+    # player can do now.
     ending = story["endings"][ending_id]
     window.blit(fonts["small"].render("ENDING", False, CREAM), (40 * scale, 28 * scale))
     window.blit(fonts["big"].render(ending["title"].upper(), False, CREAM), (40 * scale, 36 * scale))

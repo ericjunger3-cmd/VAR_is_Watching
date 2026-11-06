@@ -587,7 +587,7 @@ def draw_booth(canvas, pictures, progress, tick):
 
     # The lanyard hangs over the back of the desk until you take it.
     # It floats up and down a little and sparkles, so you notice it.
-    if "lanyard" not in progress["inventory"]:
+    if "lanyard" not in progress["choices"]:
         lift = float_lift(tick)
         pygame.draw.line(canvas, YELLOW, (24, 150 - lift), (28, 162 - lift), 2)
         pygame.draw.line(canvas, YELLOW, (36, 150 - lift), (32, 162 - lift), 2)
@@ -1484,7 +1484,7 @@ def draw_press_room(canvas, progress, tick):
     # A crumpled piece of paper (the betting slip) by the TV camera,
     # until you pick it up.
     # It floats and sparkles; its shadow gets smaller when it floats higher.
-    if "slip" not in progress["inventory"]:
+    if "slip" not in progress["choices"]:
         lift = float_lift(tick)
         draw_shadow(canvas, 424 + lift, 201, 13 - lift * 2)
         pygame.draw.circle(canvas, OUTLINE, (430, 197 - lift), 5)

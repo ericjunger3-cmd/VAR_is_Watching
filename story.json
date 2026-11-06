@@ -7,13 +7,10 @@
 
   "items": {
     "whistle": "Lucky Whistle",
-    "usb": "USB Stick",
-    "lanyard": "Press Lanyard",
-    "slip": "Betting Slip"
+    "usb": "USB Stick"
   },
 
-  "clue_items": ["lanyard", "slip"],
-  "clue_choices": ["dave"],
+  "clue_choices": ["lanyard", "slip", "dave"],
 
   "truth": "THE RIGHT CALL: GOAL. When the ball was passed, the striker was onside by 30 cm.",
 
@@ -45,7 +42,7 @@
         { "label": "Look at the sticky note", "x": 185, "marker": [190, 110],
           "text": "Dave's note says: \"Back in 5 min - Dave. P.S. Angle cuts out? Ask Pombo, our mascot. He films EVERYTHING.\"",
           "closeup": ["Back in 5 min", "- Dave", "P.S. Angle cuts out?", "Ask Pombo, our mascot.", "He films EVERYTHING."] },
-        { "label": "Look behind the desk", "take_item": "lanyard", "x": 30, "marker": [30, 145],
+        { "label": "Look behind the desk", "set_choice": "lanyard", "value": "found", "x": 30, "marker": [30, 145],
           "text": "The key camera's cable is yanked out of the wall. On purpose! Tangled in it: a \"PRESS - TV STUDIO\" lanyard." },
         { "label": "Plug the USB Stick into the VAR computer", "review": true, "set_choice": "review", "x": 104, "marker": [104, 154],
           "needs_item": "usb",
@@ -90,15 +87,10 @@
         { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment", "x": 330, "marker": [330, 130], "marker_after": "dave",
           "text": "\"No comment.\" Calm. Professional. Boring. The journalists sigh." },
         { "label": "Say: 'Rex Smugworth cut the camera feed. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "x": 330, "marker": [330, 130], "marker_after": "dave",
-          "needs_items": ["lanyard", "slip"], "needs_choice": "dave",
+          "needs_choices": ["lanyard", "slip", "dave"], "hide_if_blocked": true,
           "blocked_text": "No proof, no accusation.",
-          "proof_list": [
-            { "id": "lanyard", "what": "Who", "name": "the Press Lanyard" },
-            { "id": "slip", "what": "Why", "name": "the Betting Slip" },
-            { "id": "dave", "what": "Witness", "name": "Dave's statement" }
-          ],
           "text": "\"Rex pulled the cable. Here's his lanyard, his betting slip and a pigeon witness.\" Every camera turns to the TV studio." },
-        { "label": "Pick up the crumpled paper by the TV camera", "take_item": "slip", "x": 436, "marker": [430, 188],
+        { "label": "Pick up the crumpled paper by the TV camera", "set_choice": "slip", "value": "found", "x": 436, "marker": [430, 188],
           "text": "A betting slip: \"500 pounds - AWAY WIN - late offside drama\". Signed: R. Smugworth. The pundit?!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40,
           "text": "You leave. A journalist keeps shouting at the door." }

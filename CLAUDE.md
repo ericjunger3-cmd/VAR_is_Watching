@@ -55,7 +55,8 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
 
 ### Items
 
-- Lucky Whistle, USB Stick, Press Lanyard, Betting Slip.
+- Lucky Whistle, USB Stick. (The Press Lanyard and Betting Slip are hidden
+  clues in `choices`, not items. The player never sees a clue count.)
 - Items are **reusable** (not used up) and **cannot be duplicated**.
 
 ### Endings (`choose_ending` in game.py, checked top to bottom)

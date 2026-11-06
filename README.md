@@ -115,9 +115,12 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 
 - **5 scenes:** VAR Booth (start), Referee's Dressing Room, Mascot Changing Room,
   Press Room, The Pitch.
-- **4 items:** the Lucky Whistle opens the Mascot Changing Room; Pombo the pigeon
-  mascot gives you the USB Stick with the missing angle; the Press Lanyard and the
-  Betting Slip are clues. Items are reusable and can only be collected once.
+- **2 items:** the Lucky Whistle opens the Mascot Changing Room; Pombo the pigeon
+  mascot gives you the USB Stick with the missing angle. Items are reusable and
+  can only be collected once.
+- **3 hidden clues against Rex:** the Press Lanyard, the Betting Slip and Dave's
+  statement. They are not items: the game remembers them secretly and never
+  shows how many there are.
 - **The twist:** Pombo is really Dave, the missing VAR operator, and the TV pundit
   Rex Smugworth pulled the camera cable because he bet on the away team.
   Finding this out is optional.
