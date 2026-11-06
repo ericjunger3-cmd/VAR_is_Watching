@@ -571,11 +571,12 @@ def draw_review_text(window, review, state, fonts, scale):
     window.blit(fonts["small"].render("TIME " + str(time) + " s", False, (255, 220, 90)),
                 (24 * scale, 34 * scale))
 
-    # Shirt numbers on the dots.
+    # Shirt numbers on the dots, in the number colour from story.json
+    # (white on red, black on yellow, so you can always read them).
     for player in review["players"]:
         x = metres_to_x(game.value_at(review["tracks"][player["id"]], time, 1))
         y = int(game.value_at(review["tracks"][player["id"]], time, 2))
-        picture = fonts["small"].render(player["number"], False, (255, 255, 255))
+        picture = fonts["small"].render(player["number"], False, player["number_colour"])
         window.blit(picture, ((x - 2) * scale, (y - 4) * scale))
 
     # Instructions in the box at the bottom.

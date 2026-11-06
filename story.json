@@ -124,11 +124,11 @@
     "end": 3.0,
     "release": 1.2,
     "players": [
-      { "id": "passer", "name": "Passer (red, number 8)", "colour": [230, 60, 60], "number": "8" },
-      { "id": "striker", "name": "Striker (red, number 9)", "colour": [230, 60, 60], "number": "9" },
-      { "id": "deep_defender", "name": "Defender (blue, number 4)", "colour": [70, 110, 230], "number": "4" },
-      { "id": "high_defender", "name": "Defender (blue, number 5)", "colour": [70, 110, 230], "number": "5" },
-      { "id": "goalkeeper", "name": "Goalkeeper (yellow, number 1)", "colour": [250, 210, 60], "number": "1" }
+      { "id": "passer", "name": "Passer (red, number 8)", "colour": [220, 25, 55], "number": "8", "number_colour": [255, 255, 255] },
+      { "id": "striker", "name": "Striker (red, number 9)", "colour": [220, 25, 55], "number": "9", "number_colour": [255, 255, 255] },
+      { "id": "deep_defender", "name": "Defender (yellow, number 4)", "colour": [250, 220, 20], "number": "4", "number_colour": [35, 35, 40] },
+      { "id": "high_defender", "name": "Defender (yellow, number 5)", "colour": [250, 220, 20], "number": "5", "number_colour": [35, 35, 40] },
+      { "id": "goalkeeper", "name": "Goalkeeper (purple, number 1)", "colour": [150, 80, 210], "number": "1", "number_colour": [255, 255, 255] }
     ],
     "tracks": {
       "passer":        [[0.0, 37.0, 70], [1.2, 34.5, 70], [3.0, 32.0, 72]],

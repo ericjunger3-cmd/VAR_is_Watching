@@ -22,8 +22,8 @@ WHITE = (255, 255, 255)
 BLACK = (30, 30, 40)
 GRASS = (70, 180, 80)
 GRASS_LIGHT = (95, 200, 100)
-HOME_RED = (230, 60, 60)
-AWAY_BLUE = (70, 110, 230)
+HOME_RED = (220, 25, 55)
+AWAY_YELLOW = (250, 220, 20)
 SKIN = (250, 200, 160)
 YELLOW = (250, 210, 60)
 SKY = (150, 200, 240)
@@ -209,7 +209,7 @@ def draw_window(canvas, tick):
     # The stands, full of fans. The colour of each fan comes from a
     # simple calculation, so the crowd looks mixed but never changes.
     pygame.draw.rect(canvas, (200, 70, 70), (x, y + 34, width, 16))
-    fan_colours = [WHITE, YELLOW, (255, 120, 120), SKIN, AWAY_BLUE]
+    fan_colours = [WHITE, YELLOW, (255, 120, 120), SKIN, AWAY_YELLOW]
     for fan_y in range(y + 35, y + 49, 3):
         for fan_x in range(x + 1, x + width - 1, 3):
             colour = fan_colours[(fan_x * 3 + fan_y) % 5]
@@ -354,9 +354,9 @@ def draw_camera(canvas, number, x, y):
                 box(canvas, GRASS_LIGHT, x + i, y, 6, 16)
         box(canvas, WHITE, x + 12, y, 1, 16)
         box(canvas, HOME_RED, x + 5, y + 6, 1, 2)
-        box(canvas, AWAY_BLUE, x + 9, y + 10, 1, 2)
+        box(canvas, AWAY_YELLOW, x + 9, y + 10, 1, 2)
         box(canvas, HOME_RED, x + 16, y + 5, 1, 2)
-        box(canvas, AWAY_BLUE, x + 19, y + 11, 1, 2)
+        box(canvas, AWAY_YELLOW, x + 19, y + 11, 1, 2)
         box(canvas, WHITE, x + 13, y + 8, 1, 2)
 
     elif number == 1:
@@ -365,7 +365,7 @@ def draw_camera(canvas, number, x, y):
         box(canvas, WHITE, x, y + 8, 24, 1)
         pygame.draw.circle(canvas, WHITE, (x + 12, y + 8), 5, 1)
         canvas.set_at((x + 4, y + 3), HOME_RED)
-        canvas.set_at((x + 18, y + 12), AWAY_BLUE)
+        canvas.set_at((x + 18, y + 12), AWAY_YELLOW)
         canvas.set_at((x + 9, y + 13), HOME_RED)
 
     elif number == 2:
@@ -408,7 +408,7 @@ def draw_camera(canvas, number, x, y):
     elif number == 5:
         # The away captain screaming "OFFSIDE!" with his arm up.
         box(canvas, SKY, x, y, 24, 16)
-        box(canvas, AWAY_BLUE, x + 3, y + 10, 18, 6)
+        box(canvas, AWAY_YELLOW, x + 3, y + 10, 18, 6)
         box(canvas, SKIN, x + 7, y + 2, 9, 8)
         box(canvas, BLACK, x + 7, y + 1, 9, 2)
         box(canvas, BLACK, x + 8, y + 3, 2, 1)
@@ -422,7 +422,7 @@ def draw_camera(canvas, number, x, y):
     elif number == 6:
         # Crowd camera: lots of fans and a banner.
         box(canvas, (200, 70, 70), x, y, 24, 16)
-        fan_colours = [WHITE, YELLOW, (255, 130, 130), SKIN, AWAY_BLUE]
+        fan_colours = [WHITE, YELLOW, (255, 130, 130), SKIN, AWAY_YELLOW]
         for fan_y in range(1, 12, 2):
             for fan_x in range((fan_y // 2) % 2, 24, 2):
                 canvas.set_at((x + fan_x, y + fan_y), fan_colours[(fan_x * 3 + fan_y) % 5])
@@ -779,7 +779,7 @@ def draw_dressing_room(canvas, pictures, progress, tick):
         pygame.draw.line(canvas, HOME_RED, (x - 3, y - 3), (x + 3, y + 3))
         pygame.draw.line(canvas, HOME_RED, (x - 3, y + 3), (x + 3, y - 3))
     for x, y in [(140, 62), (162, 36), (178, 60)]:
-        pygame.draw.circle(canvas, AWAY_BLUE, (x, y), 3, 1)
+        pygame.draw.circle(canvas, AWAY_YELLOW, (x, y), 3, 1)
     pygame.draw.line(canvas, BLACK, (134, 44), (148, 55))
     pygame.draw.line(canvas, BLACK, (152, 56), (168, 47))
     pygame.draw.rect(canvas, HOME_RED, (176, 72, 6, 2))          # markers
@@ -1651,7 +1651,7 @@ def draw_press_table(canvas):
 
     # Microphones of all the TV channels, with their cables.
     microphones = [(300, HOME_RED), (312, YELLOW), (322, (90, 180, 110)),
-                   (334, WHITE), (346, AWAY_BLUE), (358, (240, 140, 40))]
+                   (334, WHITE), (346, AWAY_YELLOW), (358, (240, 140, 40))]
     for mic_x, colour in microphones:
         pygame.draw.line(canvas, OUTLINE, (mic_x + 2, 145), (330, 133))
         outlined_box(canvas, (40, 40, 50), mic_x, 124, 5, 7)
@@ -1663,7 +1663,7 @@ def draw_press_table(canvas):
     for bottle_x in [282, 372]:
         outlined_box(canvas, (150, 205, 245), bottle_x, 134, 6, 12)
         pygame.draw.rect(canvas, (210, 240, 255), (bottle_x + 1, 135, 1, 10))
-        pygame.draw.rect(canvas, AWAY_BLUE, (bottle_x, 132, 6, 3))
+        pygame.draw.rect(canvas, AWAY_YELLOW, (bottle_x, 132, 6, 3))
     outlined_box(canvas, WHITE, 352, 139, 20, 7)
     pygame.draw.rect(canvas, (200, 205, 220), (352, 145, 20, 1))
 
@@ -1811,14 +1811,15 @@ def draw_pitch_people(canvas, pictures, ball, tick):
     canvas.blit(captain, (CAPTAIN_X, FLOOR_Y - captain.get_height() - jump))
 
     # The linesman's flag, held up in his right hand (next to his head).
-    # It flutters a little.
+    # It flutters a little. The pole is 50 pixels long and the flag is
+    # 15 x 11 pixels: yellow, with a red square top left and bottom right.
     flag_x = LINESMAN_X + 31
     flutter = (tick // 5) % 2
-    pygame.draw.rect(canvas, OUTLINE, (flag_x, 146, 1, 44))
-    pygame.draw.rect(canvas, OUTLINE, (flag_x, 145, 11, 9 + flutter))
-    pygame.draw.rect(canvas, YELLOW, (flag_x + 1, 146, 9, 7 + flutter))
-    pygame.draw.rect(canvas, HOME_RED, (flag_x + 1, 146, 4, 3))
-    pygame.draw.rect(canvas, HOME_RED, (flag_x + 5, 149, 5, 4 + flutter))
+    pygame.draw.rect(canvas, OUTLINE, (flag_x, 140, 1, 50))
+    pygame.draw.rect(canvas, OUTLINE, (flag_x, 139, 17, 13 + flutter))
+    pygame.draw.rect(canvas, YELLOW, (flag_x + 1, 140, 15, 11 + flutter))
+    pygame.draw.rect(canvas, HOME_RED, (flag_x + 1, 140, 7, 5))
+    pygame.draw.rect(canvas, HOME_RED, (flag_x + 8, 145, 8, 6 + flutter))
     outlined_box(canvas, SKIN, flag_x - 2, 184, 4, 3)                          # his hand
 
     # A speech bubble over the captain ("OFFSIDE!" is added as text).
@@ -1854,7 +1855,7 @@ def draw_stadium(canvas, celebrating, tick):
 
     # Upper tier: small fans. The colour of each fan comes from a calculation,
     # so the crowd looks mixed but always the same.
-    fan_colours = [WHITE, YELLOW, (255, 120, 120), SKIN, AWAY_BLUE, (235, 70, 70)]
+    fan_colours = [WHITE, YELLOW, (255, 120, 120), SKIN, AWAY_YELLOW, (235, 70, 70)]
     pygame.draw.rect(canvas, (60, 60, 80), (0, 42, ROOM_WIDTH, 50))
     for fan_y in range(44, 90, 4):
         for fan_x in range(1 + (fan_y // 4) % 2 * 2, ROOM_WIDTH, 4):
@@ -1880,7 +1881,7 @@ def draw_stadium(canvas, celebrating, tick):
     canvas.blit(glow, (180, 38))
     shaded_box(canvas, (20, 20, 30), (60, 60, 75), (10, 10, 15), 190, 46, 100, 34)
     pygame.draw.rect(canvas, HOME_RED, (194, 50, 30, 10))
-    pygame.draw.rect(canvas, AWAY_BLUE, (256, 50, 30, 10))
+    pygame.draw.rect(canvas, AWAY_YELLOW, (256, 50, 30, 10))
     pygame.draw.rect(canvas, (255, 200, 40), (194, 66, 92, 10))
     if celebrating:
         pygame.draw.rect(canvas, (230, 60, 60), (194, 66, 92, 10))

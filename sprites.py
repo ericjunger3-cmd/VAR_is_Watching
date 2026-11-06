@@ -41,25 +41,31 @@ PALETTE = {
 # These dictionaries say which colours change for that character.
 REFEREE_COLOURS = {"h": (30, 25, 25), "H": (55, 45, 40), "j": (90, 75, 65),
                    "B": (50, 52, 62), "b": (32, 33, 42)}
+# The home team plays in Bayern colours: red with white numbers.
 STRIKER_COLOURS = {"h": (200, 150, 40), "H": (240, 200, 80), "j": (255, 235, 150),
-                   "B": (235, 70, 70), "b": (190, 45, 50)}
+                   "B": (220, 25, 55), "b": (170, 15, 45)}
+# The away team plays in Dortmund colours: a yellow shirt, and black
+# for the number, collar, shorts and captain's armband ("W", "c", "Y").
 CAPTAIN_COLOURS = {"h": (25, 20, 20), "H": (45, 35, 35), "j": (70, 60, 60),
-                   "B": (80, 125, 240), "b": (50, 85, 190), "S": (205, 150, 110),
+                   "B": (250, 220, 20), "b": (215, 180, 0), "S": (205, 150, 110),
                    "s": (170, 115, 80), "t": (225, 175, 135), "p": (200, 110, 100),
-                   "Q": (140, 95, 65)}
+                   "Q": (140, 95, 65), "W": (35, 35, 40), "c": (20, 20, 25),
+                   "Y": (35, 35, 40)}
 PUNDIT_COLOURS = {"h": (25, 20, 22), "H": (45, 38, 40), "j": (120, 110, 125)}
+# The linesman wears the same black shirt as the referee, so he does
+# not look like an away (yellow) player.
 LINESMAN_COLOURS = {"h": (160, 70, 30), "H": (210, 105, 45), "j": (240, 150, 80),
-                    "B": (250, 215, 60), "b": (210, 170, 30)}
-# The player wears a Bayern-style kit: a red shirt instead of black,
-# white stripes instead of yellow, and red trousers instead of dark ones.
-PLAYER_COLOURS = {"b": (210, 20, 50), "B": (240, 65, 85), "k": (130, 10, 35),
+                    "B": (50, 52, 62), "b": (32, 33, 42)}
+# The player wears a classic referee look: an all-black shirt with
+# white trim instead of yellow, and black trousers.
+PLAYER_COLOURS = {"b": (30, 30, 36), "B": (58, 58, 68), "k": (14, 14, 20),
                   "Y": (245, 245, 250), "q": (255, 255, 255),
-                  "Z": (195, 18, 46), "z": (150, 12, 38)}
+                  "Z": (34, 34, 42), "z": (20, 20, 26)}
 
 # The player, standing and facing you: a junior VAR official with a
 # headset (the grey band over his hair), a polo with VAR stripes and a
 # VAR badge, a lanyard with an ID card, and a belt buckle.
-# The shirt colours come from PLAYER_COLOURS (red and white).
+# The shirt colours come from PLAYER_COLOURS (black and white).
 # Cute style: a big round head (more than half of the height) with big
 # shiny eyes, a little curl of hair on top, a small body and short legs.
 PLAYER = [
@@ -360,7 +366,7 @@ STEWARD = [
 ]
 
 # The home striker: spiky blond hair, laughing (eyes closed), number 9.
-# Kit colours come from STRIKER_COLOURS.
+# Kit colours come from STRIKER_COLOURS: red shirt, red shorts, red socks.
 STRIKER = [
     "........h...hh...hh...h.........",
     "........hH.hHHh.hHHh.hHh........",
@@ -392,9 +398,9 @@ STRIKER = [
     "......SSBBBBBBBBWBBBBBbbSS......",
     "......ssBBBBBBWWWBBBBBbbss......",
     "........BBBBBBBBBBBBBBbb........",
-    "........WWWWWWWWWWWWWWWc........",
-    "........WWWWWWWccWWWWWWc........",
-    ".........WWWWWc..WWWWWc.........",
+    "........BBBBBBBBBBBBBBBb........",
+    "........BBBBBBBbbBBBBBBb........",
+    ".........BBBBBb..BBBBBb.........",
     "..........SSSs....SSSs..........",
     "..........BBBb....BBBb..........",
     "..........BBBb....BBBb..........",
