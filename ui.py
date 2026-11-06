@@ -701,8 +701,8 @@ def draw_dialogue_text(window, page, letters_shown, fonts, scale, faded=False):
 
 
 def draw_pundit_text(window, pundit_line, fonts, scale):
-    # The pundit's line in his speech box. It looks like "PUNDIT: ..." or
-    # "PUNDIT (sweating): ...": the part before ": " is his name (in orange),
+    # The pundit's line in his speech box. It looks like "GIANNO INFANTINI: ..." or
+    # "GIANNO INFANTINI (sweating): ...": the part before ": " is his name (in orange),
     # the part after it is what he says.
     position = pundit_line.index(": ")
     name = pundit_line[:position]
@@ -753,8 +753,8 @@ def draw_note_text(window, lines, fonts, scale):
 TUTORIAL_STEPS = [
     {"area": None, "title": "WELCOME, ROOKIE",
      "text": "Your first day as VAR. Here is a quick tour of the screen."},
-    {"area": "pundit", "title": "REX ON TV",
-     "text": "Rex always tells you what to do next. When his box flashes, he has a new tip."},
+    {"area": "pundit", "title": "INFANTINI ON TV",
+     "text": "Infantini always tells you what to do next. When his box flashes, he has a new tip."},
     {"area": "items", "title": "YOUR ITEMS",
      "text": "Everything you pick up lands here."},
     {"area": "timer", "title": "STADIUM WAITS",

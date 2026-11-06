@@ -114,9 +114,9 @@ def test_offside_rule(story):
 
 
 def test_expose_needs_all_clues(story):
-    # The option to expose Rex stays hidden until the player has the lanyard,
+    # The option to expose Infantini stays hidden until the player has the lanyard,
     # the betting slip AND Dave's statement. Clues are choices, not items.
-    expose = find_action(story, "press_room", "Say: 'Rex")
+    expose = find_action(story, "press_room", "Say: 'Gianno Infantini")
     assert game.is_hidden(expose, [], {"lanyard": "found", "slip": "found"})
     assert game.is_hidden(expose, [], {"lanyard": "found", "dave": "talked"})
     assert not game.is_hidden(expose, [], {"lanyard": "found", "slip": "found", "dave": "talked"})
@@ -143,9 +143,9 @@ def test_pundit_hints(story):
     first = game.current_hint(story, progress)
     progress["inventory"].append("whistle")
     assert game.current_hint(story, progress) != first
-    assert game.pundit_line(story, progress).startswith("PUNDIT: ")
+    assert game.pundit_line(story, progress).startswith("GIANNO INFANTINI: ")
     progress["choices"]["lanyard"] = "found"
-    assert game.pundit_line(story, progress).startswith("PUNDIT (nervous): ")
+    assert game.pundit_line(story, progress).startswith("GIANNO INFANTINI (nervous): ")
 
 
 def test_door_to_hint(story):

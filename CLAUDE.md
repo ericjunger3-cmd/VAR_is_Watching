@@ -16,7 +16,8 @@ https://nova-sbe-introduction-to-programming.github.io/intro-to-programming-2026
 
 94th minute of a cup final. The home side scores, the away side claims offside,
 and the key VAR angle is missing. The player is a junior VAR official on their
-first day. A smug TV pundit narrates everything.
+first day. A smug TV guest expert, Gianno Infantini (a fictional character),
+narrates everything. It is 0:0 before the goal.
 
 Teams: home side in red (Bayern style: striker, passer), away side in yellow and
 black (Dortmund style: captain, defenders; the review goalkeeper is purple). The
@@ -25,14 +26,14 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 
 ### The pundit gives the hints
 
-- Rex always says (rudely, but clearly) what to do next: the `"hints"` list in
+- Infantini always says (rudely, but clearly) what to do next: the `"hints"` list in
   story.json, each with a `"done_when"` id (item or choice); `current_hint` in
   game.py shows the first one not done. A hint can have `"if_clue"` /
   `"pundit_if_clue"` for a different line once that clue is found.
 - His mood shows in his name, from `"pundit_moods"` by clue count:
-  PUNDIT, PUNDIT (nervous), (sweating), (panicking) (`pundit_line`).
+  GIANNO INFANTINI, GIANNO INFANTINI (nervous), (sweating), (panicking) (`pundit_line`).
 - 2D: a new line makes his speech box flash yellow and beep (`HINT_FLASH_FRAMES`).
-- Clues are secret: no counter anywhere. Exposing Rex stays hidden until all
+- Clues are secret: no counter anywhere. Exposing Infantini stays hidden until all
   clues are found (`needs_choices` + `hide_if_blocked`).
 - Each hint has a `"room"`; `door_to_hint` finds the door on the way there
   (from the booth: that room's door, elsewhere: the door back to the booth).
@@ -44,7 +45,7 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 ### Tutorial (2D)
 
 - A new game starts with a tour of the screen: `TUTORIAL_STEPS` in ui.py (7 steps:
-  welcome, Rex on TV, items, timer, the player and the "!", the story text, the
+  welcome, Infantini on TV, items, timer, the player and the "!", the story text, the
   goal). Each step darkens the screen except one area (`tutorial_area` in
   game_2d.py) and explains it in a caption box (`draw_tutorial`).
 - `screen["tutorial"]` is the current step (None = closed). Space = next,
@@ -56,8 +57,9 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 - **Bernie is Dave**, the missing VAR operator from the sticky note, working a
   second job as the mascot. He filmed the goal on his head-cam (the USB Stick)
   and saw a man in a shiny suit run out of the booth at 93:30.
-- **The pundit, Rex Smugworth, pulled the camera cable** because he bet 500 on
-  the away team. Clues: the Press Lanyard (behind the booth desk), the Betting
+- **The TV expert, Gianno Infantini, pulled the camera cable** because he bet 500
+  on a 0:0 draw. He wants the VAR to rule OFFSIDE so the goal is gone and his
+  bet wins. Clues: the Press Lanyard (behind the booth desk), the Betting
   Slip (press room), Dave's statement. The pundit gets more nervous with every
   clue. Every ending except the best one ends with an epilogue hinting at him.
 - The truth: the striker was **onside by 30 cm**, so GOAL is the right call.
@@ -70,8 +72,8 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 3. **Mascot Changing Room** – locked; needs the Lucky Whistle.
    Bernie/Dave gives the **USB Stick** and his statement.
 4. **Press Room** – one answer only: **"Clearly a goal!"**, **"No comment"** or
-   **expose Rex** (needs lanyard + slip + Dave). Betting Slip by the TV camera.
-   Why the VAR goes there: Rex's TV channel has a deal with the league, so the
+   **expose Infantini** (needs lanyard + slip + Dave). Betting Slip by the TV camera.
+   Why the VAR goes there: Infantini's TV channel has a deal with the league, so the
    VAR must give one live quote before every decision (said in the booth intro).
 5. **The Pitch** – open from the start, but the referee only takes the call
    after the press answer; rule **Goal** or **Offside** (both allowed).
@@ -98,7 +100,7 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
 
 - **Daylight Robbery** – ruled OFFSIDE.
 - **Clip of the Year** – GOAL without the review.
-- **VAR Is Watching** – GOAL after the review + exposed Rex (best ending).
+- **VAR Is Watching** – GOAL after the review + exposed Infantini (best ending).
 - **Justice Served** – GOAL after the review + "No comment".
 - **Right Call, Wrong Mouth** – GOAL after the review + "Clearly a goal!".
 
@@ -182,4 +184,4 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
 - A1/A2: the Lucky Whistle is the "key" for the Mascot Changing Room.
 - A3: every item can be collected only once (taken items disappear).
 - PT04: the review result and the press answer are remembered and change the
-  ending; exposing Rex needs earlier clues (needs_choices).
+  ending; exposing Infantini needs earlier clues (needs_choices).

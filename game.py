@@ -125,12 +125,12 @@ def door_to_hint(story, progress):
 def pundit_line(story, progress):
     # The pundit always says (rudely, but clearly) what to do next.
     # The more clues against him the player has found, the more nervous
-    # he gets: his name shows his mood, e.g. "PUNDIT (sweating)".
+    # he gets: his name shows his mood, e.g. "GIANNO INFANTINI (sweating)".
     # 0 clues -> mood "" (index 0), 1 clue -> "nervous" (index 1), ...
     mood = story["pundit_moods"][count_clues(story, progress)]
-    name = "PUNDIT"
+    name = "GIANNO INFANTINI"
     if mood != "":
-        name = "PUNDIT (" + mood + ")"
+        name = "GIANNO INFANTINI (" + mood + ")"
     return name + ": " + current_hint(story, progress)
 
 
@@ -409,7 +409,7 @@ def after_ending_menu(story, progress):
 
 def show_actions(actions, door):
     # Print every action with a number in front, starting at 1.
-    # The door Rex's hint leads to (from door_to_hint) gets a "(!)".
+    # The door Infantini's hint leads to (from door_to_hint) gets a "(!)".
     print()
     number = 1
     for action in actions:
@@ -550,7 +550,7 @@ def main():
     print("*** " + story["title"] + " ***")
     # The goal of the game and how to play, so beginners know what to do.
     print(story["goal"])
-    print("Type the number of an action. (!) marks the way Rex tells you to go.")
+    print("Type the number of an action. (!) marks the way Infantini tells you to go.")
 
     # Ask the player: new game or continue?
     progress = start_menu(story)

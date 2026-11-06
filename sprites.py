@@ -601,7 +601,7 @@ DAVE_HEAD = [
     "..........ssssssssssss..........",
 ]
 
-# Rex Smugworth, the TV pundit (head and shoulders, shown in the TV):
+# Gianno Infantini, the TV guest expert (head and shoulders, shown in the TV):
 # a shiny bald head, friendly eyebrows, a closed-mouth smile, a dark navy
 # suit, a white shirt, a dark navy tie and a small gold pin on the lapel.
 PUNDIT = [

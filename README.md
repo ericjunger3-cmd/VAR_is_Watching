@@ -8,7 +8,7 @@ Solo project for Nova SBE *Introduction to Programming*, based on the
 
 It is the 94th minute of a cup final. The home side scores, the away side
 claims offside, and the key VAR angle is missing. You are a junior VAR official
-on your first day. A smug TV pundit comments on everything you do.
+on your first day. A smug TV guest expert, Gianno Infantini, comments on everything you do.
 Find the missing footage, survive the press, and make the call.
 
 ## How to run
@@ -119,24 +119,24 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 ## Help for new players
 
 - **Tutorial (2D):** a new game starts with a tour of the screen. Each step lights
-  up one part and explains it: Rex on the TV (the hints), your items, the timer,
+  up one part and explains it: Infantini on the TV (the hints), your items, the timer,
   you and the "!" markers, the story text, and the goal of the game. The steps are
   `TUTORIAL_STEPS` in `ui.py`; `tutorial_area` in `game_2d.py` finds each part.
   The terminal version prints the goal of the game at the start.
 - **Follow the "!":** besides the things you can use, the door on the way to
-  Rex's current hint also gets a bouncing "!" (terminal: a "(!)" after the
+  Infantini's current hint also gets a bouncing "!" (terminal: a "(!)" after the
   action). Each hint has a `"room"` in `story.json`; `door_to_hint` in `game.py`
   finds the door.
-- **The pundit gives the hints.** Rex Smugworth always says (rudely, but clearly)
+- **The pundit gives the hints.** Gianno Infantini always says (rudely, but clearly)
   what to do next, e.g. "Sticky note on your desk, rookie. Read it!". The hints are
   the `"hints"` list in `story.json`; the first one that is not done yet is shown.
   He even gives himself away (his lanyard, the paper by his camera).
 - **He gets nervous.** With every clue against him his name changes:
-  PUNDIT, PUNDIT (nervous), (sweating), (panicking).
+  GIANNO INFANTINI, GIANNO INFANTINI (nervous), (sweating), (panicking).
 - **New hint signal (2D):** when he says something new, his speech box flashes
   yellow and beeps.
 - **Secret clues:** the game never shows how many clues exist or how many you
-  found. The option to expose Rex only appears once you have all of them.
+  found. The option to expose Infantini only appears once you have all of them.
 - **The truth at the end:** every ending shows the right call (GOAL, onside by
   30 cm) and a tip for the next game.
 - **The Press Room** reminds you that a VAR never picks a side.
@@ -151,11 +151,12 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 - **2 items:** the Lucky Whistle opens the Mascot Changing Room; Bernie the bear
   mascot gives you the USB Stick with the missing angle. Items are reusable and
   can only be collected once.
-- **3 hidden clues against Rex:** the Press Lanyard, the Betting Slip and Dave's
+- **3 hidden clues against Infantini:** the Press Lanyard, the Betting Slip and Dave's
   statement. They are not items: the game remembers them secretly and never
   shows how many there are.
 - **The twist:** Bernie is really Dave, the missing VAR operator, and the TV pundit
-  Rex Smugworth pulled the camera cable because he bet on the away team.
+  Gianno Infantini pulled the camera cable because he bet on a 0:0 draw: he
+  wants you to rule OFFSIDE, but the striker was onside.
   Finding this out is optional.
 - **The VAR Review:** plug the USB Stick into the VAR computer, find the exact
   moment the ball leaves the passer's boot (0.0 - 3.0 s in steps of 0.1 s), lock
@@ -163,7 +164,7 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
   You only get one look.
   (The right answer: 1.2 s, line on defender number 4 at 21.5 m: onside.)
 - **Remembered decisions:** your review result, Dave's statement, and your one
-  answer to the press ("Clearly a goal!", "No comment", or exposing Rex, which
+  answer to the press ("Clearly a goal!", "No comment", or exposing Infantini, which
   needs the lanyard, the slip and Dave's statement). The referee only takes
   your call after you have spoken to the press.
 - **The stadium is waiting:** you have 40 actions (terminal) or 5 minutes of
@@ -173,12 +174,12 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
   - *Clip of the Year*: GOAL without doing the review
   - *Right Call, Wrong Mouth*: GOAL after the review + "Clearly a goal!"
   - *Justice Served*: GOAL after the review + "No comment"
-  - *VAR Is Watching*: GOAL after the review + you exposed Rex
+  - *VAR Is Watching*: GOAL after the review + you exposed Infantini
   - *The Stadium Went Home*: you ran out of time
 
 ## Automatic tests
 
-`test_game.py` checks A1-A6 (and the offside rule, the clues for exposing Rex,
+`test_game.py` checks A1-A6 (and the offside rule, the clues for exposing Infantini,
 the pundit's hints, the "!" door and the ending summary) with the functions from `game.py`. It uses its own save file,
 so your saved game is never touched.
 

@@ -14,7 +14,7 @@
 
   "truth": "THE RIGHT CALL: GOAL. When the ball was passed, the striker was onside by 30 cm.",
 
-  "goal": "Your goal: give the referee the right call, GOAL or OFFSIDE. Rex on the TV always tells you what to do next.",
+  "goal": "Your goal: give the referee the right call, GOAL or OFFSIDE. Gianno Infantini on the TV always tells you what to do next.",
 
   "hints": [
     { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. Thrilling.", "done_when": "whistle", "room": "dressing_room" },
@@ -22,15 +22,15 @@
     { "pundit": "A USB stick from a bear. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review", "room": "booth",
       "if_clue": "lanyard", "pundit_if_clue": "A USB stick from a bear. Plug it into your VAR computer, genius. And that lanyard? Never seen it. Never." },
     { "pundit": "Press Room next. One quote, rookie. And don't touch any crumpled paper by my camera. Totally normal paper.", "done_when": "press_answer", "room": "press_room" },
-    { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. Trust me. I'm on TV.", "room": "pitch" }
+    { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. 0:0 is a beautiful result. Trust me. I'm the expert.", "room": "pitch" }
   ],
   "pundit_moods": ["", "nervous", "sweating", "panicking"],
-  "ball_goal_pundit": "PUNDIT: Did the VAR official just score?! Somebody check the VAR! Oh wait... that's you. Doesn't count, rookie.",
+  "ball_goal_pundit": "INFANTINI: Did the VAR official just score?! Somebody check the VAR! Oh wait... that's you. Doesn't count, rookie.",
 
   "scenes": {
     "booth": {
       "name": "VAR Booth",
-      "text": "94th minute, cup final. Home side scores, away captain screams \"OFFSIDE!\" at the sky. Day one as VAR, and the key camera shows static. Find the angle, make the call. But first: one quote for the Press Room (Rex's TV deal).",
+      "text": "94th minute, cup final, 0:0. Home side scores, away captain screams \"OFFSIDE!\" at the sky. Day one as VAR, and the key camera shows static. Find the angle, make the call. But first: one quote for the Press Room (TV guest expert Gianno Infantini's deal).",
       "actions": [
         { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258, "door_marker": [258, 104],
           "text": "You sprint down the tunnel, past a trolley of orange slices." },
@@ -83,18 +83,18 @@
     "press_room": {
       "name": "Press Room",
       "menu_title": "What do you tell the press?",
-      "text": "Cameras, microphones and every journalist in the country. Rex's TV deal: one live quote from you. Only one. Careful: a VAR never picks a side.",
+      "text": "Cameras, microphones and every journalist in the country. Infantini's TV deal: one live quote from you. Only one. Careful: a VAR never picks a side.",
       "actions": [
         { "label": "Say: 'Clearly a goal!'", "set_choice": "press_answer", "value": "goal", "x": 330, "marker": [330, 130], "marker_after": "dave",
           "text": "Cameras flash. The headline is written before you finish. A VAR rulebook bursts into flames." },
         { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment", "x": 330, "marker": [330, 130], "marker_after": "dave",
           "text": "\"No comment.\" Calm. Professional. Boring. The journalists sigh." },
-        { "label": "Say: 'Rex Smugworth cut the camera feed. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "x": 330, "marker": [330, 130], "marker_after": "dave",
+        { "label": "Say: 'Gianno Infantini cut the camera feed. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "x": 330, "marker": [330, 130], "marker_after": "dave",
           "needs_choices": ["lanyard", "slip", "dave"], "hide_if_blocked": true,
           "blocked_text": "No proof, no accusation.",
-          "text": "\"Rex pulled the cable. Here's his lanyard, his betting slip and a bear witness.\" Every camera turns to the TV studio." },
+          "text": "\"Infantini pulled the cable. Here's his lanyard, his betting slip and a bear witness.\" Every camera turns to the TV studio." },
         { "label": "Pick up the crumpled paper by the TV camera", "set_choice": "slip", "value": "found", "x": 436, "marker": [430, 188],
-          "text": "A betting slip: \"500 pounds - AWAY WIN - late offside drama\". Signed: R. Smugworth. The pundit?!" },
+          "text": "A betting slip: \"500 pounds - DRAW 0:0 - late offside drama\". Signed: G. Infantini. The TV expert?!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 104],
           "text": "You leave. A journalist keeps shouting at the door." }
       ]
@@ -157,40 +157,40 @@
     "daylight_robbery": {
       "title": "Daylight Robbery",
       "show_epilogue": true,
-      "text": "You signal OFFSIDE and the goal is gone. Within minutes, freeze-frames all over the internet show the striker was onside by 30 centimetres. The home fans chant your name in a way you will never forget. PUNDIT: What a call! Clearly offside! ...Right? RIGHT?",
+      "text": "You signal OFFSIDE and the goal is gone. Within minutes, freeze-frames all over the internet show the striker was onside by 30 centimetres. The home fans chant your name in a way you will never forget. INFANTINI: What a call! Clearly offside! 0:0, just as I predicted. ...Right? RIGHT?",
       "tip": "TIP: In the VAR Review, freeze the exact moment the ball leaves the boot, then line up the second-last defender."
     },
     "clip_of_the_year": {
       "title": "Clip of the Year",
       "show_epilogue": true,
-      "text": "You never studied the footage, so you make the call on pure vibes. GOAL! You happen to be right, but the broadcast cuts to your face at the exact moment you decide, and it is not a good face. By morning the clip has 40 million views and its own song. PUNDIT: Absolute cinema. That clip will outlive us all.",
+      "text": "You never studied the footage, so you make the call on pure vibes. GOAL! You happen to be right, but the broadcast cuts to your face at the exact moment you decide, and it is not a good face. By morning the clip has 40 million views and its own song. INFANTINI: Absolute cinema. That clip will outlive us all.",
       "tip": "TIP: Check the footage first. Bernie the mascot has it."
     },
     "right_call_wrong_mouth": {
       "title": "Right Call, Wrong Mouth",
       "show_epilogue": true,
-      "text": "Your review was right: onside, the goal stands. But you told the press \"Clearly a goal!\" before the referee had even made the call, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. PUNDIT: Right call, wrong mouth. They'll teach this one at VAR school.",
-      "tip": "TIP: A VAR stays neutral. Say \"No comment\", or expose Rex if you can prove it."
+      "text": "Your review was right: onside, the goal stands. But you told the press \"Clearly a goal!\" before the referee had even made the call, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. INFANTINI: Right call, wrong mouth. They'll teach this one at VAR school.",
+      "tip": "TIP: A VAR stays neutral. Say \"No comment\", or expose Infantini if you can prove it."
     },
     "justice_served": {
       "title": "Justice Served",
       "show_epilogue": true,
-      "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you picked a side before the official decision. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. PUNDIT: Fine. Correct AND professional. Absolutely terrible for my ratings.",
+      "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you picked a side before the official decision. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. INFANTINI: Fine. Correct AND professional. Absolutely terrible for my ratings.",
       "tip": "TIP: Prove who pulled the cable and expose him in the Press Room for the best ending."
     },
     "time_up": {
       "title": "The Stadium Went Home",
       "show_epilogue": true,
-      "text": "You took too long. After all that waiting, the referee shrugs, decides the goal with a coin toss and walks off. Half the stadium has already gone home; the other half is booing you personally. PUNDIT: That long for one decision? Even the bear left.",
-      "tip": "TIP: Rex on the TV always tells you the next step. Follow the \"!\" markers."
+      "text": "You took too long. After all that waiting, the referee shrugs, decides the goal with a coin toss and walks off. Half the stadium has already gone home; the other half is booing you personally. INFANTINI: That long for one decision? Even the bear left.",
+      "tip": "TIP: Infantini on the TV always tells you the next step. Follow the \"!\" markers."
     },
     "var_is_watching": {
       "title": "VAR Is Watching",
       "show_epilogue": false,
-      "text": "You give the goal and the stadium explodes. On every TV in the country, Rex Smugworth freezes mid-grin as two stewards walk into his studio holding a lanyard and a betting slip. In the stands, a bear takes off its head and bows. The goal stands. Rex does not. PUNDIT: This is an outrage! I want my lawy-- [SIGNAL LOST]",
-      "tip": "PERFECT GAME: the right call, and Rex is exposed. You are a natural."
+      "text": "You give the goal and the stadium explodes. On every TV in the country, Gianno Infantini freezes mid-grin as two stewards walk into his studio holding a lanyard and a betting slip. In the stands, a bear takes off its head and bows. The goal stands. Infantini does not. INFANTINI: This is an outrage! I want my lawy-- [SIGNAL LOST]",
+      "tip": "PERFECT GAME: the right call, and Infantini is exposed. You are a natural."
     }
   },
 
-  "epilogue": "Meanwhile, in the TV studio, Rex Smugworth smooths his hair and smiles. Nobody will ever know who pulled the camera cable at 93:30. Or will they? (Play again to find out.)"
+  "epilogue": "Meanwhile, in the TV studio, Gianno Infantini polishes his bald head and smiles. Nobody will ever know who pulled the camera cable at 93:30. Or will they? (Play again to find out.)"
 }
