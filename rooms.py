@@ -283,25 +283,84 @@ def draw_monitors(canvas, tick, progress):
             x = 12 + column * 32
             y = 88 + row * 24
 
-            # Monitor frame: light top edge, dark bottom edge.
-            pygame.draw.rect(canvas, OUTLINE, (x - 2, y - 2, 30, 22))
-            pygame.draw.rect(canvas, (90, 95, 115), (x - 1, y - 1, 28, 20))
-            pygame.draw.rect(canvas, (130, 135, 155), (x - 1, y - 1, 28, 1))
-            pygame.draw.rect(canvas, (60, 64, 80), (x - 1, y + 18, 28, 1))
-
             if camera_number == 11:
-                draw_broken_screen(canvas, x + 1, y + 1, tick, progress)
-                led = (230, 50, 50)
+                # The sabotaged monitor hangs crooked (see draw_crooked_monitor).
+                draw_crooked_monitor(canvas, x, y, tick, progress)
             else:
+                draw_monitor_frame(canvas, x, y)
                 draw_camera(canvas, camera_number, x + 1, y + 1)
-                led = (90, 230, 110)
-            # A small power light that blinks now and then. Every monitor
-            # blinks at another moment (camera_number * 13 shifts the timing).
-            if (tick + camera_number * 13) % 90 > 6:
-                canvas.set_at((x + 24, y + 18), led)
-            # A tiny shine in the top-left corner of the screen.
-            canvas.set_at((x + 1, y + 1), (235, 245, 255))
+                # A small green power light that blinks now and then. Every
+                # monitor blinks at another moment (camera_number * 13 shifts
+                # the timing).
+                if (tick + camera_number * 13) % 90 > 6:
+                    canvas.set_at((x + 24, y + 18), (90, 230, 110))
+                # A tiny shine in the top-left corner of the screen.
+                canvas.set_at((x + 1, y + 1), (235, 245, 255))
             camera_number = camera_number + 1
+
+
+def draw_monitor_frame(surface, x, y):
+    # The frame of one monitor: light top edge, dark bottom edge.
+    pygame.draw.rect(surface, OUTLINE, (x - 2, y - 2, 30, 22))
+    pygame.draw.rect(surface, (90, 95, 115), (x - 1, y - 1, 28, 20))
+    pygame.draw.rect(surface, (130, 135, 155), (x - 1, y - 1, 28, 1))
+    pygame.draw.rect(surface, (60, 64, 80), (x - 1, y + 18, 28, 1))
+
+
+def draw_crooked_monitor(canvas, x, y, tick, progress):
+    # The monitor with the offside angle. Someone cut its cable (in another
+    # room): it hangs crooked and its picture flickers.
+
+    # 1. Draw the monitor on its own small see-through picture first,
+    #    so we can turn the whole picture afterwards.
+    picture = pygame.Surface((34, 26), pygame.SRCALPHA)
+    draw_monitor_frame(picture, 4, 4)
+    draw_broken_screen(picture, 5, 5, tick, progress)
+    # Now and then the picture goes black for a moment (a flicker).
+    # (tick * 7) % 50 < 4 is true for 4 frames out of every 50 or so.
+    if (tick * 7) % 50 < 4:
+        pygame.draw.rect(picture, (15, 15, 20), (5, 5, 24, 16))
+    # The red power light blinks.
+    if tick % 20 < 10:
+        picture.set_at((28, 22), (230, 50, 50))
+
+    # 2. Turn it 8 degrees (it hangs crooked) and put it where the
+    #    monitor should be. get_rect(center=...) keeps the middle in place.
+    turned = pygame.transform.rotate(picture, -8)
+    middle = (x + 13, y + 9)
+    canvas.blit(turned, turned.get_rect(center=middle))
+
+
+def draw_sparks(canvas, x, y, tick):
+    # Sparks fly out of a cut cable in short bursts: for 8 frames out of
+    # every 40 there are a few yellow and white dots around the cable end.
+    # random makes them jump around every frame.
+    if tick % 40 >= 8:
+        return
+    for i in range(5):
+        spark_x = x + random.randint(-5, 5)
+        spark_y = y + random.randint(-3, 4)
+        if random.randint(0, 1) == 0:
+            colour = (255, 240, 120)
+        else:
+            colour = WHITE
+        canvas.set_at((spark_x, spark_y), colour)
+
+
+def draw_smoke(canvas, x, y, tick):
+    # Three soft grey puffs of smoke rise from the cable, grow and fade out.
+    # Each puff starts at another moment (puff * 30), so they never stop.
+    for puff in range(3):
+        age = (tick + puff * 30) % 90          # 0 to 89 frames old
+        rise = age // 3                        # how far it has risen
+        size = 2 + age // 15                   # it grows as it rises
+        alpha = 200 - age * 2                  # and fades out
+        if alpha <= 0:
+            continue
+        smoke = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+        pygame.draw.circle(smoke, (215, 215, 222, alpha), (size, size), size)
+        # The smoke drifts a little to the left as it rises.
+        canvas.blit(smoke, (x - size - age // 15, y - rise - size))
 
 
 def draw_broken_screen(canvas, x, y, tick, progress):
