@@ -138,6 +138,19 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   The same circle, much slower (`ENDING_FRAMES` = 60, 2 s), plays once when
   the last text is read, and opens on the ending screen (`start_circle`,
   `screen["ending_circle"]`). The ending jingle waits until it is finished.
+- 2D end clips (`clips.py`): after the slow circle, short "film scenes" play
+  (`screen["clips"]`, `CLIP_FRAMES` = 150 = 5 s each, Space skips), each
+  followed by a circle (`CLIP_CHANGE_FRAMES`), then the ending screen.
+  Clip 1 is on the pitch (`pitch_clip_name`): **pitch_goal** (striker knee
+  slide, passer jumps, red confetti, away players sad), **pitch_offside**
+  (away players jump, yellow confetti, striker on his knees, hands on head),
+  **pitch_time_up** (the ref's coin lands on OFFSIDE, lights go out, Bernie
+  walks home). The clip camera films a 320 x 180 part of the canvas 3x bigger
+  (`CLIP_LEFT`, `CLIP_TOP`, `CLIP_ZOOM`, `to_window`), with black film bars.
+  Extra player pictures: "passer", "defender" and the sad away players
+  without the raised arm (`CAPTAIN_ARM_DOWN`).
+- After the ruling the scoreboard shows FULL TIME and 1 - 0 (GOAL) or 0 - 0
+  (OFFSIDE) (`draw_scoreboard_text`).
 - 2D pundit faces: `make_pundit(mood)` in sprites.py swaps rows
   (`PUNDIT_MOOD_ROWS`) and skin colours (`PUNDIT_MOOD_SKIN`) per clue count.
 - `test_game.py` – automatic tests for A1-A6 and the main rules, plain asserts,

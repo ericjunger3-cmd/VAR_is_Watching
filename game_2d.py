@@ -8,6 +8,7 @@ import sprites
 import rooms
 import ui
 import sound
+import clips
 
 # Everything is drawn on a small canvas and then made 2x bigger,
 # so each pixel becomes a 2 x 2 block: the "chunky pixel" look.
@@ -43,6 +44,12 @@ ENDING_FRAMES = 60
 
 # How many frames the pundit's speech box flashes when he has a new hint.
 HINT_FLASH_FRAMES = 60
+
+# The circle between two end clips (and after the last one): 1 second.
+CLIP_CHANGE_FRAMES = 30
+
+# The sound at the start of each end clip.
+CLIP_SOUNDS = {"pitch_goal": "goal", "pitch_offside": "goal", "pitch_time_up": "whistle"}
 
 # The room sounds that play in the background of some rooms.
 ROOM_SOUNDS = {"pitch": "crowd", "dressing_room": "shower"}
@@ -189,10 +196,21 @@ def draw_labels(window, font, small_font, scene_id, offset):
         window.blit(picture, (x * SCALE - offset, y * SCALE))
 
 
-def draw_scoreboard_text(window, font, ball, offset):
-    # The yellow bar of the scoreboard says "VAR CHECK", or flashes
-    # "GOAL?!" while the player's goal is celebrated.
-    if ball["celebrate"] > 0:
+def draw_scoreboard_text(window, font, ball, offset, choices):
+    # The score: 1 - 0, but 0 - 0 once you ruled OFFSIDE (the goal is gone).
+    if choices.get("ruling") == "offside":
+        score = "0 - 0"
+    else:
+        score = "1 - 0"
+    window.blit(font.render(score, False, (255, 255, 255)), (159 * SCALE - offset, 50 * SCALE))
+
+    # The yellow bar of the scoreboard says "VAR CHECK", "FULL TIME" after
+    # your call (the referee blew the final whistle), or flashes "GOAL?!"
+    # while the player's goal is celebrated.
+    if "ruling" in choices:
+        text = "FULL TIME"
+        x = 140
+    elif ball["celebrate"] > 0:
         text = "GOAL?!"
         x = 156
     else:
@@ -542,11 +560,12 @@ def start_circle(screen, frames):
 
 def text_box_is_open(screen):
     # True if a box with text or choices is open: dialogue, close-up,
-    # menu, VAR Review, pause menu, a yes/no question or the tutorial.
+    # menu, VAR Review, pause menu, a yes/no question or the tutorial,
+    # or an end clip is playing.
     return (len(screen["dialogue"]) > 0 or screen["closeup"] is not None
             or screen["menu"] is not None or screen["review"] is not None
             or screen["pause"] is not None or screen["confirm"] is not None
-            or screen["tutorial"] is not None)
+            or screen["tutorial"] is not None or len(screen["clips"]) > 0)
 
 
 def box_is_open(screen):
@@ -582,6 +601,8 @@ def make_screen(dialogue):
         "tutorial": None,   # the step of the tutorial while it is open (0, 1, 2 ...)
         "door": None,       # the circle animation while it runs (frame, photo, frames)
         "ending_circle": False,  # True once the slow circle before the ending has started
+        "clips": [],        # the end clips still to show (e.g. ["pitch_goal"])
+        "clip_frame": 0,    # how far the current clip is (in frames)
     }
 
 
@@ -725,7 +746,7 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     # 2. The sharp room labels and the breathing "E" bubble.
     draw_labels(window, fonts["label"], fonts["label_small"], progress["scene"], offset)
     if progress["scene"] == "pitch":
-        draw_scoreboard_text(window, fonts["label"], ball, offset)
+        draw_scoreboard_text(window, fonts["label"], ball, offset, progress["choices"])
     if len(nearby) > 0:
         middle_x = (player["x"] + player_width // 2) * SCALE - offset
         ui.draw_e_bubble(window, middle_x, (player_y - 12) * SCALE, tick, fonts["bubble"])
@@ -816,7 +837,15 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         area = tutorial_area(name, player, assets, moving)
         ui.draw_tutorial(window, screen["tutorial"], area, fonts, SCALE)
 
-    # 6. The door animation, on top of everything.
+    # 6. An end clip covers the whole screen. It is drawn on the room
+    #    canvas, filmed close up, with its sharp text on top.
+    if len(screen["clips"]) > 0:
+        name = screen["clips"][0]
+        clips.draw_clip(canvas, assets["pictures"], name, screen["clip_frame"])
+        clips.draw_clip_picture(window, canvas)
+        clips.draw_clip_text(window, fonts, name, screen["clip_frame"])
+
+    # 7. The door animation, on top of everything.
     if screen["door"] is not None:
         ui.draw_door_transition(window, screen["door"])
 
@@ -961,6 +990,11 @@ def play(assets, story, progress, screen, player):
             # During the circle animation all keys wait (it is short).
             if screen["door"] is not None:
                 continue
+            # During an end clip, Space, Enter or E skips to its end.
+            if len(screen["clips"]) > 0:
+                if event.key in [pygame.K_SPACE, pygame.K_RETURN, pygame.K_e]:
+                    screen["clip_frame"] = clips.CLIP_FRAMES
+                continue
 
             # Only one thing reacts to a key: whatever is open on top.
             if screen["confirm"] is not None:
@@ -1006,10 +1040,12 @@ def play(assets, story, progress, screen, player):
             open_press_questions(story, progress, screen)
 
         # The game just ended and the last text is read: a slow circle
-        # closes over the pitch and opens on the ending screen, so the
+        # closes over the pitch and opens on the first end clip, so the
         # player sees that a new scene begins. It runs only once.
-        if ending_is_showing(progress, screen) and not screen["ending_circle"]:
+        if progress["ending"] is not None and not screen["ending_circle"] and not text_box_is_open(screen):
             screen["ending_circle"] = True
+            screen["clips"] = [clips.pitch_clip_name(progress)]
+            screen["clip_frame"] = 0
             start_circle(screen, ENDING_FRAMES)
 
         # The keys may have changed what is open (e.g. a new game started),
@@ -1076,6 +1112,17 @@ def play(assets, story, progress, screen, player):
             screen["reveal"] = screen["reveal"] + 1
             if screen["reveal"] >= REVEAL_FRAMES:
                 screen["reveal"] = None
+        # The end clips play one after the other. When a clip is over, a
+        # circle closes over it and opens on the next clip (or, after the
+        # last clip, on the ending screen).
+        if len(screen["clips"]) > 0 and screen["door"] is None:
+            if screen["clip_frame"] == 0:
+                sound.play(CLIP_SOUNDS[screen["clips"][0]])
+            screen["clip_frame"] = screen["clip_frame"] + 1
+            if screen["clip_frame"] >= clips.CLIP_FRAMES:
+                screen["clips"].pop(0)
+                screen["clip_frame"] = 0
+                start_circle(screen, CLIP_CHANGE_FRAMES)
         if screen["door"] is not None:
             screen["door"]["frame"] = screen["door"]["frame"] + 1
             if screen["door"]["frame"] >= screen["door"]["frames"]:
@@ -1167,6 +1214,10 @@ def main():
             "bernie": sprites.make_sprite(sprites.BERNIE, sprites.BERNIE_COLOURS),
             "referee": sprites.make_sprite(sprites.REFEREE, sprites.REFEREE_COLOURS),
             "striker": sprites.make_sprite(sprites.STRIKER, sprites.STRIKER_COLOURS),
+            "passer": sprites.make_sprite(sprites.STRIKER, sprites.PASSER_COLOURS),
+            "defender": sprites.make_sprite(sprites.CAPTAIN, sprites.DEFENDER_COLOURS),
+            "captain_sad": sprites.make_sprite(sprites.CAPTAIN_ARM_DOWN, sprites.CAPTAIN_COLOURS),
+            "defender_sad": sprites.make_sprite(sprites.CAPTAIN_ARM_DOWN, sprites.DEFENDER_COLOURS),
             "captain": sprites.make_sprite(sprites.CAPTAIN, sprites.CAPTAIN_COLOURS),
             "linesman": sprites.make_sprite(sprites.LINESMAN, sprites.LINESMAN_COLOURS),
             "ball": sprites.make_sprite(sprites.BALL),

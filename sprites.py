@@ -51,6 +51,15 @@ CAPTAIN_COLOURS = {"h": (25, 20, 20), "H": (45, 35, 35), "j": (70, 60, 60),
                    "s": (170, 115, 80), "t": (225, 175, 135), "p": (200, 110, 100),
                    "Q": (140, 95, 65), "W": (35, 35, 40), "c": (20, 20, 25),
                    "Y": (35, 35, 40)}
+# Two more players for the end clips: the home passer (red kit like the
+# striker, but dark brown hair) and an away defender (yellow kit like the
+# captain, but light skin and red hair).
+PASSER_COLOURS = dict(STRIKER_COLOURS)
+PASSER_COLOURS.update({"h": (70, 40, 25), "H": (105, 65, 40), "j": (150, 100, 60)})
+DEFENDER_COLOURS = dict(CAPTAIN_COLOURS)
+DEFENDER_COLOURS.update({"h": (150, 60, 30), "H": (200, 95, 45), "j": (235, 140, 80),
+                         "S": (250, 200, 160), "s": (214, 150, 112), "t": (255, 228, 200),
+                         "p": (245, 140, 140), "Q": (190, 125, 95)})
 # The pundit wears a dark navy suit ("u", "U") and a blue silk tie ("l"),
 # the same blue as the tie tip in the Server Room.
 PUNDIT_COLOURS = {"h": (25, 20, 22), "H": (45, 38, 40), "j": (120, 110, 125),
@@ -453,6 +462,14 @@ CAPTAIN = [
     ".........OOOOO....OOOOO...........",
     "........OxxOOO....OOOxxO..........",
 ]
+
+# The captain without his raised arm, for the sad away players in the end
+# clips: in the top 23 rows everything right of column 26 (the arm) is
+# made transparent, the rest of the picture stays the same.
+CAPTAIN_ARM_DOWN = []
+for row in CAPTAIN[:23]:
+    CAPTAIN_ARM_DOWN.append(row[:26] + "." * (len(row) - 26))
+CAPTAIN_ARM_DOWN = CAPTAIN_ARM_DOWN + CAPTAIN[23:]
 
 # The linesman: curly ginger hair, freckles, a worried look.
 # Kit colours come from LINESMAN_COLOURS. The flag is drawn in rooms.py.
