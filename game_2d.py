@@ -44,7 +44,7 @@ HINT_FLASH_FRAMES = 60
 ROOM_SOUNDS = {"pitch": "crowd", "dressing_room": "shower"}
 
 # The endings that get the happy jingle (all others get the sad one).
-GOOD_ENDINGS = ["var_is_watching", "justice_served", "clip_of_the_year"]
+GOOD_ENDINGS = ["var_is_watching", "by_the_book", "lucky_guess"]
 
 
 
@@ -263,18 +263,24 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
         if action["set_choice"] == "dave":
             screen["reveal"] = 0
             sound.play("growl")
+        # The ruling: the referee blows the final whistle, and then the
+        # press comes running (their questions open when the text is read).
+        if action["set_choice"] == "ruling":
+            sound.play("whistle")
+            screen["press_next"] = True
         # The press: cameras click. The drawer: it squeaks open.
         if action["set_choice"] == "press_answer":
             sound.play("camera")
         if action["set_choice"] == "drawer":
             sound.play("door")
         # Finding a clue sounds like a pick-up, but it does not become an item.
-        if action["set_choice"] == "lanyard" or action["set_choice"] == "slip":
+        if action["set_choice"] in ["press_pass", "slip", "tie"]:
             sound.play("pickup")
 
-    # A ruling ends the game. The ending screen appears when the text is read.
-    if "ruling" in action:
-        progress["ending"] = game.choose_ending(action["ruling"], choices)
+    # The answer to the press ends the game. The ending screen appears
+    # when the text is read.
+    if "ends_game" in action:
+        progress["ending"] = game.choose_ending(choices)
 
     # Walk through a door into another room.
     if "go_to" in action:
@@ -343,7 +349,9 @@ def handle_menu_key(key, progress, story, screen, fonts, player, player_width):
         menu["selected"] = (menu["selected"] + 1) % count
         sound.play("blip")
     elif key == pygame.K_ESCAPE:
-        screen["menu"] = None
+        # The press questions cannot be closed: you have to answer.
+        if not menu["locked"]:
+            screen["menu"] = None
     else:
         chosen = None
         if key in [pygame.K_RETURN, pygame.K_e, pygame.K_SPACE]:
@@ -420,6 +428,17 @@ def handle_review_key(key, progress, story, screen, fonts):
                 say(screen, review["onside_text"], fonts)
 
 
+def open_press_questions(story, progress, screen):
+    # Open the menu with the answers for the press: every action on the
+    # pitch that ends the game and is visible right now.
+    scene = story["scenes"]["pitch"]
+    answers = []
+    for action in game.get_visible_actions(scene, progress["inventory"], progress["choices"]):
+        if "ends_game" in action:
+            answers.append(action)
+    screen["menu"] = {"title": answers[0]["menu_title"], "actions": answers, "selected": 0, "locked": True}
+
+
 def handle_walking_key(key, scene, nearby, progress, story, screen, fonts, player, player_width):
     # While walking, E uses what is nearby: one action directly,
     # several actions at the same spot as a menu.
@@ -440,7 +459,12 @@ def handle_walking_key(key, scene, nearby, progress, story, screen, fonts, playe
     if len(nearby) == 1:
         do_action(nearby[0], progress, story, screen, fonts, player, player_width)
     else:
-        screen["menu"] = {"title": scene["menu_title"], "actions": nearby, "selected": 0}
+        # The title comes from the first action (the press answers have
+        # their own) or else from the scene ("VAR, what's your call?").
+        title = scene["menu_title"]
+        if "menu_title" in nearby[0]:
+            title = nearby[0]["menu_title"]
+        screen["menu"] = {"title": title, "actions": nearby, "selected": 0, "locked": False}
 
 
 # ---------------------------------------------------------------- the ball on the pitch
@@ -531,6 +555,7 @@ def make_screen(dialogue):
         "letters": 0,       # how many letters of the page are typed so far
         "closeup": None,    # the lines of the sticky note while it is open
         "menu": None,       # the open menu (press answers, GOAL / OFFSIDE)
+        "press_next": False,  # True: open the press questions when the text is read
         "review": None,     # the VAR Review while it is open
         "pause": None,      # the pause menu (Escape) while it is open
         "confirm": None,    # a yes/no question while it is open
@@ -566,7 +591,12 @@ def continue_game(story, fonts, player, progress, player_width):
     else:
         player["x"] = arrival_x(scene, story["start_scene"], player_width)
     pages = ui.make_pages(scene["name"], "You continue where you left off.", fonts["text"], SCALE)
-    return make_screen(pages)
+    screen = make_screen(pages)
+    # Saved after the ruling but before the press answer: the press is
+    # still waiting for you.
+    if "ruling" in progress["choices"] and progress["ending"] is None:
+        screen["press_next"] = True
+    return screen
 
 
 # ---------------------------------------------------------------- pause menu and yes/no box
@@ -755,7 +785,8 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     if screen["review"] is not None:
         ui.draw_review_text(window, story["review"], screen["review"], fonts, SCALE)
     if show_ending:
-        ui.draw_ending_text(window, story, progress["ending"], game.ending_summary(story, progress), fonts, SCALE)
+        epilogue = story["epilogues"][game.studio_outcome(progress)]
+        ui.draw_ending_text(window, story, progress["ending"], epilogue, game.ending_summary(story, progress), fonts, SCALE)
     if screen["confirm"] is not None:
         ui.draw_confirm_text(window, screen["confirm"], fonts, SCALE)
 
@@ -948,6 +979,12 @@ def play(assets, story, progress, screen, player):
             else:
                 handle_walking_key(event.key, scene, nearby, progress, story, screen, fonts, player, player_width)
 
+        # After the ruling the press comes running: as soon as the text is
+        # read, their questions open (a menu you cannot close).
+        if screen["press_next"] and not box_is_open(screen) and progress["ending"] is None:
+            screen["press_next"] = False
+            open_press_questions(story, progress, screen)
+
         # The keys may have changed what is open (e.g. a new game started),
         # so we check again before walking and drawing.
         free_to_walk = not box_is_open(screen) and not ending_is_showing(progress, screen)
@@ -990,8 +1027,6 @@ def play(assets, story, progress, screen, player):
         # when they flash (the same moments as in rooms.py), and the
         # ending jingle, once, when the ending screen appears.
         sound.set_ambience(ROOM_SOUNDS.get(progress["scene"]))
-        if progress["scene"] == "press_room" and moving["tick"] % 50 == 0:
-            sound.play("camera")
         if progress["scene"] == "pitch" and moving["tick"] % 70 == 0:
             sound.play("camera")
         if ending_is_showing(progress, screen) and not jingle_played:
@@ -1093,9 +1128,9 @@ def main():
         "standing": standing,
         # The four walking pictures (3/4 view), made one by one in a loop.
         "walking": [],
-        # Infantini in his 4 moods (0 = calm ... 3 = panicking), one per clue count.
-        "pundit": [sprites.make_pundit(0), sprites.make_pundit(1),
-                   sprites.make_pundit(2), sprites.make_pundit(3)],
+        # Infantini in his 5 moods (0 = calm ... 4 = furious), one per clue count.
+        "pundit": [sprites.make_pundit(0), sprites.make_pundit(1), sprites.make_pundit(2),
+                   sprites.make_pundit(3), sprites.make_pundit(4)],
         # The feet always touch the floor.
         "player_y": rooms.FLOOR_Y - standing.get_height(),
         # The characters and objects that live in the rooms. Some use the
@@ -1116,7 +1151,6 @@ def main():
             "bernie_head": sprites.make_sprite(sprites.BERNIE_HEAD, sprites.BERNIE_COLOURS),
             "bernie_body": sprites.make_sprite(sprites.BERNIE_BODY, sprites.BERNIE_COLOURS),
             "dave_head": sprites.make_sprite(sprites.DAVE_HEAD),
-            "lanyard": sprites.make_sprite(sprites.LANYARD),
             "slip": sprites.make_sprite(sprites.SLIP),
             # For the title screen: the VAR screen above the logo and the arrow.
             "var_screen": sprites.make_sprite(sprites.VAR_SCREEN),

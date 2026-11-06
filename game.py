@@ -63,7 +63,30 @@ def load_progress(file_name="save.json"):
         if clue in progress["inventory"]:
             progress["inventory"].remove(clue)
             progress["choices"][clue] = "found"
+    update_old_save(progress)
     return progress
+
+
+def update_old_save(progress):
+    # Older versions had a Press Room, a "lanyard" clue and other endings.
+    # Change an old save so it still works with the new story.
+    choices = progress["choices"]
+    # The lanyard is now called the press pass.
+    if "lanyard" in choices:
+        choices["press_pass"] = choices["lanyard"]
+        del choices["lanyard"]
+    # The Press Room is gone: the press now waits on the pitch.
+    if progress["scene"] == "press_room":
+        progress["scene"] = "pitch"
+    # The press answer now comes AFTER the ruling. An old answer from the
+    # Press Room is forgotten, so the player can answer again on the pitch.
+    if "press_answer" in choices and "ruling" not in choices:
+        del choices["press_answer"]
+    # Old endings get the name of the new ending that replaced them.
+    old_endings = {"clip_of_the_year": "lucky_guess", "justice_served": "by_the_book",
+                   "right_call_wrong_mouth": "by_the_book"}
+    if progress.get("ending") in old_endings:
+        progress["ending"] = old_endings[progress["ending"]]
 
 
 def count_clues(story, progress):
@@ -82,11 +105,15 @@ def find_current_hint(story, progress):
     # that is not done yet. A hint is done when its "done_when" id is in the
     # inventory (an item, e.g. "whistle") or in the choices (e.g. "dave").
     # The last hint has no "done_when": it stays until the game ends.
+    # A hint with "skip_after" is also skipped once that choice is made
+    # (after the ruling, the old tips like "find the USB stick" are too late).
     for hint in story["hints"]:
         done = False
         if "done_when" in hint:
             done_id = hint["done_when"]
             done = done_id in progress["inventory"] or done_id in progress["choices"]
+        if "skip_after" in hint and hint["skip_after"] in progress["choices"]:
+            done = True
         if not done:
             return hint
     return story["hints"][-1]
@@ -94,7 +121,7 @@ def find_current_hint(story, progress):
 
 def current_hint(story, progress):
     # What the pundit says for the current hint. Some hints change once you
-    # found a certain clue (e.g. he stops asking for his lanyard once you
+    # found a certain clue (e.g. he stops asking for his press pass once you
     # have found it).
     hint = find_current_hint(story, progress)
     if "if_clue" in hint and hint["if_clue"] in progress["choices"]:
@@ -157,6 +184,10 @@ def is_hidden(action, inventory, choices):
     # This way a decision can only be made once.
     if "set_choice" in action and action["set_choice"] in choices:
         return True
+    # Some actions disappear after a decision (e.g. you cannot walk back to
+    # the booth once you made your call: the press is coming).
+    if "hidden_after" in action and action["hidden_after"] in choices:
+        return True
     # Some actions stay hidden until they can be done (e.g. taking the
     # whistle only appears once the drawer is open).
     if "hide_if_blocked" in action and blocked_reason(action, inventory, choices) is not None:
@@ -186,29 +217,45 @@ def blocked_reason(action, inventory, choices):
     # Same idea for a decision the player has not made yet.
     if "needs_choice" in action and action["needs_choice"] not in choices:
         return action["blocked_text"]
+    # Some press answers only fit one ruling (e.g. "clearly ONSIDE" only
+    # after you ruled GOAL). choices.get() gives None if there is no ruling yet.
+    if "needs_ruling" in action and choices.get("ruling") != action["needs_ruling"]:
+        return action["blocked_text"]
     return None
 
 
-def choose_ending(ruling, choices):
-    # Decide the ending from the ruling and the choices made during the game.
+def choose_ending(choices):
+    # Decide the ending from the choices made during the game: the ruling
+    # on the pitch, the VAR Review and the answer to the press.
     # The checks are read from top to bottom; the first one that fits wins.
 
     # The goal was legal (onside by 30 cm), so OFFSIDE is always the wrong call.
-    if ruling == "offside":
+    if choices["ruling"] == "offside":
         return "daylight_robbery"
 
     # GOAL, but without studying the footage: right, but only by luck.
     if "review" not in choices:
-        return "clip_of_the_year"
+        return "lucky_guess"
 
-    # GOAL after the review. Now the press answer decides the ending.
-    # (The referee only accepts a ruling after the press question is
-    # answered, so "press_answer" is always in choices here.)
+    # GOAL after the review. If you also told the press who cut the
+    # cable, it is the perfect ending.
     if choices["press_answer"] == "expose":
         return "var_is_watching"
-    if choices["press_answer"] == "no_comment":
-        return "justice_served"
-    return "right_call_wrong_mouth"
+    return "by_the_book"
+
+
+def studio_outcome(progress):
+    # What happens to Infantini in the TV studio after the game:
+    # "arrested" - you told the press he cut the cable,
+    # "wins"     - it ended 0:0 (OFFSIDE, or the coin when time ran out),
+    #              so his bet on a 0:0 draw wins,
+    # "loses"    - the goal counts (1:0), so his bet is lost.
+    choices = progress["choices"]
+    if choices.get("press_answer") == "expose":
+        return "arrested"
+    if progress["ending"] == "time_up" or choices.get("ruling") == "offside":
+        return "wins"
+    return "loses"
 
 
 def ending_summary(story, progress):
@@ -227,10 +274,9 @@ def show_ending(story, progress):
     print("ENDING: " + ending["title"])
     print("*****************************************")
     print(ending["text"])
-    # Most endings also reveal what the pundit got away with.
-    if ending["show_epilogue"]:
-        print()
-        print(story["epilogue"])
+    # Then what happens to Infantini in the TV studio.
+    print()
+    print(story["epilogues"][studio_outcome(progress)])
     # And what really happened, so the result is easy to understand.
     print()
     for line in ending_summary(story, progress):
@@ -505,9 +551,11 @@ def play_game(story, progress):
         print()
         print(action["text"])
 
-        # A ruling on the Pitch ends the game.
-        if "ruling" in action:
-            ending_id = choose_ending(action["ruling"], choices)
+        # The answer to the press ends the game. (Its choice is saved
+        # first, because the ending depends on it.)
+        if "ends_game" in action:
+            choices[action["set_choice"]] = action["value"]
+            ending_id = choose_ending(choices)
             # Remember and save the ending, so it cannot be changed later.
             progress["ending"] = ending_id
             save_progress(progress)

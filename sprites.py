@@ -51,9 +51,10 @@ CAPTAIN_COLOURS = {"h": (25, 20, 20), "H": (45, 35, 35), "j": (70, 60, 60),
                    "s": (170, 115, 80), "t": (225, 175, 135), "p": (200, 110, 100),
                    "Q": (140, 95, 65), "W": (35, 35, 40), "c": (20, 20, 25),
                    "Y": (35, 35, 40)}
-# The pundit wears a dark navy suit ("u", "U") and a dark navy tie ("l").
+# The pundit wears a dark navy suit ("u", "U") and a blue silk tie ("l"),
+# the same blue as the tie tip in the Server Room.
 PUNDIT_COLOURS = {"h": (25, 20, 22), "H": (45, 38, 40), "j": (120, 110, 125),
-                  "u": (22, 26, 48), "U": (38, 45, 80), "l": (12, 15, 32)}
+                  "u": (22, 26, 48), "U": (38, 45, 80), "l": (55, 70, 150)}
 # The linesman wears the same black shirt as the referee, so he does
 # not look like an away (yellow) player.
 LINESMAN_COLOURS = {"h": (160, 70, 30), "H": (210, 105, 45), "j": (240, 150, 80),
@@ -603,7 +604,9 @@ DAVE_HEAD = [
 
 # Gianno Infantini, the TV guest expert (head and shoulders, shown in the TV):
 # a shiny bald head, friendly eyebrows, a closed-mouth smile, a dark navy
-# suit, a white shirt, a dark navy tie and a small gold pin on the lapel.
+# suit, a white shirt, a small gold pin on the lapel and a dark navy tie
+# that is much too short: its tip was cut off (the clue in the Server Room),
+# so the white shirt shows under its straight, cut end.
 PUNDIT = [
     "................................",
     "................................",
@@ -630,10 +633,10 @@ PUNDIT = [
     "............WWSSSSWW............",
     "............uWWllWWU............",
     ".........uuuUUWllWUUUUU.........",
-    ".......uuuuUUUUllUUUUUUUU.......",
-    "......uuuuuUUUUllUUUUUUUUU......",
-    ".....uuuuuuUUUUllllUUUUUUUU.....",
-    "....uuuuuuUUUUUllUUUUUYUUUUU....",
+    ".......uuuuUUUWllWUUUUUUU.......",
+    "......uuuuuUUUWWWWUUUUUUUU......",
+    ".....uuuuuuUUUUWWUUUUUUUUUU.....",
+    "....uuuuuuUUUUUUUUUUUUYUUUUU....",
     "...uuuuuuuUUUUUUUUUUUUUUUUUUU...",
     "..uuuuuuuuUUUUUUUUUUUUUUUUUUUU..",
     ".uuuuuuuuuUUUUUUUUUUUUUUUUUUUUU.",
@@ -642,11 +645,12 @@ PUNDIT = [
     "uuuuuuuuuUUUUUUUUUUUUUUUUUUUUUUU",
 ]
 
-# Infantini gets more nervous with every clue the player finds (0 to 3).
+# Infantini gets more nervous with every clue the player finds (0 to 4).
 # For each mood only some rows of PUNDIT change: the eyebrows, the mouth
 # and the sweat drops ("C", light blue). The row number is the key.
 # Mood 0: calm smile. 1: worried eyebrows, flat mouth.
 # 2: wobbly mouth and sweat drops. 3: angry eyebrows, gritted teeth, more sweat.
+# 4: furious, with steam coming out next to his ears.
 PUNDIT_MOOD_ROWS = [
     # mood 0 (calm): nothing changes
     {
@@ -682,6 +686,22 @@ PUNDIT_MOOD_ROWS = [
         18: "..sSSSSSSSSSmmmmmmmmSSSSSSSSSs..",
         19: "....sSSSSSSSmTTTTTTmSSSSSSSs....",
     },
+    # mood 4 (furious): like mood 3, plus steam ("c") puffing out
+    # next to his ears and a wide open, shouting mouth.
+    {
+        5: ".....sSSSSttSSSSSSSSCSSSSSs.....",
+        6: "....sSSSSSSSSSSSSSSSCSSSSSSs....",
+        8: "...sSSCSSSSSSSSSSSSSSSSSSSSSs...",
+        9: "...sSSCSSSSSSSSSSSSSSSSSCSSSs...",
+        10: "c.sSSSSSSSSSSSSSSSSSSSSSCSSSSs.c",
+        11: ".csSSSSSSSSSSSSSSSSSSSSSSSCSSsc.",
+        12: "c.sSSSSSSSSSSSSSSSSSSSSSSSCSSs.c",
+        13: "..sSSSSSeSSSSSSSSSSSSSSeSSSSSs..",
+        14: "..sSSSSSSeeSSSSSSSSSSeeSSSSSSs..",
+        18: "..sSSSSSSSSmmmmmmmmmmSSSSSSSSs..",
+        19: "....sSSSSSSmrrrrrrrrmSSSSSSs....",
+        20: ".......sSSSSmmmmmmmmSSSSs.......",
+    },
 ]
 
 # His skin gets redder with every mood ("S" skin, "s" shadow, "t" shine).
@@ -690,6 +710,7 @@ PUNDIT_MOOD_SKIN = [
     {"S": (250, 180, 150), "s": (214, 135, 105), "t": (255, 215, 195)},
     {"S": (245, 150, 125), "s": (205, 110, 90), "t": (255, 195, 175)},
     {"S": (235, 110, 95), "s": (190, 75, 65), "t": (250, 165, 150)},
+    {"S": (220, 70, 60), "s": (170, 45, 40), "t": (240, 130, 115)},
 ]
 
 # The Lucky Whistle: silver, with a red cord.
@@ -712,18 +733,6 @@ USB = [
     "cWWcuUUUUUURUu",
     "ccccuuuuuuuuuu",
     "xxxx..........",
-]
-
-# The Press Lanyard: a yellow strap with a "PRESS" card (red stripe).
-LANYARD = [
-    ".YY......YY.",
-    "..YY....YY..",
-    "...YY..YY...",
-    "....YYYY....",
-    "...WWWWWW...",
-    "...RRRRRR...",
-    "...WkkkkW...",
-    "...WWWWWW...",
 ]
 
 # The Betting Slip: white paper with scribbled lines and a red stamp.

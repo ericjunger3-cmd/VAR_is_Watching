@@ -638,47 +638,75 @@ def draw_tunnel(canvas):
     canvas.blit(spill, (x - 14, FLOOR_Y))
 
 
+# The window, the monitors and the desk stand 58 pixels to the right of
+# the left wall, so there is room for the Server Room door on the left.
+BOOTH_SHIFT = 58
+
+# The red cable of the offside camera: it goes from the crooked monitor
+# down, then left along the wall and into the Server Room door.
+RED_CABLE = [(236, 128), (236, 141), (40, 141)]
+
+
 def draw_booth(canvas, pictures, progress, tick):
     # Draw the whole VAR Booth, from the back to the front.
     draw_wall(canvas)
     draw_floor(canvas)
-    draw_window(canvas, tick)
-    draw_monitors(canvas, tick, progress)
-    draw_door(canvas, 238, (250, 250, 250), (200, 200, 210))   # Referee's room
-    draw_door(canvas, 296, (255, 210, 70), (215, 160, 40))     # Mascot room
-    draw_door(canvas, 354, (110, 170, 255), (70, 120, 210))    # Press room
+
+    # The window, the monitors and the desk are drawn on a "subsurface":
+    # a part of the canvas that starts BOOTH_SHIFT pixels to the right.
+    # Everything drawn on it at x = 0 lands on the canvas at x = 58.
+    shifted = canvas.subsurface((BOOTH_SHIFT, 0, ROOM_WIDTH - BOOTH_SHIFT, CANVAS_HEIGHT))
+    draw_window(shifted, tick)
+    draw_monitors(shifted, tick, progress)
+
+    draw_red_cable(canvas)
+    # The doors are drawn after the cable, so the cable disappears
+    # behind the Server Room door.
+    draw_door(canvas, 20, (230, 70, 70), (180, 45, 45))        # Server Room
+    draw_door(canvas, 296, (250, 250, 250), (200, 200, 210))   # Referee's room
+    draw_door(canvas, 354, (255, 210, 70), (215, 160, 40))     # Mascot room
     draw_tunnel(canvas)
 
-    # The yanked-out camera cable: a socket on the wall, the plug hanging down.
-    pygame.draw.rect(canvas, OUTLINE, (17, 135, 10, 9))
-    pygame.draw.rect(canvas, (235, 235, 240), (18, 136, 8, 7))
-    canvas.set_at((20, 139), OUTLINE)
-    canvas.set_at((23, 139), OUTLINE)
-    pygame.draw.line(canvas, OUTLINE, (22, 144), (34, 156), 2)
-    pygame.draw.rect(canvas, OUTLINE, (32, 155, 6, 6))
-    pygame.draw.rect(canvas, (90, 90, 100), (33, 156, 4, 4))
+    draw_desk(shifted)
 
-    draw_desk(canvas)
-
-    # The lanyard hangs over the back of the desk until you take it.
+    # Infantini's press pass lies behind the desk until you find it.
     # It floats up and down a little and sparkles, so you notice it.
-    if "lanyard" not in progress["choices"]:
+    if "press_pass" not in progress["choices"]:
         lift = float_lift(tick)
-        pygame.draw.line(canvas, YELLOW, (24, 150 - lift), (28, 162 - lift), 2)
-        pygame.draw.line(canvas, YELLOW, (36, 150 - lift), (32, 162 - lift), 2)
-        pygame.draw.rect(canvas, OUTLINE, (25, 157 - lift, 11, 8))
-        pygame.draw.rect(canvas, WHITE, (26, 158 - lift, 9, 6))
-        pygame.draw.rect(canvas, (230, 60, 60), (26, 158 - lift, 9, 2))
-        draw_sparkle(canvas, 34, 159 - lift, tick, 0)
+        draw_press_pass(canvas, 82, 152 - lift)
+        draw_sparkle(canvas, 95, 154 - lift, tick, 0)
 
     # The padlock hangs on the Mascot door until you have the whistle.
     if "whistle" not in progress["inventory"]:
-        canvas.blit(pictures["padlock"], (310, 152))
+        canvas.blit(pictures["padlock"], (368, 152))
 
     # The steward stands next to the tunnel to the pitch.
     steward = pictures["steward"]
     draw_shadow(canvas, 450, FLOOR_Y + 1, steward.get_width() + 4)
     canvas.blit(steward, (452, FLOOR_Y - steward.get_height() - bob(tick, 7)))
+
+
+def draw_red_cable(canvas):
+    # A thick red cable with a dark outline: first a wide dark line,
+    # then a thinner red line on top, then a light line for the shine.
+    pygame.draw.lines(canvas, OUTLINE, False, RED_CABLE, 5)
+    pygame.draw.lines(canvas, (220, 40, 40), False, RED_CABLE, 3)
+    pygame.draw.line(canvas, (255, 120, 110), (40, 140), (235, 140))
+    # A white tag on the cable says which camera it belongs to
+    # (the text "OFFSIDE CAM" is added later, see LABELS).
+    pygame.draw.rect(canvas, OUTLINE, (190, 136, 40, 10))
+    pygame.draw.rect(canvas, WHITE, (191, 137, 38, 8))
+
+
+def draw_press_pass(canvas, x, y):
+    # Infantini's press pass: a white card with a blue "PRESS" stripe,
+    # a tiny photo (a bald head) and a few lines of text.
+    pygame.draw.rect(canvas, OUTLINE, (x, y, 14, 11))
+    pygame.draw.rect(canvas, WHITE, (x + 1, y + 1, 12, 9))
+    pygame.draw.rect(canvas, (60, 110, 210), (x + 1, y + 1, 12, 3))
+    pygame.draw.rect(canvas, (250, 200, 160), (x + 2, y + 5, 4, 4))      # the photo
+    pygame.draw.line(canvas, (150, 150, 165), (x + 7, y + 6), (x + 11, y + 6))
+    pygame.draw.line(canvas, (150, 150, 165), (x + 7, y + 8), (x + 10, y + 8))
 
 
 # ---------------------------------------------------------------- helpers for the rooms
@@ -923,6 +951,16 @@ def draw_dressing_room(canvas, pictures, progress, tick):
     shaded_box(canvas, (120, 130, 150), (155, 165, 185), (90, 98, 115), 350, 180, 18, 20)
     outlined_box(canvas, WHITE, 352, 175, 5, 6)
     outlined_box(canvas, WHITE, 360, 177, 5, 4)
+    # Infantini's crumpled betting slip sticks out of the bin until you
+    # find it. It floats up a little and sparkles, so you notice it.
+    if "slip" not in progress["choices"]:
+        lift = float_lift(tick)
+        pygame.draw.circle(canvas, OUTLINE, (364, 174 - lift), 5)
+        pygame.draw.circle(canvas, (225, 225, 215), (364, 174 - lift), 4)
+        pygame.draw.circle(canvas, (250, 250, 240), (363, 173 - lift), 2)
+        pygame.draw.line(canvas, (180, 180, 170), (361, 172 - lift), (366, 176 - lift))
+        pygame.draw.line(canvas, (230, 60, 60), (365, 171 - lift), (362, 175 - lift))
+        draw_sparkle(canvas, 367, 171 - lift, tick, 80)
     draw_ball_bag(canvas)
 
     draw_shower(canvas, tick)
@@ -1441,336 +1479,263 @@ def draw_mirror_table(canvas, tick):
     pygame.draw.rect(canvas, (255, 210, 130), (385, y + 45, 1, 8))
 
 
-# ---------------------------------------------------------------- Press Room
+# ---------------------------------------------------------------- Server Room
 
-def draw_reporter(canvas, x, hair, hair_light, style, shirt, shirt_light, lift):
-    # A reporter seen from behind, sitting on a folding chair.
-    # style is "plain", "bald", "ponytail", "cap" or "curly".
-    # lift is 0 or 1: the reporter breathes (moves up by 1 pixel).
-    chair = (70, 72, 88)
+def draw_server_room(canvas, progress, tick):
+    # The stadium's server room: humming racks with blinking lights, a
+    # technician's desk, cables under the ceiling and a raised floor with
+    # cold air vents. The red cable from the booth is cut on the floor.
+    draw_server_wall(canvas)
+    draw_server_floor(canvas)
+    draw_cable_tray(canvas)
+    draw_ceiling_lamps(canvas, [150, 380])
 
-    # The shadow on the floor and the thin metal chair legs.
-    draw_shadow(canvas, x - 3, 200, 32)
-    for leg_x in [x + 1, x + 22]:
-        pygame.draw.rect(canvas, OUTLINE, (leg_x - 1, 176, 4, 24))
-        pygame.draw.rect(canvas, (150, 155, 170), (leg_x, 176, 2, 23))
+    draw_door(canvas, 20, (230, 70, 70), (180, 45, 45))       # back to the booth
+    draw_warning_sign(canvas)
+    draw_air_conditioner(canvas, tick)
+    draw_fire_extinguisher(canvas)
+    draw_tech_desk(canvas, tick)
 
-    # Back and shoulders: light on the left, shadow on the right,
-    # and a bit of neck above the collar.
-    y = 150 - lift
-    pygame.draw.rect(canvas, OUTLINE, (x + 1, y, 24, 22))
-    pygame.draw.rect(canvas, shirt, (x + 2, y + 1, 22, 21))
-    pygame.draw.rect(canvas, shirt_light, (x + 2, y + 1, 22, 3))
-    pygame.draw.rect(canvas, shirt_light, (x + 2, y + 1, 3, 21))
-    pygame.draw.rect(canvas, darker(shirt, 0.75), (x + 20, y + 4, 4, 18))
-    pygame.draw.rect(canvas, darker(SKIN, 0.85), (x + 10, y - 1, 6, 2))
+    # Three server racks on the right.
+    for rack_x, rack_number in [(306, 0), (362, 1), (418, 2)]:
+        draw_shadow(canvas, rack_x - 3, FLOOR_Y + 1, 56)
+        draw_server_rack(canvas, rack_x, rack_number, tick)
 
-    # The backrest of the chair, in front of the reporter's back.
-    shaded_box(canvas, chair, (105, 108, 125), (48, 50, 62), x, 164, 26, 12)
-    pygame.draw.rect(canvas, OUTLINE, (x - 1, 176, 28, 3))
+    draw_floor_vent(canvas, tick)
+    draw_cut_cable(canvas, progress, tick)
 
-    # The back of the head: first a darker circle, then the hair circle
-    # 1 pixel higher, so a dark edge stays at the bottom (the shadow).
-    head_y = 141 - lift
-    hair_dark = darker(hair, 0.7)
-    pygame.draw.circle(canvas, OUTLINE, (x + 13, head_y), 9)
-    if style == "bald":
-        pygame.draw.circle(canvas, darker(SKIN, 0.85), (x + 13, head_y), 8)
-        pygame.draw.circle(canvas, SKIN, (x + 13, head_y - 1), 7)
-        pygame.draw.rect(canvas, (255, 235, 215), (x + 9, head_y - 6, 4, 2))     # shiny head
-        pygame.draw.rect(canvas, hair, (x + 6, head_y + 1, 14, 4))
-    else:
-        pygame.draw.circle(canvas, hair_dark, (x + 13, head_y), 8)
-        pygame.draw.circle(canvas, hair, (x + 13, head_y - 1), 7)
-        pygame.draw.rect(canvas, hair_light, (x + 9, head_y - 6, 5, 2))
-    if style == "ponytail":
-        pygame.draw.circle(canvas, OUTLINE, (x + 13, head_y + 11), 4)
-        pygame.draw.circle(canvas, hair, (x + 13, head_y + 11), 3)
-        pygame.draw.rect(canvas, HOME_RED, (x + 11, head_y + 7, 5, 2))            # hair tie
-    if style == "cap":
-        pygame.draw.rect(canvas, OUTLINE, (x + 4, head_y - 8, 18, 7))
-        pygame.draw.rect(canvas, HOME_RED, (x + 5, head_y - 7, 16, 5))
-        pygame.draw.rect(canvas, (255, 110, 110), (x + 5, head_y - 7, 16, 1))
-        pygame.draw.rect(canvas, (180, 40, 40), (x + 5, head_y - 3, 16, 1))
-    if style == "curly":
-        for dx, dy in [(-7, -3), (7, -3), (0, -8), (-5, 4), (5, 4)]:
-            pygame.draw.circle(canvas, OUTLINE, (x + 13 + dx, head_y + dy), 5)
-            pygame.draw.circle(canvas, hair_dark, (x + 13 + dx, head_y + dy), 4)
-            pygame.draw.circle(canvas, hair, (x + 13 + dx, head_y + dy - 1), 3)
-
-    # Ears.
-    pygame.draw.rect(canvas, SKIN, (x + 3, head_y, 2, 3))
-    pygame.draw.rect(canvas, SKIN, (x + 21, head_y, 2, 3))
+    # The lamps shine down into the room.
+    for lamp_x in [150, 380]:
+        draw_light_cone(canvas, lamp_x + 8, 13, FLOOR_Y, 14, 90)
 
 
-def draw_press_room(canvas, progress, tick):
-    # The back wall: dark navy, even darker towards the ceiling.
-    draw_bands(canvas, [(24, 32, 64), (30, 40, 78), (36, 48, 92), (40, 54, 100)],
-               0, 0, ROOM_WIDTH, FLOOR_Y)
-    draw_lighting_rig(canvas)
-    draw_door(canvas, 20, (110, 170, 255), (70, 120, 210))     # back to the booth
-    draw_match_clock(canvas, tick)
-
-    draw_sponsor_wall(canvas)
-    draw_press_floor(canvas)
-    draw_press_table(canvas)
-
-    # The spotlights shine on the table (drawn after the wall and the
-    # table, so they get brighter; the reporters stay in front).
-    draw_light_cone(canvas, 300, 12, 186, 8, 90)
-    draw_light_cone(canvas, 362, 12, 186, 8, 90)
-
-    draw_tv_camera(canvas, tick)
-
-    # Six reporters seen from behind, all different.
-    reporters = [
-        ((110, 70, 40), (150, 105, 70), "plain", (200, 80, 80), (230, 110, 110)),
-        ((40, 30, 30), (80, 65, 65), "ponytail", (80, 120, 200), (110, 150, 230)),
-        ((90, 90, 90), (130, 130, 130), "bald", (90, 160, 110), (120, 190, 140)),
-        ((230, 190, 90), (255, 225, 140), "cap", (240, 240, 245), (255, 255, 255)),
-        ((60, 40, 30), (100, 75, 60), "curly", (170, 110, 190), (200, 140, 220)),
-        ((150, 80, 40), (190, 115, 70), "plain", (250, 190, 70), (255, 220, 110)),
-    ]
-    x = 84
-    number = 0
-    for hair, hair_light, style, shirt, shirt_light in reporters:
-        lift = bob(tick, number * 7)
-        draw_reporter(canvas, x, hair, hair_light, style, shirt, shirt_light, lift)
-        x = x + 30
-        number = number + 1
-
-    # One reporter holds up a phone, another a camera.
-    outlined_box(canvas, (30, 30, 40), 125, 118, 8, 14)
-    pygame.draw.rect(canvas, (120, 200, 255), (126, 119, 6, 11))
-    pygame.draw.rect(canvas, (190, 230, 255), (126, 119, 6, 2))
-    pygame.draw.rect(canvas, SKIN, (127, 132, 4, 8))
-    shaded_box(canvas, (50, 50, 60), (85, 85, 95), (30, 30, 38), 213, 114, 18, 12)
-    pygame.draw.circle(canvas, OUTLINE, (222, 120), 5)
-    pygame.draw.circle(canvas, (150, 200, 255), (222, 120), 4)
-    pygame.draw.rect(canvas, WHITE, (220, 118, 2, 2))
-    pygame.draw.rect(canvas, SKIN, (218, 126, 4, 10))
-
-    # Camera flashes: every 50 frames another reporter's camera flashes
-    # for 5 frames. (tick // 50) % 6 picks the reporter: 0, 1, 2 ... 5, 0 ...
-    if tick % 50 < 5:
-        reporter = (tick // 50) % 6
-        flash_x = 84 + reporter * 30 + 13
-        flash_y = 122
-        flash = pygame.Surface((40, 40), pygame.SRCALPHA)
-        pygame.draw.circle(flash, (255, 255, 255, 110), (20, 20), 18)
-        canvas.blit(flash, (flash_x - 20, flash_y - 20))
-        for dx, dy in [(-10, 0), (10, 0), (0, -10), (0, 10)]:
-            pygame.draw.line(canvas, WHITE, (flash_x, flash_y), (flash_x + dx, flash_y + dy), 2)
-
-    # A crumpled piece of paper (the betting slip) by the TV camera,
-    # until you pick it up.
-    # It floats and sparkles; its shadow gets smaller when it floats higher.
-    if "slip" not in progress["choices"]:
-        lift = float_lift(tick)
-        draw_shadow(canvas, 424 + lift, 201, 13 - lift * 2)
-        pygame.draw.circle(canvas, OUTLINE, (430, 197 - lift), 5)
-        pygame.draw.circle(canvas, (225, 225, 215), (430, 197 - lift), 4)
-        pygame.draw.circle(canvas, (250, 250, 240), (429, 196 - lift), 2)
-        pygame.draw.line(canvas, (180, 180, 170), (427, 195 - lift), (432, 199 - lift))
-        pygame.draw.line(canvas, (180, 180, 170), (431, 194 - lift), (428, 198 - lift))
-        draw_sparkle(canvas, 433, 194 - lift, tick, 80)
+def draw_server_wall(canvas):
+    # A cool grey-blue painted wall, darker near the ceiling, with grey
+    # metal panels on the lower part (like the wood panels in the booth).
+    draw_bands(canvas, [(150, 165, 185), (165, 180, 198), (175, 190, 207), (182, 197, 213)],
+               0, 0, ROOM_WIDTH, 148)
+    pygame.draw.rect(canvas, (120, 130, 150), (0, 0, ROOM_WIDTH, 10))
+    pygame.draw.rect(canvas, OUTLINE, (0, 10, ROOM_WIDTH, 1))
+    # A rail on top of the panels, then the panels with a light top edge.
+    pygame.draw.rect(canvas, OUTLINE, (0, 147, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (95, 105, 125), (0, 148, ROOM_WIDTH, 3))
+    pygame.draw.rect(canvas, (130, 140, 160), (0, 148, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (110, 120, 140), (0, 151, ROOM_WIDTH, 49))
+    for x in range(0, ROOM_WIDTH, 30):
+        pygame.draw.rect(canvas, (128, 138, 158), (x + 1, 153, 27, 44))   # panel
+        pygame.draw.rect(canvas, (150, 160, 180), (x + 1, 153, 27, 1))    # light top
+        pygame.draw.rect(canvas, (95, 104, 122), (x + 1, 196, 27, 1))     # dark bottom
+        canvas.set_at((x + 4, 156), (175, 182, 200))                       # screws
+        canvas.set_at((x + 25, 156), (175, 182, 200))
+    draw_dark_band(canvas, 11, 10, 25)
+    draw_dark_band(canvas, 188, 12, 30)
 
 
-def draw_lighting_rig(canvas):
-    # A metal beam under the ceiling with four spotlights hanging from it.
-    pygame.draw.rect(canvas, OUTLINE, (0, 0, ROOM_WIDTH, 7))
-    pygame.draw.rect(canvas, (90, 95, 110), (0, 1, ROOM_WIDTH, 4))
-    pygame.draw.rect(canvas, (130, 135, 150), (0, 1, ROOM_WIDTH, 1))
-    # Little cross struts make it look like a real lighting truss.
-    for x in range(0, ROOM_WIDTH, 8):
-        pygame.draw.line(canvas, (60, 63, 75), (x, 2), (x + 4, 4))
-    for x in [150, 296, 358, 440]:
-        pygame.draw.rect(canvas, OUTLINE, (x - 1, 5, 10, 8))
-        pygame.draw.rect(canvas, (60, 62, 72), (x, 6, 8, 5))
-        pygame.draw.rect(canvas, (95, 98, 110), (x, 6, 8, 1))
-        pygame.draw.rect(canvas, (255, 245, 200), (x + 1, 11, 6, 2))         # the bulb
-
-
-# How high the match clock hangs (below the timer, above the door).
-CLOCK_Y = 74
-
-
-def draw_match_clock(canvas, tick):
-    # A digital clock above the door that shows the match time.
-    # The two dots in the middle blink once per second (30 frames).
-    shaded_box(canvas, (20, 20, 28), (55, 55, 65), (10, 10, 15), 18, CLOCK_Y, 44, 18)
-    if (tick // 30) % 2 == 0:
-        pygame.draw.rect(canvas, (255, 70, 60), (34, CLOCK_Y + 5, 2, 2))
-        pygame.draw.rect(canvas, (255, 70, 60), (34, CLOCK_Y + 10, 2, 2))
-    # A soft red glow around the clock.
-    glow = pygame.Surface((56, 30), pygame.SRCALPHA)
-    pygame.draw.ellipse(glow, (255, 60, 50, 25), (0, 0, 56, 30))
-    canvas.blit(glow, (12, CLOCK_Y - 6))
-
-
-def draw_sponsor_wall(canvas):
-    # The backdrop behind the press table, like at real press conferences:
-    # the same two logos repeat in a neat pattern ("step and repeat").
-    # 1. The metal stands that hold it, standing on the floor.
-    for stand_x in [104, 462]:
-        pygame.draw.rect(canvas, OUTLINE, (stand_x - 1, 148, 5, 52))
-        pygame.draw.rect(canvas, (140, 145, 160), (stand_x, 148, 3, 51))
-        pygame.draw.rect(canvas, OUTLINE, (stand_x - 7, 196, 17, 4))
-
-    # 2. The backdrop: darker at the top and bottom, lighter in the middle,
-    #    with a metal frame (light top and left edge, dark bottom and right).
-    pygame.draw.rect(canvas, OUTLINE, (89, 21, 388, 130))
-    draw_bands(canvas, [(28, 78, 155), (32, 88, 172), (35, 96, 185), (32, 88, 172), (28, 78, 155)],
-               92, 24, 382, 124)
-    pygame.draw.rect(canvas, (175, 185, 205), (90, 22, 386, 2))
-    pygame.draw.rect(canvas, (175, 185, 205), (90, 22, 2, 128))
-    pygame.draw.rect(canvas, (95, 105, 125), (90, 148, 386, 2))
-    pygame.draw.rect(canvas, (95, 105, 125), (474, 22, 2, 128))
-
-    # 3. The logos: rows of trophies and balls, every second row moved
-    #    by half a step, so they make a diagonal pattern.
-    for row in range(5):
-        for column in range(10):
-            x = 100 + column * 38 + (row % 2) * 19
-            y = 30 + row * 23
-            if x > 456:
-                continue
-            if (row + column) % 2 == 0:
-                draw_trophy_logo(canvas, x, y)
-            else:
-                draw_ball_logo(canvas, x, y)
-
-    # 4. The club crest above the table, with a gold ring.
-    pygame.draw.circle(canvas, OUTLINE, (330, 100), 15)
-    pygame.draw.circle(canvas, (230, 180, 60), (330, 100), 14)
-    pygame.draw.circle(canvas, (255, 220, 110), (329, 99), 12)
-    pygame.draw.circle(canvas, WHITE, (330, 100), 11)
-    pygame.draw.circle(canvas, HOME_RED, (330, 100), 8)
-    pygame.draw.circle(canvas, (255, 110, 100), (328, 98), 4)
-    pygame.draw.circle(canvas, WHITE, (330, 100), 3)
-
-
-def draw_trophy_logo(canvas, x, y):
-    # A small golden trophy with a white text line next to it.
-    gold = (250, 205, 60)
-    pygame.draw.rect(canvas, gold, (x + 1, y, 7, 4))          # the cup
-    pygame.draw.rect(canvas, gold, (x + 2, y + 4, 5, 1))
-    pygame.draw.rect(canvas, gold, (x + 4, y + 5, 1, 2))      # the stem
-    pygame.draw.rect(canvas, gold, (x + 2, y + 7, 5, 1))      # the base
-    canvas.set_at((x, y + 1), gold)                          # the handles
-    canvas.set_at((x + 8, y + 1), gold)
-    pygame.draw.rect(canvas, (255, 240, 150), (x + 2, y + 1, 1, 2))    # shine
-    pygame.draw.rect(canvas, (200, 150, 30), (x + 6, y + 1, 1, 3))     # shadow
-    pygame.draw.rect(canvas, (220, 230, 245), (x + 11, y + 2, 9, 2))
-    pygame.draw.rect(canvas, (150, 170, 210), (x + 11, y + 5, 6, 1))
-
-
-def draw_ball_logo(canvas, x, y):
-    # A small white football with a text line next to it.
-    pygame.draw.circle(canvas, (220, 230, 245), (x + 4, y + 4), 4)
-    pygame.draw.rect(canvas, (40, 60, 110), (x + 3, y + 3, 2, 2))
-    canvas.set_at((x + 1, y + 4), (40, 60, 110))
-    canvas.set_at((x + 7, y + 4), (40, 60, 110))
-    pygame.draw.rect(canvas, (250, 205, 60), (x + 11, y + 2, 9, 2))
-    pygame.draw.rect(canvas, (150, 170, 210), (x + 11, y + 5, 6, 1))
-
-
-def draw_press_floor(canvas):
-    # A dark skirting board, then a carpet that gets lighter towards the
-    # front (the bottom of the screen) and a red walkway to the stage.
-    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y - 1, ROOM_WIDTH, 1))
-    pygame.draw.rect(canvas, (20, 26, 52), (0, FLOOR_Y, ROOM_WIDTH, 4))
-    pygame.draw.rect(canvas, (60, 72, 115), (0, FLOOR_Y, ROOM_WIDTH, 1))
-    draw_bands(canvas, [(28, 42, 98), (34, 52, 115), (40, 62, 132), (46, 72, 148), (52, 82, 162)],
-               0, FLOOR_Y + 4, ROOM_WIDTH, CANVAS_HEIGHT - FLOOR_Y - 4)
-
-    # The dot pattern: the rows get further apart towards the front.
-    # Things that are far away look closer together, so this gives depth.
-    y = FLOOR_Y + 7
-    gap = 4
+def draw_server_floor(canvas):
+    # A raised floor of grey square tiles. Like the other floors, every
+    # row is a bit taller and lighter than the row behind it (depth).
+    pygame.draw.rect(canvas, OUTLINE, (0, FLOOR_Y, ROOM_WIDTH, 1))
+    y = FLOOR_Y + 1
+    height = 8
+    row = 0
     while y < CANVAS_HEIGHT:
-        for x in range((y * 3) % gap, ROOM_WIDTH, gap * 2):
-            canvas.set_at((x, y), (75, 105, 185))
-        y = y + gap
-        gap = gap + 1
-
-    # The red walkway: narrow at the back, wide at the front (perspective),
-    # with gold edges and a darker part far away.
-    pygame.draw.polygon(canvas, (150, 40, 50), [(298, 204), (362, 204), (386, 270), (274, 270)])
-    pygame.draw.polygon(canvas, (120, 30, 42), [(298, 204), (362, 204), (366, 215), (294, 215)])
-    pygame.draw.line(canvas, (220, 175, 70), (298, 204), (274, 270), 2)
-    pygame.draw.line(canvas, (220, 175, 70), (362, 204), (386, 270), 2)
+        width = height * 3
+        tile = (120 + row * 7, 128 + row * 7, 142 + row * 6)
+        pygame.draw.rect(canvas, darker(tile, 0.7), (0, y, ROOM_WIDTH, height))
+        for x in range(0, ROOM_WIDTH, width):
+            pygame.draw.rect(canvas, tile, (x + 1, y + 1, width - 1, height - 1))
+            pygame.draw.rect(canvas, (tile[0] + 20, tile[1] + 20, tile[2] + 18), (x + 1, y + 1, width - 1, 1))
+        y = y + height
+        height = height + 2
+        row = row + 1
 
 
-def draw_press_table(canvas):
-    # The stage, with the press table on it: a white tablecloth, a
-    # dark blue skirt with folds and the club crest, microphones,
-    # water bottles and a name card.
-
-    # The stage (a low wooden box), with a shadow on the floor.
-    draw_shadow(canvas, 244, 203, 172)
-    shaded_box(canvas, (70, 75, 95), (110, 115, 135), (45, 48, 62), 250, 186, 160, 14)
-
-    # The tablecloth on top.
-    outlined_box(canvas, (230, 232, 245), 262, 146, 136, 5)
-    pygame.draw.rect(canvas, WHITE, (262, 146, 136, 1))
-    pygame.draw.rect(canvas, (190, 195, 215), (262, 150, 136, 1))
-
-    # The skirt hanging down, with folds: every 8 pixels a light and a
-    # dark line, like real cloth.
-    outlined_box(canvas, (35, 55, 115), 264, 152, 132, 34)
-    for fold_x in range(268, 394, 8):
-        pygame.draw.rect(canvas, (52, 75, 142), (fold_x, 152, 1, 34))
-        pygame.draw.rect(canvas, (24, 38, 85), (fold_x + 3, 152, 1, 34))
-    pygame.draw.rect(canvas, (24, 38, 85), (264, 183, 132, 3))
-
-    # The crest on the skirt.
-    pygame.draw.circle(canvas, OUTLINE, (330, 168), 10)
-    pygame.draw.circle(canvas, HOME_RED, (330, 168), 9)
-    pygame.draw.circle(canvas, (255, 110, 100), (328, 166), 4)
-    pygame.draw.circle(canvas, WHITE, (330, 168), 4)
-
-    # Microphones of all the TV channels, with their cables.
-    microphones = [(300, HOME_RED), (312, YELLOW), (322, (90, 180, 110)),
-                   (334, WHITE), (346, AWAY_YELLOW), (358, (240, 140, 40))]
-    for mic_x, colour in microphones:
-        pygame.draw.line(canvas, OUTLINE, (mic_x + 2, 145), (330, 133))
-        outlined_box(canvas, (40, 40, 50), mic_x, 124, 5, 7)
-        pygame.draw.rect(canvas, (110, 110, 120), (mic_x + 1, 125, 2, 2))
-        outlined_box(canvas, colour, mic_x - 1, 132, 7, 5)
-        pygame.draw.rect(canvas, darker(colour, 0.7), (mic_x - 1, 135, 7, 2))
-
-    # Water bottles with a shine, and the name card.
-    for bottle_x in [282, 372]:
-        outlined_box(canvas, (150, 205, 245), bottle_x, 134, 6, 12)
-        pygame.draw.rect(canvas, (210, 240, 255), (bottle_x + 1, 135, 1, 10))
-        pygame.draw.rect(canvas, AWAY_YELLOW, (bottle_x, 132, 6, 3))
-    outlined_box(canvas, WHITE, 352, 139, 20, 7)
-    pygame.draw.rect(canvas, (200, 205, 220), (352, 145, 20, 1))
+def draw_cable_tray(canvas):
+    # A metal cable tray under the ceiling, full of cables. Some cables
+    # hang down in loops and go into the racks.
+    pygame.draw.rect(canvas, OUTLINE, (60, 17, ROOM_WIDTH - 60, 7))
+    pygame.draw.rect(canvas, (150, 155, 170), (60, 18, ROOM_WIDTH - 60, 5))
+    pygame.draw.rect(canvas, (185, 190, 205), (60, 18, ROOM_WIDTH - 60, 1))
+    for hanger_x in range(80, ROOM_WIDTH, 60):
+        pygame.draw.rect(canvas, OUTLINE, (hanger_x, 11, 2, 7))
+    # Bundles of coloured cables lying in the tray.
+    for i, colour in enumerate([(60, 120, 220), (240, 200, 50), (80, 190, 110)]):
+        pygame.draw.line(canvas, colour, (62, 19 + i), (ROOM_WIDTH, 19 + i))
+    # Cables hanging down from the tray into the tops of the racks.
+    for start_x, colour in [(318, (60, 120, 220)), (334, (240, 200, 50)),
+                            (378, (80, 190, 110)), (392, (60, 120, 220)), (440, (240, 200, 50))]:
+        pygame.draw.line(canvas, OUTLINE, (start_x, 24), (start_x, 72), 3)
+        pygame.draw.line(canvas, colour, (start_x, 24), (start_x, 72))
 
 
-def draw_tv_camera(canvas, tick):
-    # A TV camera on a tripod, and a fluffy boom microphone over the table.
-    draw_shadow(canvas, 416, 201, 42)
-    for foot_x in [420, 436, 452]:
-        pygame.draw.line(canvas, OUTLINE, (foot_x, 200), (436, 150), 3)
-        pygame.draw.line(canvas, (120, 125, 140), (foot_x, 199), (436, 151), 1)
-    shaded_box(canvas, (60, 60, 70), (95, 95, 108), (35, 35, 45), 420, 132, 34, 20)
-    pygame.draw.rect(canvas, (45, 45, 55), (424, 140, 20, 2))                  # vents
-    pygame.draw.rect(canvas, (45, 45, 55), (424, 144, 20, 2))
-    outlined_box(canvas, (30, 30, 40), 408, 136, 12, 12)
-    pygame.draw.circle(canvas, (70, 120, 200), (414, 142), 4)
-    pygame.draw.circle(canvas, (150, 210, 255), (413, 141), 2)
-    canvas.set_at((412, 140), WHITE)                                           # lens shine
-    # The red "recording" light blinks (on for 15 frames, off for 15).
-    if (tick // 15) % 2 == 0:
-        pygame.draw.rect(canvas, (255, 50, 50), (448, 135, 3, 3))
-    else:
-        pygame.draw.rect(canvas, (110, 30, 30), (448, 135, 3, 3))
-    pygame.draw.line(canvas, OUTLINE, (466, 66), (392, 98), 2)                 # boom pole
-    outlined_box(canvas, (110, 110, 120), 376, 96, 18, 8)
-    for i in range(0, 18, 3):
-        pygame.draw.rect(canvas, (150, 150, 160), (376 + i, 96, 1, 8))
+def draw_warning_sign(canvas):
+    # A yellow warning sign with black stripes: "STAFF ONLY"
+    # (the text is added later, see LABELS).
+    shaded_box(canvas, (250, 215, 60), (255, 240, 130), (210, 170, 30), 78, 72, 46, 26)
+    for stripe_x in range(80, 122, 6):
+        pygame.draw.line(canvas, OUTLINE, (stripe_x, 92), (stripe_x + 3, 95), 2)
+
+
+def draw_air_conditioner(canvas, tick):
+    # A white air conditioner high on the wall (server rooms must stay
+    # cold). It has a small blue display and cold air lines that wave
+    # out of its bottom.
+    shaded_box(canvas, (235, 238, 245), WHITE, (195, 200, 212), 168, 74, 70, 22)
+    for slat_y in [88, 91]:
+        pygame.draw.rect(canvas, (170, 175, 190), (172, slat_y, 62, 1))
+    pygame.draw.rect(canvas, OUTLINE, (220, 77, 14, 7))
+    pygame.draw.rect(canvas, (70, 160, 230), (221, 78, 12, 5))      # the display ("16C")
+    # Three wavy lines of cold air under it; they move with the tick.
+    for line in range(3):
+        x = 182 + line * 18
+        wave = (tick // 6 + line) % 3 - 1
+        pygame.draw.line(canvas, (200, 230, 255), (x, 99), (x + wave, 104))
+        pygame.draw.line(canvas, (200, 230, 255), (x + wave, 104), (x, 109))
+
+
+def draw_fire_extinguisher(canvas):
+    # A red fire extinguisher hanging on the wall next to the door.
+    pygame.draw.rect(canvas, OUTLINE, (86, 160, 4, 4))                       # wall hook
+    shaded_box(canvas, (220, 45, 45), (250, 100, 90), (170, 30, 30), 82, 166, 12, 28)
+    pygame.draw.rect(canvas, (40, 40, 45), (84, 162, 8, 4))                  # the top
+    pygame.draw.line(canvas, OUTLINE, (92, 163), (98, 170), 2)               # the hose
+    pygame.draw.rect(canvas, WHITE, (84, 176, 8, 4))                         # the label
+
+
+def draw_tech_desk(canvas, tick):
+    # The technician's desk with two monitors, a keyboard, a mug and a
+    # chair. One monitor shows a network graph; the other one is the feed
+    # from the offside camera: "NO SIGNAL", blinking.
+    draw_shadow(canvas, 132, FLOOR_Y + 1, 118)
+    shaded_box(canvas, (95, 100, 118), (125, 130, 150), (70, 74, 90), 134, 162, 114, 6)   # top
+    for leg_x in [138, 240]:
+        shaded_box(canvas, (75, 80, 96), (100, 105, 122), (55, 58, 72), leg_x, 168, 5, 32)
+    # A drawer unit under the desk.
+    shaded_box(canvas, (85, 90, 108), (110, 115, 135), (62, 66, 80), 200, 170, 36, 30)
+    pygame.draw.rect(canvas, OUTLINE, (214, 178, 8, 2))
+    pygame.draw.rect(canvas, OUTLINE, (214, 190, 8, 2))
+
+    # Monitor 1: a green network graph that moves (the line wobbles).
+    draw_desk_monitor(canvas, 144)
+    pygame.draw.rect(canvas, (15, 35, 25), (148, 132, 38, 22))
+    points = []
+    for step in range(10):
+        wave = math.sin(tick / 8 + step * 0.9) * 5
+        points.append((149 + step * 4, 144 + int(wave)))
+    pygame.draw.lines(canvas, (90, 230, 120), False, points)
+
+    # Monitor 2: the offside camera feed is gone. Red "NO SIGNAL" bars
+    # blink (the text is drawn on top, see LABELS).
+    draw_desk_monitor(canvas, 194)
+    pygame.draw.rect(canvas, (40, 15, 18), (198, 132, 38, 22))
+    if tick % 40 < 28:
+        pygame.draw.rect(canvas, (200, 40, 40), (200, 139, 34, 8))
+
+    # The keyboard, a mug and a messy pile of papers.
+    pygame.draw.rect(canvas, OUTLINE, (160, 157, 40, 5))
+    pygame.draw.rect(canvas, (210, 212, 225), (161, 158, 38, 3))
+    outlined_box(canvas, (240, 240, 245), 214, 154, 7, 8)
+    pygame.draw.rect(canvas, (60, 120, 220), (214, 157, 7, 2))
+    for i in range(3):
+        outlined_box(canvas, (245, 245, 238), 226 + i, 159 - i * 2, 16, 2)
+
+    # The office chair, seen from behind.
+    draw_shadow(canvas, 170, FLOOR_Y + 1, 30)
+    shaded_box(canvas, (50, 52, 66), (80, 82, 100), (32, 33, 44), 174, 168, 22, 16)
+    pygame.draw.rect(canvas, OUTLINE, (183, 185, 4, 9))
+    pygame.draw.rect(canvas, OUTLINE, (173, 194, 24, 3))
+    for wheel_x in [173, 183, 193]:
+        pygame.draw.rect(canvas, OUTLINE, (wheel_x, 196, 4, 4))
+
+
+def draw_desk_monitor(canvas, x):
+    # A flat monitor on a small stand (the picture is drawn afterwards).
+    shaded_box(canvas, (55, 58, 70), (85, 88, 102), (35, 37, 45), x, 128, 46, 30)
+    pygame.draw.rect(canvas, OUTLINE, (x + 20, 158, 6, 4))
+
+
+def draw_server_rack(canvas, x, number, tick):
+    # One tall server rack: a dark cabinet full of server units. Each unit
+    # has drive slots and little lights that blink at their own moment.
+    shaded_box(canvas, (40, 43, 54), (70, 74, 90), (25, 27, 34), x, 74, 50, 126)
+    pygame.draw.rect(canvas, (30, 32, 40), (x + 4, 78, 42, 118))             # inside
+    # A small label plate on top of each rack: R1, R2, R3 (see LABELS).
+    shaded_box(canvas, (220, 225, 235), WHITE, (180, 185, 200), x + 16, 66, 18, 7)
+
+    unit_y = 80
+    unit = 0
+    while unit_y < 190:
+        # The middle rack has a patch panel (a row of coloured plugs)
+        # as its third unit: that is where the red cable goes in.
+        if number == 1 and unit == 2:
+            pygame.draw.rect(canvas, (70, 74, 90), (x + 5, unit_y, 40, 9))
+            for plug in range(7):
+                colour = [(60, 120, 220), (240, 200, 50), (80, 190, 110)][plug % 3]
+                pygame.draw.rect(canvas, colour, (x + 8 + plug * 5, unit_y + 3, 3, 3))
+            unit_y = unit_y + 11
+            unit = unit + 1
+            continue
+
+        # A normal server: light grey front with dark drive slots.
+        pygame.draw.rect(canvas, (150, 155, 170), (x + 5, unit_y, 40, 9))
+        pygame.draw.rect(canvas, (185, 190, 205), (x + 5, unit_y, 40, 1))
+        for slot in range(4):
+            pygame.draw.rect(canvas, (90, 95, 110), (x + 8 + slot * 6, unit_y + 3, 4, 4))
+        # Two lights: green (power) always on, orange (data) blinking.
+        canvas.set_at((x + 36, unit_y + 4), (90, 230, 110))
+        if (tick + unit * 9 + number * 17) % 24 < 12:
+            canvas.set_at((x + 40, unit_y + 4), (255, 180, 60))
+        unit_y = unit_y + 11
+        unit = unit + 1
+
+    # A shine on the glass door: a light diagonal line.
+    pygame.draw.line(canvas, (90, 95, 115), (x + 8, 190), (x + 30, 82))
+
+
+def draw_floor_vent(canvas, tick):
+    # A floor tile with a vent grille under the cut cable. Cold air blows
+    # up out of it (light blue lines that rise and fade) - that is the
+    # wind that makes the tie flutter.
+    pygame.draw.rect(canvas, OUTLINE, (236, 203, 34, 7))
+    pygame.draw.rect(canvas, (90, 98, 115), (237, 204, 32, 5))
+    for slit_x in range(239, 268, 3):
+        pygame.draw.line(canvas, (50, 55, 68), (slit_x, 204), (slit_x, 208))
+    for puff in range(4):
+        age = (tick + puff * 8) % 32           # 0 to 31 frames old
+        air = pygame.Surface((2, 6), pygame.SRCALPHA)
+        air.fill((200, 230, 255, 140 - age * 4))
+        canvas.blit(air, (240 + puff * 8, 200 - age))
+
+
+def draw_cut_cable(canvas, progress, tick):
+    # The red cable comes in under the door and runs along the floor.
+    # Above the vent it is cut: two copper ends with sparks and smoke.
+    # The second half runs on and up into the patch panel of rack R2.
+    first_half = [(40, 196), (246, 196)]
+    second_half = [(260, 196), (352, 196), (352, 107), (367, 107)]
+    for half in [first_half, second_half]:
+        pygame.draw.lines(canvas, OUTLINE, False, half, 5)
+        pygame.draw.lines(canvas, (220, 40, 40), False, half, 3)
+    pygame.draw.line(canvas, (255, 120, 110), (40, 195), (245, 195))       # shine
+    # The copper ends.
+    for end_x in [247, 258]:
+        pygame.draw.rect(canvas, (230, 140, 60), (end_x, 195, 2, 3))
+    draw_sparks(canvas, 252, 195, tick)
+    draw_smoke(canvas, 252, 192, tick)
+
+    # The tip of Infantini's tie is stuck in the cut, until you find it.
+    # The cold air from the vent makes it flutter up and down.
+    if "tie" not in progress["choices"]:
+        flutter = int(math.sin(tick / 3) * 4)
+        tip = [(249, 188), (249, 198), (234, 193 + flutter), (228, 189 + flutter), (234, 185 + flutter)]
+        pygame.draw.polygon(canvas, OUTLINE, tip)
+        inside = [(248, 189), (248, 197), (234, 192 + flutter), (230, 189 + flutter), (234, 186 + flutter)]
+        pygame.draw.polygon(canvas, (55, 70, 150), inside)
+        pygame.draw.line(canvas, (90, 110, 190), (247, 190), (234, 187 + flutter))   # silk shine
+        # The gold initials G.I. (two small gold marks).
+        pygame.draw.rect(canvas, (255, 215, 70), (238, 189 + flutter // 2, 2, 2))
+        pygame.draw.rect(canvas, (255, 215, 70), (242, 189 + flutter // 2, 1, 2))
+        draw_sparkle(canvas, 236, 181 + flutter, tick, 40)
 
 
 # ---------------------------------------------------------------- The Pitch
@@ -2096,8 +2061,8 @@ def draw_room(canvas, scene_id, pictures, progress, extras):
         draw_dressing_room(canvas, pictures, progress, tick)
     elif scene_id == "mascot_room":
         draw_mascot_room(canvas, pictures, progress, tick, extras["reveal"])
-    elif scene_id == "press_room":
-        draw_press_room(canvas, progress, tick)
+    elif scene_id == "server_room":
+        draw_server_room(canvas, progress, tick)
     elif scene_id == "pitch":
         draw_pitch(canvas, pictures, extras["ball"], tick)
 
@@ -2106,10 +2071,11 @@ def draw_room(canvas, scene_id, pictures, progress, extras):
 # They are drawn later on the big window, so the letters stay sharp.
 LABELS = {
     "booth": [
-        ("REF", 250, 110, (60, 60, 70), False),
-        ("MASCOT", 299, 110, (90, 60, 10), False),
-        ("PRESS", 359, 110, (255, 255, 255), False),
+        ("SERVER", 26, 110, (255, 255, 255), False),
+        ("REF", 308, 110, (60, 60, 70), False),
+        ("MASCOT", 357, 110, (90, 60, 10), False),
         ("PITCH", 430, 117, (255, 255, 255), False),
+        ("OFFSIDE CAM", 192, 138, (220, 40, 40), True),
     ],
     "dressing_room": [
         ("BOOTH", 28, 110, (60, 60, 70), False),
@@ -2121,10 +2087,15 @@ LABELS = {
         ("EMPLOYEE", 83, 105, (120, 60, 20), True),
         ("HONEY", 457, 180, (120, 80, 30), True),
     ],
-    "press_room": [
+    "server_room": [
         ("BOOTH", 28, 110, (255, 255, 255), False),
-        ("Ref. Unit", 353, 139, (40, 40, 60), True),
-        ("94  00", 22, 77, (255, 70, 60), False),
+        ("STAFF", 87, 75, (30, 30, 40), False),
+        ("ONLY", 91, 83, (30, 30, 40), False),
+        ("NO SIGNAL", 201, 140, (255, 235, 235), True),
+        ("16C", 222, 77, (255, 255, 255), True),
+        ("R1", 325, 67, (30, 30, 40), True),
+        ("R2", 381, 67, (30, 30, 40), True),
+        ("R3", 437, 67, (30, 30, 40), True),
     ],
     "pitch": [
         ("BOOTH", 25, 120, (255, 255, 255), False),

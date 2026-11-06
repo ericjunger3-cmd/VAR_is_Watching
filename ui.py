@@ -647,10 +647,10 @@ def draw_e_bubble(window, middle_x, top_y, tick, font):
     window.blit(letter, (middle_x - letter.get_width() / 2, top_y - letter.get_height() / 2))
 
 
-def draw_ending_text(window, story, ending_id, summary, fonts, scale):
-    # The ending: its title, its text, the epilogue (for most endings),
-    # the summary (the right call, from game.ending_summary) and what the
-    # player can do now.
+def draw_ending_text(window, story, ending_id, epilogue, summary, fonts, scale):
+    # The ending: its title, its text, what happens to Infantini in the
+    # TV studio (the epilogue), the summary (the right call, from
+    # game.ending_summary) and what the player can do now.
     ending = story["endings"][ending_id]
     window.blit(fonts["small"].render("ENDING", False, CREAM), (40 * scale, 28 * scale))
     window.blit(fonts["big"].render(ending["title"].upper(), False, CREAM), (40 * scale, 36 * scale))
@@ -658,11 +658,10 @@ def draw_ending_text(window, story, ending_id, summary, fonts, scale):
     for line in wrap_text(ending["text"], fonts["text"], 396 * scale):
         window.blit(fonts["text"].render(line, False, BROWN), (42 * scale, y * scale))
         y = y + 10
-    if ending["show_epilogue"]:
-        y = y + 6
-        for line in wrap_text(story["epilogue"], fonts["text"], 396 * scale):
-            window.blit(fonts["text"].render(line, False, (120, 60, 140)), (42 * scale, y * scale))
-            y = y + 10
+    y = y + 6
+    for line in wrap_text(epilogue, fonts["text"], 396 * scale):
+        window.blit(fonts["text"].render(line, False, (120, 60, 140)), (42 * scale, y * scale))
+        y = y + 10
     y = y + 8
     for text in summary:
         for line in wrap_text(text, fonts["text"], 396 * scale):

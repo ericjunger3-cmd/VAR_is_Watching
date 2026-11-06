@@ -15,7 +15,8 @@ https://nova-sbe-introduction-to-programming.github.io/intro-to-programming-2026
 ## Story
 
 94th minute of a cup final. The home side scores, the away side claims offside,
-and the key VAR angle is missing. The player is a junior VAR official on their
+and the offside camera is dead: its monitor hangs crooked and flickers, and its
+red cable ("OFFSIDE CAM" tag) runs into the Server Room, where it is cut. The player is a junior VAR official on their
 first day. A smug TV guest expert, Gianno Infantini (a fictional character),
 narrates everything. It is 0:0 before the goal.
 
@@ -31,10 +32,11 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
   game.py shows the first one not done. A hint can have `"if_clue"` /
   `"pundit_if_clue"` for a different line once that clue is found.
 - His mood shows in his name, from `"pundit_moods"` by clue count:
-  GIANNO INFANTINI, GIANNO INFANTINI (nervous), (sweating), (panicking) (`pundit_line`).
+  GIANNO INFANTINI, (nervous), (sweating), (panicking), (furious) (`pundit_line`).
+  2D: his face changes too (5 faces, `make_pundit(mood)`).
 - 2D: a new line makes his speech box flash yellow and beep (`HINT_FLASH_FRAMES`).
 - Clues are secret: no counter anywhere. Exposing Infantini stays hidden until all
-  clues are found (`needs_choices` + `hide_if_blocked`).
+  4 clues are found (`needs_choices` + `hide_if_blocked`).
 - Each hint has a `"room"`; `door_to_hint` finds the door on the way there
   (from the booth: that room's door, elsewhere: the door back to the booth).
   2D draws a "!" at its `"door_marker"`; the terminal adds "(!)" to the action.
@@ -57,26 +59,32 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 - **Bernie is Dave**, the missing VAR operator from the sticky note, working a
   second job as the mascot. He filmed the goal on his head-cam (the USB Stick)
   and saw a man in a shiny suit run out of the booth at 93:30.
-- **The TV expert, Gianno Infantini, pulled the camera cable** because he bet 500
-  on a 0:0 draw. He wants the VAR to rule OFFSIDE so the goal is gone and his
-  bet wins. Clues: the Press Lanyard (behind the booth desk), the Betting
-  Slip (press room), Dave's statement. The pundit gets more nervous with every
-  clue. Every ending except the best one ends with an epilogue hinting at him.
+- **The TV expert, Gianno Infantini, cut the camera cable** in the Server Room because
+  he bet 500 on a 0:0 draw. He wants the VAR to rule OFFSIDE so the goal is gone
+  and his bet wins. When he cut the cable, he cut off the tip of his own tie too
+  (his tie on TV is too short). Before kick-off he tried to "chat" with the ref.
+- 4 clues (choices, `clue_choices`): the **Press Pass** (behind the booth desk),
+  the **Betting Slip** (bin in the ref's room), the **tie tip** with gold
+  initials G.I. (stuck in the cut cable in the Server Room) and **Dave's statement**.
 - The truth: the striker was **onside by 30 cm**, so GOAL is the right call.
 
 ### Scenes
 
-1. **VAR Booth** – start. Sticky note (close-up), lanyard behind the desk,
-   VAR computer for the **VAR Review** (needs the USB; one look only).
-2. **Referee's Dressing Room** – the **Lucky Whistle**.
+1. **VAR Booth** – start. Doors from left to right: Server Room, Ref, Mascot,
+   tunnel to the Pitch. The window, monitors and desk are drawn 58 px to the
+   right (`BOOTH_SHIFT`, a subsurface). Sticky note (close-up), press pass
+   behind the desk, VAR computer for the **VAR Review** (needs the USB; one look only).
+2. **Referee's Dressing Room** – the **Lucky Whistle**, the Betting Slip in the bin.
 3. **Mascot Changing Room** – locked; needs the Lucky Whistle.
    Bernie/Dave gives the **USB Stick** and his statement.
-4. **Press Room** – one answer only: **"Clearly a goal!"**, **"No comment"** or
-   **expose Infantini** (needs lanyard + slip + Dave). Betting Slip by the TV camera.
-   Why the VAR goes there: Infantini's TV channel has a deal with the league, so the
-   VAR must give one live quote before every decision (said in the booth intro).
-5. **The Pitch** – open from the start, but the referee only takes the call
-   after the press answer; rule **Goal** or **Offside** (both allowed).
+4. **Server Room** – racks, a technician's desk ("NO SIGNAL" monitor), the cut
+   red cable (sparks, smoke) over a floor vent, and the tie tip fluttering in the cold air.
+5. **The Pitch** – rule **Goal** or **Offside** (both allowed). The ref blows
+   the final whistle, the press rushes in, and you answer (this ends the game):
+   **"Clearly ONSIDE/OFFSIDE"** (matches your ruling, `needs_ruling`),
+   **"No comment"** or **expose Infantini** (needs all 4 clues). After the
+   ruling you cannot go back to the booth (`hidden_after`); in 2D the press
+   questions open by themselves and cannot be closed (`press_next`, `locked`).
 
 ### VAR Review
 
@@ -92,17 +100,22 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
 
 ### Items
 
-- Lucky Whistle, USB Stick. (The Press Lanyard and Betting Slip are hidden
-  clues in `choices`, not items. The player never sees a clue count.)
+- Lucky Whistle, USB Stick. (The 4 clues are hidden in `choices`, not items.
+  The player never sees a clue count.)
 - Items are **reusable** (not used up) and **cannot be duplicated**.
 
 ### Endings (`choose_ending` in game.py, checked top to bottom)
 
 - **Daylight Robbery** – ruled OFFSIDE.
-- **Clip of the Year** – GOAL without the review.
+- **Lucky Guess** – GOAL without the review.
 - **VAR Is Watching** – GOAL after the review + exposed Infantini (best ending).
-- **Justice Served** – GOAL after the review + "No comment".
-- **Right Call, Wrong Mouth** – GOAL after the review + "Clearly a goal!".
+- **By the Book** – GOAL after the review, Infantini not exposed.
+- **The Stadium Went Home** – time ran out (the coin says OFFSIDE).
+
+Every ending then shows Infantini in the TV studio (`studio_outcome`,
+`"epilogues"` in story.json): **arrested** (you exposed him), **wins** (it
+ended 0:0: OFFSIDE or time up) or **loses** (the goal counts). Ending texts are
+short and funny. Old saves are updated on loading (`update_old_save`).
 
 ## Tech
 

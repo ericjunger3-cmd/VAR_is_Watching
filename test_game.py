@@ -77,16 +77,16 @@ def test_a4_resume(story):
 def test_a5_two_outcomes(story):
     # A5: two different paths reach two different endings, and a saved
     # ending stays the same after loading.
-    bad = game.choose_ending("offside", {"press_answer": "goal"})
-    good = game.choose_ending("goal", {"review": "onside", "press_answer": "no_comment"})
+    bad = game.choose_ending({"ruling": "offside", "press_answer": "clear"})
+    good = game.choose_ending({"ruling": "goal", "review": "onside", "press_answer": "no_comment"})
     assert bad == "daylight_robbery"
-    assert good == "justice_served"
+    assert good == "by_the_book"
     progress = game.new_progress(story)
     progress["ending"] = good
     game.save_progress(progress, TEST_SAVE)
     loaded = game.load_progress(TEST_SAVE)
     os.remove(TEST_SAVE)
-    assert loaded["ending"] == "justice_served"
+    assert loaded["ending"] == "by_the_book"
 
 
 def test_a6_restart(story):
@@ -114,26 +114,82 @@ def test_offside_rule(story):
 
 
 def test_expose_needs_all_clues(story):
-    # The option to expose Infantini stays hidden until the player has the lanyard,
-    # the betting slip AND Dave's statement. Clues are choices, not items.
-    expose = find_action(story, "press_room", "Say: 'Gianno Infantini")
-    assert game.is_hidden(expose, [], {"lanyard": "found", "slip": "found"})
-    assert game.is_hidden(expose, [], {"lanyard": "found", "dave": "talked"})
-    assert not game.is_hidden(expose, [], {"lanyard": "found", "slip": "found", "dave": "talked"})
+    # The option to expose Infantini (on the pitch, after the ruling) stays
+    # hidden until the player has all 4 clues: the press pass, the betting
+    # slip, the tip of his tie AND Dave's statement. Clues are choices, not items.
+    expose = find_action(story, "pitch", "Say: 'Gianno Infantini")
+    three = {"ruling": "goal", "press_pass": "found", "slip": "found", "dave": "talked"}
+    assert game.is_hidden(expose, [], three)
+    all_four = {"ruling": "goal", "press_pass": "found", "slip": "found", "tie": "found", "dave": "talked"}
+    assert not game.is_hidden(expose, [], all_four)
+    # Without a ruling there is no press yet.
+    del all_four["ruling"]
+    assert game.is_hidden(expose, [], all_four)
+
+
+def test_press_after_ruling(story):
+    # The press answers only appear after the ruling, the "clearly ..."
+    # answer matches the ruling, and you cannot walk back to the booth.
+    onside = find_action(story, "pitch", "Say: 'Guys, it was clearly ONSIDE")
+    offside = find_action(story, "pitch", "Say: 'Guys, it was clearly OFFSIDE")
+    no_comment = find_action(story, "pitch", "Say: 'No comment")
+    back = find_action(story, "pitch", "Back to the VAR Booth")
+    assert game.is_hidden(no_comment, [], {})
+    assert not game.is_hidden(back, [], {})
+    choices = {"ruling": "goal"}
+    assert not game.is_hidden(no_comment, [], choices)
+    assert not game.is_hidden(onside, [], choices)
+    assert game.is_hidden(offside, [], choices)
+    assert game.is_hidden(back, [], choices)
+
+
+def test_all_endings(story):
+    # Every combination leads to the planned ending and studio scene.
+    def finish(choices, ending=None):
+        progress = game.new_progress(story)
+        progress["choices"] = choices
+        if ending is None:
+            ending = game.choose_ending(choices)
+        progress["ending"] = ending
+        return ending, game.studio_outcome(progress)
+    assert finish({"ruling": "offside", "press_answer": "clear"}) == ("daylight_robbery", "wins")
+    assert finish({"ruling": "offside", "press_answer": "expose"}) == ("daylight_robbery", "arrested")
+    assert finish({"ruling": "goal", "press_answer": "no_comment"}) == ("lucky_guess", "loses")
+    assert finish({"ruling": "goal", "press_answer": "expose"}) == ("lucky_guess", "arrested")
+    assert finish({"ruling": "goal", "review": "onside", "press_answer": "clear"}) == ("by_the_book", "loses")
+    assert finish({"ruling": "goal", "review": "onside", "press_answer": "no_comment"}) == ("by_the_book", "loses")
+    assert finish({"ruling": "goal", "review": "onside", "press_answer": "expose"}) == ("var_is_watching", "arrested")
+    assert finish({}, "time_up") == ("time_up", "wins")
+    for ending_id in story["endings"]:
+        assert ending_id in ["daylight_robbery", "lucky_guess", "by_the_book", "var_is_watching", "time_up"]
+
+
+def test_old_save_still_works(story):
+    # A save from the old version (Press Room, lanyard, old ending names)
+    # is changed so it works with the new story.
+    progress = game.new_progress(story)
+    progress["scene"] = "press_room"
+    progress["choices"] = {"lanyard": "found", "press_answer": "goal"}
+    game.save_progress(progress, TEST_SAVE)
+    loaded = game.load_progress(TEST_SAVE)
+    os.remove(TEST_SAVE)
+    assert loaded["scene"] == "pitch"
+    assert loaded["choices"] == {"press_pass": "found"}
+    assert loaded["scene"] in story["scenes"]
 
 
 def test_clues_are_not_items(story):
     # Finding a clue never puts it in the inventory, and an old save that
     # still has a clue as an item is converted when it is loaded.
-    assert "lanyard" not in story["items"]
-    assert "slip" not in story["items"]
+    for clue in story["clue_choices"]:
+        assert clue not in story["items"]
     progress = game.new_progress(story)
     progress["inventory"] = ["whistle", "lanyard"]
     game.save_progress(progress, TEST_SAVE)
     loaded = game.load_progress(TEST_SAVE)
     os.remove(TEST_SAVE)
     assert loaded["inventory"] == ["whistle"]
-    assert loaded["choices"]["lanyard"] == "found"
+    assert loaded["choices"]["press_pass"] == "found"
 
 
 def test_pundit_hints(story):
@@ -144,7 +200,7 @@ def test_pundit_hints(story):
     progress["inventory"].append("whistle")
     assert game.current_hint(story, progress) != first
     assert game.pundit_line(story, progress).startswith("GIANNO INFANTINI: ")
-    progress["choices"]["lanyard"] = "found"
+    progress["choices"]["press_pass"] = "found"
     assert game.pundit_line(story, progress).startswith("GIANNO INFANTINI (nervous): ")
 
 
@@ -176,7 +232,8 @@ def run_all_tests():
     story = game.load_story()
     tests = [test_a1_locked_route, test_a2_unlocked_route, test_a3_no_duplicate,
              test_a4_resume, test_a5_two_outcomes, test_a6_restart,
-             test_offside_rule, test_expose_needs_all_clues, test_clues_are_not_items,
+             test_offside_rule, test_expose_needs_all_clues, test_press_after_ruling,
+             test_all_endings, test_old_save_still_works, test_clues_are_not_items,
              test_pundit_hints, test_door_to_hint, test_ending_summary]
     failed = 0
     for test in tests:

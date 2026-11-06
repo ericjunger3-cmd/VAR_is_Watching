@@ -10,44 +10,44 @@
     "usb": "USB Stick"
   },
 
-  "clue_choices": ["lanyard", "slip", "dave"],
+  "clue_choices": ["press_pass", "slip", "tie", "dave"],
 
   "truth": "THE RIGHT CALL: GOAL. When the ball was passed, the striker was onside by 30 cm.",
 
   "goal": "Your goal: give the referee the right call, GOAL or OFFSIDE. Gianno Infantini on the TV always tells you what to do next.",
 
   "hints": [
-    { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. Thrilling.", "done_when": "whistle", "room": "dressing_room" },
-    { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a bear. Live on my show. I'm crying.", "done_when": "dave", "room": "mascot_room" },
-    { "pundit": "A USB stick from a bear. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review", "room": "booth",
-      "if_clue": "lanyard", "pundit_if_clue": "A USB stick from a bear. Plug it into your VAR computer, genius. And that lanyard? Never seen it. Never." },
-    { "pundit": "Press Room next. One quote, rookie. And don't touch any crumpled paper by my camera. Totally normal paper.", "done_when": "press_answer", "room": "press_room" },
-    { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. 0:0 is a beautiful result. Trust me. I'm the expert.", "room": "pitch" }
+    { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. And stay out of the server room. Nothing in there.", "done_when": "whistle", "room": "dressing_room", "skip_after": "ruling" },
+    { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a bear. Live on my show. I'm crying.", "done_when": "dave", "room": "mascot_room", "skip_after": "ruling" },
+    { "pundit": "A USB stick from a bear. Plug it into your VAR computer, genius. Also... anyone seen my press pass? No reason.", "done_when": "review", "room": "booth", "skip_after": "ruling",
+      "if_clue": "press_pass", "pundit_if_clue": "A USB stick from a bear. Plug it into your VAR computer, genius. And that press pass? Never seen it. Never." },
+    { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. 0:0 is a beautiful result. Trust me. I'm the expert.", "done_when": "ruling", "room": "pitch" },
+    { "pundit": "Uh-oh, the press! Choose your words, rookie. Or don't. I'd prefer you don't.", "room": "pitch" }
   ],
-  "pundit_moods": ["", "nervous", "sweating", "panicking"],
+  "pundit_moods": ["", "nervous", "sweating", "panicking", "furious"],
   "ball_goal_pundit": "INFANTINI: Did the VAR official just score?! Somebody check the VAR! Oh wait... that's you. Doesn't count, rookie.",
 
   "scenes": {
     "booth": {
       "name": "VAR Booth",
-      "text": "94th minute, cup final, 0:0. Home side scores, away captain screams \"OFFSIDE!\" at the sky. Day one as VAR, and the key camera shows static. Find the angle, make the call. But first: one quote for the Press Room (TV guest expert Gianno Infantini's deal).",
+      "text": "94th minute, cup final, 0:0. Home side scores, away captain screams \"OFFSIDE!\" at the sky. Day one as VAR, and the offside camera is dead. Its red cable runs straight into the server room. Find the angle, make the call.",
       "actions": [
-        { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 258, "door_marker": [258, 104],
+        { "label": "Go to the Server Room", "go_to": "server_room", "x": 40, "door_marker": [40, 104],
+          "text": "You follow the red cable through the door. It smells of hot plastic." },
+        { "label": "Go to the Referee's Dressing Room", "go_to": "dressing_room", "x": 316, "door_marker": [316, 104],
           "text": "You sprint down the tunnel, past a trolley of orange slices." },
-        { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room", "x": 316, "door_marker": [316, 104],
+        { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room", "x": 374, "door_marker": [374, 104],
           "needs_item": "whistle",
           "blocked_text": "Locked. Sign: \"MASCOTS ONLY. Whistle for entry.\" The ref keeps a spare whistle in his room.",
           "text": "You blow the Lucky Whistle. A bear growls. The door clicks open." },
-        { "label": "Go to the Press Room", "go_to": "press_room", "x": 374, "door_marker": [374, 104],
-          "text": "You follow the sound of camera shutters and bad decisions." },
         { "label": "Go to the Pitch", "go_to": "pitch", "x": 443, "door_marker": [443, 112],
           "text": "Floodlights. Sixty thousand heads turn. Your knees remember they are knees." },
-        { "label": "Look at the sticky note", "x": 185, "marker": [190, 110],
+        { "label": "Look at the sticky note", "x": 243, "marker": [248, 110],
           "text": "Dave's note says: \"Back in 5 min - Dave. P.S. Angle cuts out? Ask Bernie, our mascot. He films EVERYTHING.\"",
           "closeup": ["Back in 5 min", "- Dave", "P.S. Angle cuts out?", "Ask Bernie, our mascot.", "He films EVERYTHING."] },
-        { "label": "Look behind the desk", "set_choice": "lanyard", "value": "found", "x": 30, "marker": [30, 145],
-          "text": "The key camera's cable is yanked out of the wall. On purpose! Tangled in it: a \"PRESS - TV STUDIO\" lanyard." },
-        { "label": "Plug the USB Stick into the VAR computer", "review": true, "set_choice": "review", "x": 104, "marker": [104, 154],
+        { "label": "Look behind the desk", "set_choice": "press_pass", "value": "found", "x": 88, "marker": [88, 145],
+          "text": "Behind the desk: a PRESS PASS. Photo: Gianno Infantini, grinning. What is a TV expert doing in the VAR booth?" },
+        { "label": "Plug the USB Stick into the VAR computer", "review": true, "set_choice": "review", "x": 162, "marker": [162, 154],
           "needs_item": "usb",
           "blocked_text": "Nice USB port. Shame you have nothing to plug in.",
           "text": "You plug in the USB Stick. Bernie's head-cam footage fills the screen." }
@@ -64,6 +64,8 @@
           "needs_choice": "drawer", "hide_if_blocked": true,
           "blocked_text": "The drawer is closed.",
           "text": "Someone wrote LUCKY on it in marker pen, so it must be true." },
+        { "label": "Look in the bin", "set_choice": "slip", "value": "found", "x": 359, "marker": [359, 166],
+          "text": "A crumpled betting slip: \"500 pounds - DRAW 0:0 - late offside drama\". Signed: G. Infantini. He was here before kick-off, \"just chatting with the ref\"?!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 104],
           "text": "Back to the booth. The static is still there." }
       ]
@@ -80,23 +82,14 @@
       ]
     },
 
-    "press_room": {
-      "name": "Press Room",
-      "menu_title": "What do you tell the press?",
-      "text": "Cameras, microphones and every journalist in the country. Infantini's TV deal: one live quote from you. Only one. Careful: a VAR never picks a side.",
+    "server_room": {
+      "name": "Server Room",
+      "text": "Humming servers, blinking lights, an icy breeze from the floor vents. The red cable from your booth ends here, on the floor. Cut clean through. Still sparking.",
       "actions": [
-        { "label": "Say: 'Clearly a goal!'", "set_choice": "press_answer", "value": "goal", "x": 330, "marker": [330, 130], "marker_after": "dave",
-          "text": "Cameras flash. The headline is written before you finish. A VAR rulebook bursts into flames." },
-        { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment", "x": 330, "marker": [330, 130], "marker_after": "dave",
-          "text": "\"No comment.\" Calm. Professional. Boring. The journalists sigh." },
-        { "label": "Say: 'Gianno Infantini cut the camera feed. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "x": 330, "marker": [330, 130], "marker_after": "dave",
-          "needs_choices": ["lanyard", "slip", "dave"], "hide_if_blocked": true,
-          "blocked_text": "No proof, no accusation.",
-          "text": "\"Infantini pulled the cable. Here's his lanyard, his betting slip and a bear witness.\" Every camera turns to the TV studio." },
-        { "label": "Pick up the crumpled paper by the TV camera", "set_choice": "slip", "value": "found", "x": 436, "marker": [430, 188],
-          "text": "A betting slip: \"500 pounds - DRAW 0:0 - late offside drama\". Signed: G. Infantini. The TV expert?!" },
+        { "label": "Look at the cut cable", "set_choice": "tie", "value": "found", "x": 250, "marker": [252, 160],
+          "text": "Stuck in the cut: the tip of a blue silk tie, cut clean. Gold initials: G.I." },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 104],
-          "text": "You leave. A journalist keeps shouting at the door." }
+          "text": "You leave the server room. The servers hum goodbye." }
       ]
     },
 
@@ -105,15 +98,28 @@
       "menu_title": "VAR, what's your call?",
       "text": "Sixty thousand fans on their feet. Flag up, captain screaming. The ref stares at you: \"VAR, what's your call?\"",
       "actions": [
-        { "label": "Rule: GOAL", "ruling": "goal", "x": 311, "marker": [313, 156],
-          "needs_choice": "press_answer",
-          "blocked_text": "The ref shakes his head: \"TV contract, VAR. Press Room first, then your call.\"",
-          "text": "You give the signal: GOAL!" },
-        { "label": "Rule: OFFSIDE", "ruling": "offside", "x": 311, "marker": [313, 156],
-          "needs_choice": "press_answer",
-          "blocked_text": "The ref shakes his head: \"TV contract, VAR. Press Room first, then your call.\"",
-          "text": "You give the signal: OFFSIDE!" },
-        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 114],
+        { "label": "Rule: GOAL", "set_choice": "ruling", "value": "goal", "x": 311, "marker": [313, 156],
+          "text": "You signal GOAL! The ref blows the final whistle. Then the ground shakes: a stampede of journalists is running straight at you!" },
+        { "label": "Rule: OFFSIDE", "set_choice": "ruling", "value": "offside", "x": 311, "marker": [313, 156],
+          "text": "You signal OFFSIDE! The ref blows the final whistle. Then the ground shakes: a stampede of journalists is running straight at you!" },
+        { "label": "Say: 'Guys, it was clearly ONSIDE. A regular goal!'", "set_choice": "press_answer", "value": "clear", "ends_game": true,
+          "x": 311, "marker": [313, 156], "menu_title": "The press wants answers!",
+          "needs_ruling": "goal", "hide_if_blocked": true, "blocked_text": "You ruled OFFSIDE.",
+          "text": "Forty microphones in your face. You say it loud and clear. One journalist faints. Nobody knows why." },
+        { "label": "Say: 'Guys, it was clearly OFFSIDE. No goal!'", "set_choice": "press_answer", "value": "clear", "ends_game": true,
+          "x": 311, "marker": [313, 156], "menu_title": "The press wants answers!",
+          "needs_ruling": "offside", "hide_if_blocked": true, "blocked_text": "You ruled GOAL.",
+          "text": "Forty microphones in your face. You say it loud and clear. Somewhere, a freeze-frame is being made." },
+        { "label": "Say: 'No comment.'", "set_choice": "press_answer", "value": "no_comment", "ends_game": true,
+          "x": 311, "marker": [313, 156], "menu_title": "The press wants answers!",
+          "needs_choice": "ruling", "hide_if_blocked": true, "blocked_text": "Make your call first.",
+          "text": "\"No comment.\" Calm. Professional. Boring. Forty journalists sigh at once." },
+        { "label": "Say: 'Gianno Infantini cut the camera cable. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "ends_game": true,
+          "x": 311, "marker": [313, 156], "menu_title": "The press wants answers!",
+          "needs_choice": "ruling", "needs_choices": ["press_pass", "slip", "tie", "dave"], "hide_if_blocked": true,
+          "blocked_text": "No proof, no accusation.",
+          "text": "You hold up his press pass, his betting slip and the tip of his tie. In the stands, a bear waves. Every camera turns to the TV studio." },
+        { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 114], "hidden_after": "ruling",
           "text": "You walk back inside. Sixty thousand people boo at once. Impressive." }
       ]
     }
@@ -156,41 +162,34 @@
   "endings": {
     "daylight_robbery": {
       "title": "Daylight Robbery",
-      "show_epilogue": true,
-      "text": "You signal OFFSIDE and the goal is gone. Within minutes, freeze-frames all over the internet show the striker was onside by 30 centimetres. The home fans chant your name in a way you will never forget. INFANTINI: What a call! Clearly offside! 0:0, just as I predicted. ...Right? RIGHT?",
+      "text": "OFFSIDE! The goal is gone, it ends 0:0. By morning, freeze-frames all over the internet show the striker was onside by 30 cm. The home fans wrote a song about you. It is not a nice song.",
       "tip": "TIP: In the VAR Review, freeze the exact moment the ball leaves the boot, then line up the second-last defender."
     },
-    "clip_of_the_year": {
-      "title": "Clip of the Year",
-      "show_epilogue": true,
-      "text": "You never studied the footage, so you make the call on pure vibes. GOAL! You happen to be right, but the broadcast cuts to your face at the exact moment you decide, and it is not a good face. By morning the clip has 40 million views and its own song. INFANTINI: Absolute cinema. That clip will outlive us all.",
+    "lucky_guess": {
+      "title": "Lucky Guess",
+      "text": "GOAL! It ends 1:0. You never watched the footage. You just guessed. You guessed right! The papers ask: \"Did the VAR even look?\" You did not.",
       "tip": "TIP: Check the footage first. Bernie the mascot has it."
     },
-    "right_call_wrong_mouth": {
-      "title": "Right Call, Wrong Mouth",
-      "show_epilogue": true,
-      "text": "Your review was right: onside, the goal stands. But you told the press \"Clearly a goal!\" before the referee had even made the call, and now every newspaper says the new VAR official picked a side. You were right, and it does not matter. INFANTINI: Right call, wrong mouth. They'll teach this one at VAR school.",
-      "tip": "TIP: A VAR stays neutral. Say \"No comment\", or expose Infantini if you can prove it."
-    },
-    "justice_served": {
-      "title": "Justice Served",
-      "show_epilogue": true,
-      "text": "Your review settles it: onside, the goal stands. Because you said \"No comment\", nobody can claim you picked a side before the official decision. The home fans sing your name. The away fans sing something else. The referee gives you a small nod. INFANTINI: Fine. Correct AND professional. Absolutely terrible for my ratings.",
-      "tip": "TIP: Prove who pulled the cable and expose him in the Press Room for the best ending."
-    },
-    "time_up": {
-      "title": "The Stadium Went Home",
-      "show_epilogue": true,
-      "text": "You took too long. After all that waiting, the referee shrugs, decides the goal with a coin toss and walks off. Half the stadium has already gone home; the other half is booing you personally. INFANTINI: That long for one decision? Even the bear left.",
-      "tip": "TIP: Infantini on the TV always tells you the next step. Follow the \"!\" markers."
+    "by_the_book": {
+      "title": "By the Book",
+      "text": "GOAL! It ends 1:0. You checked the footage, drew the line and got it right. Textbook. The referee nods at you. From a referee, that is basically a hug.",
+      "tip": "TIP: Find every clue and tell the press who cut the cable."
     },
     "var_is_watching": {
       "title": "VAR Is Watching",
-      "show_epilogue": false,
-      "text": "You give the goal and the stadium explodes. On every TV in the country, Gianno Infantini freezes mid-grin as two stewards walk into his studio holding a lanyard and a betting slip. In the stands, a bear takes off its head and bows. The goal stands. Infantini does not. INFANTINI: This is an outrage! I want my lawy-- [SIGNAL LOST]",
-      "tip": "PERFECT GAME: the right call, and Infantini is exposed. You are a natural."
+      "text": "GOAL! It ends 1:0. You got the call right AND caught the man who cut the cable. Day one. Not bad, rookie.",
+      "tip": "PERFECT GAME: the right call, and Infantini is caught. You are a natural."
+    },
+    "time_up": {
+      "title": "The Stadium Went Home",
+      "text": "You took too long. The referee flips a coin: OFFSIDE. It ends 0:0. Half the stadium has already gone home. The other half is booing you personally.",
+      "tip": "TIP: Infantini on the TV always tells you the next step. Follow the \"!\" markers."
     }
   },
 
-  "epilogue": "Meanwhile, in the TV studio, Gianno Infantini polishes his bald head and smiles. Nobody will ever know who pulled the camera cable at 93:30. Or will they? (Play again to find out.)"
+  "epilogues": {
+    "arrested": "Meanwhile, in the TV studio: two police officers walk in. Click. Handcuffs. Gianno Infantini leaves with his head down and half a tie. [SIGNAL LOST]",
+    "wins": "Meanwhile, in the TV studio, Gianno Infantini kisses his betting slip: 0:0, 500 pounds won. Nobody will ever know who cut the cable. Or will they? (Play again to find out.)",
+    "loses": "Meanwhile, in the TV studio, Gianno Infantini crumples his betting slip. 500 pounds, gone. Nobody will ever know who cut the cable. Or will they? (Play again to find out.)"
+  }
 }
