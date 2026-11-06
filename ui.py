@@ -235,6 +235,42 @@ def draw_timer(canvas, seconds_left, total_seconds, tick):
         pygame.draw.rect(canvas, colour, (TIMER_X + 3, TIMER_Y + 10, int((TIMER_WIDTH - 6) * part), 3))
 
 
+TASK_X = 112
+TASK_Y = 6
+TASK_WIDTH = 114
+TASK_HEIGHT = 42
+
+
+def draw_task_box(canvas):
+    # The "YOUR TASK" box at the top, between the timer and the pundit.
+    framed_box(canvas, TASK_X, TASK_Y, TASK_WIDTH, TASK_HEIGHT,
+               (255, 245, 220), (255, 255, 245), (220, 190, 140))
+
+
+def draw_task_text(window, task, fonts, scale):
+    # What the player should do next (from game.current_task), in small
+    # letters, at most 4 lines.
+    window.blit(fonts["tiny"].render("YOUR TASK", False, ORANGE), ((TASK_X + 5) * scale, (TASK_Y + 4) * scale))
+    lines = wrap_text(task, fonts["tiny"], (TASK_WIDTH - 10) * scale)
+    y = TASK_Y + 12
+    for line in lines[:4]:
+        window.blit(fonts["tiny"].render(line, False, BROWN), ((TASK_X + 5) * scale, y * scale))
+        y = y + 7
+
+
+PROOF_Y = 52
+
+
+def draw_proof_box(canvas):
+    # A small box under the timer for the proof counter.
+    framed_box(canvas, TIMER_X, PROOF_Y, TIMER_WIDTH, 14, (60, 40, 30), (90, 60, 40), (40, 25, 20))
+
+
+def draw_proof_text(window, text, fonts, scale):
+    # "PROOF FOUND: 1 of 3" in the box under the timer.
+    window.blit(fonts["tiny"].render(text, False, CREAM), ((TIMER_X + 4) * scale, (PROOF_Y + 2) * scale))
+
+
 def menu_extra(option_count):
     # The dialogue box has room for 4 options. Every option more makes
     # the menu box 11 pixels taller (it grows upwards).
@@ -337,6 +373,12 @@ def draw_review(canvas, review, state):
     # The box for the instructions at the bottom.
     framed_box(canvas, BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT,
                (255, 245, 220), (255, 255, 245), (220, 190, 140))
+
+    # Before the footage starts (the "rules" step): a cream panel over the
+    # pitch that explains offside. Its text is written in draw_review_text.
+    if state["step"] == "rules":
+        framed_box(canvas, PITCH_X, PITCH_Y - 4, PITCH_WIDTH, PITCH_HEIGHT + 8,
+                   (255, 245, 220), (255, 255, 245), (220, 190, 140))
 
 
 def draw_ending_screen(canvas):
@@ -571,6 +613,26 @@ def draw_review_text(window, review, state, fonts, scale):
     window.blit(fonts["small"].render("TIME " + str(time) + " s", False, (255, 220, 90)),
                 (24 * scale, 34 * scale))
 
+    # The "rules" step: the offside explanation from story.json on the
+    # panel, and how to start. The first line is the heading (in orange).
+    if state["step"] == "rules":
+        y = PITCH_Y + 4
+        for i in range(len(review["rules"])):
+            if i == 0:
+                colour = ORANGE
+            else:
+                colour = BROWN
+            window.blit(fonts["text"].render(review["rules"][i], False, colour), ((PITCH_X + 10) * scale, y * scale))
+            y = y + 13
+        lines = ["Read this first, then start the footage.",
+                 "ENTER: start the footage",
+                 "ESC: stop the review"]
+        y = BOX_Y + 12
+        for line in lines:
+            window.blit(fonts["text"].render(line, False, BROWN), ((BOX_X + 10) * scale, y * scale))
+            y = y + 11
+        return
+
     # Shirt numbers on the dots, in the number colour from story.json
     # (white on red, black on yellow, so you can always read them).
     for player in review["players"]:
@@ -618,9 +680,10 @@ def draw_e_bubble(window, middle_x, top_y, tick, font):
     window.blit(letter, (middle_x - letter.get_width() / 2, top_y - letter.get_height() / 2))
 
 
-def draw_ending_text(window, story, ending_id, fonts, scale):
-    # The ending: its title, its text, the epilogue (for most endings)
-    # and what the player can do now.
+def draw_ending_text(window, story, ending_id, summary, fonts, scale):
+    # The ending: its title, its text, the epilogue (for most endings),
+    # the summary (the right call and the proof found, from
+    # game.ending_summary) and what the player can do now.
     ending = story["endings"][ending_id]
     window.blit(fonts["small"].render("ENDING", False, CREAM), (40 * scale, 28 * scale))
     window.blit(fonts["big"].render(ending["title"].upper(), False, CREAM), (40 * scale, 36 * scale))
@@ -632,6 +695,11 @@ def draw_ending_text(window, story, ending_id, fonts, scale):
         y = y + 6
         for line in wrap_text(story["epilogue"], fonts["text"], 396 * scale):
             window.blit(fonts["text"].render(line, False, (120, 60, 140)), (42 * scale, y * scale))
+            y = y + 10
+    y = y + 8
+    for text in summary:
+        for line in wrap_text(text, fonts["text"], 396 * scale):
+            window.blit(fonts["text"].render(line, False, (40, 120, 60)), (42 * scale, y * scale))
             y = y + 10
     hint = fonts["small"].render("N: new game        Q: quit", False, ORANGE)
     window.blit(hint, (42 * scale, 232 * scale))

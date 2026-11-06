@@ -73,6 +73,30 @@ def count_clues(story, progress):
     return count
 
 
+def proof_text(story, progress):
+    # "PROOF FOUND: 1 of 3", or "" while no clue has been found yet
+    # (so the counter does not give away that there is something to find).
+    found = count_clues(story, progress)
+    if found == 0:
+        return ""
+    total = len(story["clue_items"]) + len(story["clue_choices"])
+    return "PROOF FOUND: " + str(found) + " of " + str(total)
+
+
+def current_task(story, progress):
+    # The task the player should do next: the first task in story.json that
+    # is not done yet. A task is done when its "done_when" id is in the
+    # inventory (an item, e.g. "whistle") or in the choices (e.g. "dave").
+    # The last task has no "done_when": it stays until the game ends.
+    for task in story["tasks"]:
+        if "done_when" not in task:
+            return task["text"]
+        done_id = task["done_when"]
+        if done_id not in progress["inventory"] and done_id not in progress["choices"]:
+            return task["text"]
+    return ""
+
+
 def pundit_line(story, scene, progress):
     # The pundit says his normal line for the scene, but the more clues
     # the player has found, the more nervous he gets.
@@ -181,9 +205,19 @@ def choose_ending(ruling, choices):
     return "right_call_wrong_mouth"
 
 
-def show_ending(story, ending_id):
+def ending_summary(story, progress):
+    # Two lines for the end of the game, so every player understands the
+    # result: what the right call was, and how much proof against Rex
+    # they found.
+    found = count_clues(story, progress)
+    total = len(story["clue_items"]) + len(story["clue_choices"])
+    proof_line = "Proof that Rex pulled the cable: " + str(found) + " of " + str(total) + " found."
+    return [story["truth"], proof_line]
+
+
+def show_ending(story, progress):
     # Print the ending with a clear label, so the player knows the game is over.
-    ending = story["endings"][ending_id]
+    ending = story["endings"][progress["ending"]]
     print()
     print("*****************************************")
     print("ENDING: " + ending["title"])
@@ -193,6 +227,10 @@ def show_ending(story, ending_id):
     if ending["show_epilogue"]:
         print()
         print(story["epilogue"])
+    # And what really happened, so the result is easy to understand.
+    print()
+    for line in ending_summary(story, progress):
+        print(line)
 
 
 def value_at(track, time, index):
@@ -260,6 +298,10 @@ def run_review(story):
     review = story["review"]
     print()
     print(review["intro"])
+    # The offside rules in plain words (the same text as in the 2D version).
+    print()
+    for line in review["rules"]:
+        print(line)
 
     # 1. Look at moments until the player locks one with L.
     looked_at = None
@@ -340,7 +382,7 @@ def start_menu(story):
             print("Please type n or c.")
 
 
-def after_ending_menu(story, ending_id):
+def after_ending_menu(story, progress):
     # After an ending no story actions are possible any more.
     # The player can read the ending again, start over or quit.
     # Returns "restart" or "quit".
@@ -351,7 +393,7 @@ def after_ending_menu(story, ending_id):
         print("q. Quit")
         choice = input("> ").strip().lower()
         if choice == "v":
-            show_ending(story, ending_id)
+            show_ending(story, progress)
         elif choice == "n":
             if ask_yes_no("Start a new game?"):
                 return "restart"
@@ -391,8 +433,8 @@ def play_game(story, progress):
 
     # If the saved game is already finished, the ending cannot change.
     if progress["ending"] is not None:
-        show_ending(story, progress["ending"])
-        return after_ending_menu(story, progress["ending"])
+        show_ending(story, progress)
+        return after_ending_menu(story, progress)
 
     # Short names for the inventory list and the choices dictionary.
     # They point to the same list/dictionary inside progress, so changing
@@ -408,6 +450,9 @@ def play_game(story, progress):
             progress["visited"].append(progress["scene"])
         scene = story["scenes"][progress["scene"]]
         show_scene(story, progress["scene"], first_visit, pundit_line(story, scene, progress))
+        print("YOUR TASK: " + current_task(story, progress))
+        if proof_text(story, progress) != "":
+            print(proof_text(story, progress))
 
         # Only the visible actions get a number in the menu.
         actions = get_visible_actions(scene, inventory, choices)
@@ -461,8 +506,8 @@ def play_game(story, progress):
             # Remember and save the ending, so it cannot be changed later.
             progress["ending"] = ending_id
             save_progress(progress)
-            show_ending(story, ending_id)
-            return after_ending_menu(story, ending_id)
+            show_ending(story, progress)
+            return after_ending_menu(story, progress)
 
         # If the action gives an item, add it (but never a second copy).
         if "take_item" in action:
@@ -488,8 +533,8 @@ def play_game(story, progress):
         if progress["actions_left"] <= 0:
             progress["ending"] = "time_up"
             save_progress(progress)
-            show_ending(story, "time_up")
-            return after_ending_menu(story, "time_up")
+            show_ending(story, progress)
+            return after_ending_menu(story, progress)
 
         # The action was accepted, so save the progress right away.
         save_progress(progress)

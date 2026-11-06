@@ -14,6 +14,16 @@
 
   "clue_items": ["lanyard", "slip"],
   "clue_choices": ["dave"],
+
+  "truth": "THE RIGHT CALL: GOAL. When the ball was passed, the striker was onside by 30 cm.",
+
+  "tasks": [
+    { "text": "Read Dave's sticky note on the desk, then find Pombo the mascot. His door needs a whistle.", "done_when": "whistle" },
+    { "text": "Open the Mascot Changing Room with the Lucky Whistle and talk to Pombo.", "done_when": "dave" },
+    { "text": "Plug the USB Stick into the VAR computer in the booth and check the goal.", "done_when": "review" },
+    { "text": "Go to the Press Room and give the journalists one quote.", "done_when": "press_answer" },
+    { "text": "Go to the Pitch and give the referee your call: GOAL or OFFSIDE." }
+  ],
   "ball_goal_pundit": "PUNDIT: Did the VAR official just score?! Somebody check the VAR! Oh wait... that's you. Doesn't count, rookie.",
   "pundit_nervous": [
     "PUNDIT: Why are you poking around, rookie? Eyes on the football, please.",
@@ -125,6 +135,16 @@
 
   "review": {
     "intro": "Pombo's head-cam footage runs for 3 seconds. Find the exact moment the ball leaves the passer's boot and lock it. Then draw the offside line: it goes on the second-last opponent (the goalkeeper counts as one), and level counts as onside. You only get one look.",
+    "rules": [
+      "HOW OFFSIDE WORKS",
+      "An attacker is OFFSIDE if he is closer to the goal than the second-last",
+      "defender at the exact moment the ball is passed to him.",
+      "The goalkeeper counts as a defender. Level with the defender = ONSIDE.",
+      "",
+      "STEP 1: Find the moment the ball leaves the passer's boot (red 8). Lock it.",
+      "STEP 2: Put the offside line on the second-last defender. Lock it.",
+      "Then you see if the striker (red 9) is past your line."
+    ],
     "step": 0.1,
     "end": 3.0,
     "release": 1.2,

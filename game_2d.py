@@ -220,10 +220,11 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
         return
 
     # 3. The VAR Review opens its own screen (see handle_review_key).
+    #    It starts with the "rules" step, which explains offside.
     #    "frame" is the moment in the footage (0 = 0.0 s, 12 = 1.2 s ...),
     #    "line" is where the offside line is, in tenths of a metre (300 = 30.0 m).
     if "review" in action:
-        screen["review"] = {"step": "time", "frame": 0, "line": 300}
+        screen["review"] = {"step": "rules", "frame": 0, "line": 300}
         sound.play("beep")
         # Holding an arrow key now repeats it (after 200 ms, every 30 ms),
         # so the sliders move smoothly.
@@ -332,13 +333,21 @@ def close_review(screen):
 
 
 def handle_review_key(key, progress, story, screen, fonts):
+    # Before the steps ("rules"): the offside explanation. Enter starts
+    # the footage, Escape closes the review (nothing is remembered).
     # Step 1 ("time"): left / right moves through the footage, 0.1 s per
     # press; Enter locks the moment.
     # Step 2 ("line"): left / right moves the offside line, 0.1 m per press;
     # Enter locks it and the result is remembered.
     review = story["review"]
     state = screen["review"]
-    if state["step"] == "time":
+    if state["step"] == "rules":
+        if key in [pygame.K_RETURN, pygame.K_SPACE, pygame.K_e]:
+            state["step"] = "time"
+            sound.play("beep")
+        elif key == pygame.K_ESCAPE:
+            close_review(screen)
+    elif state["step"] == "time":
         # The footage has end / step + 1 moments, e.g. 3.0 / 0.1 + 1 = 31.
         last = int(round(review["end"] / review["step"]))
         if key in [pygame.K_LEFT, pygame.K_a] and state["frame"] > 0:
@@ -624,6 +633,11 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         ui.draw_flying_item(overlay, assets["pictures"][flying_item], screen["flying"]["x"] - offset // SCALE,
                             160, slot, screen["flying"]["frame"], FLY_FRAMES)
     ui.draw_timer(overlay, progress["seconds_left"], story["time_limit_seconds"], tick)
+    ui.draw_task_box(overlay)
+    # The proof counter only appears once the first clue is found.
+    proof = game.proof_text(story, progress)
+    if proof != "":
+        ui.draw_proof_box(overlay)
 
     # The text bar: the current page, or (greyed out) the last page read.
     menu_open = screen["menu"] is not None or screen["pause"] is not None
@@ -651,6 +665,9 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     # 4. The text inside the boxes.
     if not full_screen:
         ui.draw_timer_text(window, progress["seconds_left"], fonts, SCALE)
+        ui.draw_task_text(window, game.current_task(story, progress), fonts, SCALE)
+        if proof != "":
+            ui.draw_proof_text(window, proof, fonts, SCALE)
     if not full_screen and screen["confirm"] is None:
         # After a goal with the ball, the pundit comments on that instead.
         if progress["scene"] == "pitch" and ball["celebrate"] > 0:
@@ -679,7 +696,7 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     if screen["review"] is not None:
         ui.draw_review_text(window, story["review"], screen["review"], fonts, SCALE)
     if show_ending:
-        ui.draw_ending_text(window, story, progress["ending"], fonts, SCALE)
+        ui.draw_ending_text(window, story, progress["ending"], game.ending_summary(story, progress), fonts, SCALE)
     if screen["confirm"] is not None:
         ui.draw_confirm_text(window, screen["confirm"], fonts, SCALE)
 
@@ -872,9 +889,11 @@ def play(assets, story, progress, screen, player):
         if progress["scene"] == "pitch":
             update_ball(moving["ball"], player, player_width)
 
-        # The stadium is waiting: the time runs, except in the pause menu,
-        # during a yes/no question and after the game has ended.
-        paused = screen["pause"] is not None or screen["confirm"] is not None
+        # The stadium is waiting: the time only runs while you walk around.
+        # It stops while any box is open (a text, the sticky note, a menu,
+        # the VAR Review, the pause menu, a yes/no question), so reading
+        # and thinking never cost time. It also stops after the ending.
+        paused = box_is_open(screen)
         if progress["ending"] is None and not paused:
             progress["seconds_left"] = progress["seconds_left"] - 1 / 30
             if progress["seconds_left"] <= 0:
