@@ -27,17 +27,18 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 
 - Rex always says (rudely, but clearly) what to do next: the `"hints"` list in
   story.json, each with a `"done_when"` id (item or choice); `current_hint` in
-  game.py shows the first one not done. A hint can have `"if_item"` /
-  `"pundit_if_item"` for a different line once that item is carried.
+  game.py shows the first one not done. A hint can have `"if_clue"` /
+  `"pundit_if_clue"` for a different line once that clue is found.
 - His mood shows in his name, from `"pundit_moods"` by clue count:
   PUNDIT, PUNDIT (nervous), (sweating), (panicking) (`pundit_line`).
 - 2D: a new line makes his speech box flash yellow and beep (`HINT_FLASH_FRAMES`).
-- "PROOF FOUND: n of 3" (`proof_text`) appears after the first clue; trying to
-  expose Rex too early lists the missing kinds of proof (`proof_list`).
+- Clues are secret: no counter anywhere. Exposing Rex stays hidden until all
+  clues are found (`needs_choices` + `hide_if_blocked`).
 - Each hint has a `"room"`; `door_to_hint` finds the door on the way there
   (from the booth: that room's door, elsewhere: the door back to the booth).
   2D draws a "!" at its `"door_marker"`; the terminal adds "(!)" to the action.
-- Every ending shows the truth, the proof found and its `"tip"` (`ending_summary`).
+- Every ending shows the truth and its `"tip"` (`ending_summary`); tips never
+  say how many clues there are.
 - Dialogue texts are kept short: every text fits on one page of the text box.
 
 ### Tutorial (2D)
@@ -89,7 +90,8 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
 
 ### Items
 
-- Lucky Whistle, USB Stick, Press Lanyard, Betting Slip.
+- Lucky Whistle, USB Stick. (The Press Lanyard and Betting Slip are hidden
+  clues in `choices`, not items. The player never sees a clue count.)
 - Items are **reusable** (not used up) and **cannot be duplicated**.
 
 ### Endings (`choose_ending` in game.py, checked top to bottom)
@@ -180,4 +182,4 @@ Correct: 1.2 s + line on defender 4 (21.5 m); striker at 21.8 m = onside
 - A1/A2: the Lucky Whistle is the "key" for the Mascot Changing Room.
 - A3: every item can be collected only once (taken items disappear).
 - PT04: the review result and the press answer are remembered and change the
-  ending; exposing Rex needs earlier clues (needs_items + needs_choice).
+  ending; exposing Rex needs earlier clues (needs_choices).

@@ -113,12 +113,27 @@ def test_offside_rule(story):
     assert game.judge_offside(21.8, 21.9) == "offside"
 
 
-def test_expose_needs_all_proof(story):
-    # Exposing Rex needs the lanyard, the betting slip AND Dave's statement.
+def test_expose_needs_all_clues(story):
+    # The option to expose Rex stays hidden until the player has the lanyard,
+    # the betting slip AND Dave's statement. Clues are choices, not items.
     expose = find_action(story, "press_room", "Say: 'Rex")
-    assert game.blocked_reason(expose, ["lanyard", "slip"], {}) is not None
-    assert game.blocked_reason(expose, ["lanyard"], {"dave": "talked"}) is not None
-    assert game.blocked_reason(expose, ["lanyard", "slip"], {"dave": "talked"}) is None
+    assert game.is_hidden(expose, [], {"lanyard": "found", "slip": "found"})
+    assert game.is_hidden(expose, [], {"lanyard": "found", "dave": "talked"})
+    assert not game.is_hidden(expose, [], {"lanyard": "found", "slip": "found", "dave": "talked"})
+
+
+def test_clues_are_not_items(story):
+    # Finding a clue never puts it in the inventory, and an old save that
+    # still has a clue as an item is converted when it is loaded.
+    assert "lanyard" not in story["items"]
+    assert "slip" not in story["items"]
+    progress = game.new_progress(story)
+    progress["inventory"] = ["whistle", "lanyard"]
+    game.save_progress(progress, TEST_SAVE)
+    loaded = game.load_progress(TEST_SAVE)
+    os.remove(TEST_SAVE)
+    assert loaded["inventory"] == ["whistle"]
+    assert loaded["choices"]["lanyard"] == "found"
 
 
 def test_pundit_hints(story):
@@ -129,7 +144,7 @@ def test_pundit_hints(story):
     progress["inventory"].append("whistle")
     assert game.current_hint(story, progress) != first
     assert game.pundit_line(story, progress).startswith("PUNDIT: ")
-    progress["inventory"].append("lanyard")
+    progress["choices"]["lanyard"] = "found"
     assert game.pundit_line(story, progress).startswith("PUNDIT (nervous): ")
 
 
@@ -147,21 +162,22 @@ def test_door_to_hint(story):
 
 
 def test_ending_summary(story):
-    # Every ending explains the result: the truth, the proof and a tip.
+    # Every ending explains the result: the truth and a tip.
     progress = game.new_progress(story)
     for ending_id in story["endings"]:
         progress["ending"] = ending_id
         summary = game.ending_summary(story, progress)
-        assert len(summary) == 3
+        assert len(summary) == 2
         assert summary[0] == story["truth"]
+        assert summary[1] == story["endings"][ending_id]["tip"]
 
 
 def run_all_tests():
     story = game.load_story()
     tests = [test_a1_locked_route, test_a2_unlocked_route, test_a3_no_duplicate,
              test_a4_resume, test_a5_two_outcomes, test_a6_restart,
-             test_offside_rule, test_expose_needs_all_proof, test_pundit_hints,
-             test_door_to_hint, test_ending_summary]
+             test_offside_rule, test_expose_needs_all_clues, test_clues_are_not_items,
+             test_pundit_hints, test_door_to_hint, test_ending_summary]
     failed = 0
     for test in tests:
         # try / except: if an assert fails, we count it and keep going.

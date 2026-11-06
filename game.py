@@ -57,30 +57,24 @@ def load_progress(file_name="save.json"):
     # Save files from before "visited" existed do not have it yet.
     if "visited" not in progress:
         progress["visited"] = []
+    # In older versions the two clues were items. Move them to the choices,
+    # so old saves still work.
+    for clue in ["lanyard", "slip"]:
+        if clue in progress["inventory"]:
+            progress["inventory"].remove(clue)
+            progress["choices"][clue] = "found"
     return progress
 
 
 def count_clues(story, progress):
-    # Count how many clues against the pundit the player has found:
-    # the clue items in the inventory plus the clue choices that were made.
+    # Count how many clues against the pundit the player has found.
+    # Clues are not items: they are remembered in the choices dictionary.
+    # This number is secret: it only makes the pundit more nervous.
     count = 0
-    for item_id in story["clue_items"]:
-        if item_id in progress["inventory"]:
-            count = count + 1
     for choice_name in story["clue_choices"]:
         if choice_name in progress["choices"]:
             count = count + 1
     return count
-
-
-def proof_text(story, progress):
-    # "PROOF FOUND: 1 of 3", or "" while no clue has been found yet
-    # (so the counter does not give away that there is something to find).
-    found = count_clues(story, progress)
-    if found == 0:
-        return ""
-    total = len(story["clue_items"]) + len(story["clue_choices"])
-    return "PROOF FOUND: " + str(found) + " of " + str(total)
 
 
 def find_current_hint(story, progress):
@@ -100,11 +94,11 @@ def find_current_hint(story, progress):
 
 def current_hint(story, progress):
     # What the pundit says for the current hint. Some hints change once you
-    # carry a certain item (e.g. he stops asking for his lanyard once you
+    # found a certain clue (e.g. he stops asking for his lanyard once you
     # have found it).
     hint = find_current_hint(story, progress)
-    if "if_item" in hint and hint["if_item"] in progress["inventory"]:
-        return hint["pundit_if_item"]
+    if "if_clue" in hint and hint["if_clue"] in progress["choices"]:
+        return hint["pundit_if_clue"]
     return hint["pundit"]
 
 
@@ -179,40 +173,19 @@ def get_visible_actions(scene, inventory, choices):
     return visible
 
 
-def explain_blocked(action, inventory, choices):
-    # The text that explains why an action is blocked.
-    text = action["blocked_text"]
-    # Accusing Rex has a "proof_list": then we add a checklist that says
-    # how much proof you have. Found proof is named; missing proof is only
-    # "still missing", so the game does not spoil what you have to find.
-    if "proof_list" in action:
-        found = 0
-        details = ""
-        for proof in action["proof_list"]:
-            # A proof is an item (in the inventory) or a choice (talking to Dave).
-            if proof["id"] in inventory or proof["id"] in choices:
-                found = found + 1
-                details = details + " " + proof["what"] + ": " + proof["name"] + "."
-            else:
-                details = details + " " + proof["what"] + ": still missing."
-        total = len(action["proof_list"])
-        text = text + " Proof found: " + str(found) + " of " + str(total) + "." + details
-    return text
-
-
 def blocked_reason(action, inventory, choices):
     # If the action needs an item the player does not have, return the
     # explanation text. Otherwise return None, which means "not blocked".
     if "needs_item" in action and action["needs_item"] not in inventory:
-        return explain_blocked(action, inventory, choices)
-    # Some actions need several items: every one of them must be in the inventory.
-    if "needs_items" in action:
-        for item_id in action["needs_items"]:
-            if item_id not in inventory:
-                return explain_blocked(action, inventory, choices)
+        return action["blocked_text"]
+    # Some actions need several decisions or clues: all of them must be there.
+    if "needs_choices" in action:
+        for choice_name in action["needs_choices"]:
+            if choice_name not in choices:
+                return action["blocked_text"]
     # Same idea for a decision the player has not made yet.
     if "needs_choice" in action and action["needs_choice"] not in choices:
-        return explain_blocked(action, inventory, choices)
+        return action["blocked_text"]
     return None
 
 
@@ -239,14 +212,11 @@ def choose_ending(ruling, choices):
 
 
 def ending_summary(story, progress):
-    # Three lines for the end of the game, so every player understands the
-    # result: what the right call was, how much proof against Rex they
-    # found, and a tip from the ending in story.json (what to try next time).
-    found = count_clues(story, progress)
-    total = len(story["clue_items"]) + len(story["clue_choices"])
-    proof_line = "Proof that Rex pulled the cable: " + str(found) + " of " + str(total) + " found."
+    # Two lines for the end of the game, so every player understands the
+    # result: what the right call was, and a tip from the ending in
+    # story.json (what to try next time).
     tip = story["endings"][progress["ending"]]["tip"]
-    return [story["truth"], proof_line, tip]
+    return [story["truth"], tip]
 
 
 def show_ending(story, progress):
@@ -488,8 +458,6 @@ def play_game(story, progress):
             progress["visited"].append(progress["scene"])
         scene = story["scenes"][progress["scene"]]
         show_scene(story, progress["scene"], first_visit, pundit_line(story, progress))
-        if proof_text(story, progress) != "":
-            print(proof_text(story, progress))
 
         # Only the visible actions get a number in the menu.
         actions = get_visible_actions(scene, inventory, choices)

@@ -135,10 +135,10 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
   PUNDIT, PUNDIT (nervous), (sweating), (panicking).
 - **New hint signal (2D):** when he says something new, his speech box flashes
   yellow and beeps.
-- **Proof counter:** "PROOF FOUND: 1 of 3" appears after the first clue.
-  Trying to expose Rex too early lists which kind of proof is still missing.
+- **Secret clues:** the game never shows how many clues exist or how many you
+  found. The option to expose Rex only appears once you have all of them.
 - **The truth at the end:** every ending shows the right call (GOAL, onside by
-  30 cm), how much proof you found, and a tip for the next game.
+  30 cm) and a tip for the next game.
 - **The Press Room** reminds you that a VAR never picks a side.
 
 ## The game at a glance
@@ -148,9 +148,12 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
   linesman) wears black. The scoreboard says FCB 1 - 0 BVB.
 - **5 scenes:** VAR Booth (start), Referee's Dressing Room, Mascot Changing Room,
   Press Room, The Pitch.
-- **4 items:** the Lucky Whistle opens the Mascot Changing Room; Pombo the pigeon
-  mascot gives you the USB Stick with the missing angle; the Press Lanyard and the
-  Betting Slip are clues. Items are reusable and can only be collected once.
+- **2 items:** the Lucky Whistle opens the Mascot Changing Room; Pombo the pigeon
+  mascot gives you the USB Stick with the missing angle. Items are reusable and
+  can only be collected once.
+- **3 hidden clues against Rex:** the Press Lanyard, the Betting Slip and Dave's
+  statement. They are not items: the game remembers them secretly and never
+  shows how many there are.
 - **The twist:** Pombo is really Dave, the missing VAR operator, and the TV pundit
   Rex Smugworth pulled the camera cable because he bet on the away team.
   Finding this out is optional.
@@ -175,7 +178,7 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 
 ## Automatic tests
 
-`test_game.py` checks A1-A6 (and the offside rule, the proof for exposing Rex,
+`test_game.py` checks A1-A6 (and the offside rule, the clues for exposing Rex,
 the pundit's hints, the "!" door and the ending summary) with the functions from `game.py`. It uses its own save file,
 so your saved game is never touched.
 
@@ -183,7 +186,7 @@ so your saved game is never touched.
 py test_game.py
 ```
 
-It prints PASS or FAIL for every test and "11 of 11 tests passed." at the end.
+It prints PASS or FAIL for every test and "12 of 12 tests passed." at the end.
 The checklists below test the same scenarios by hand, in the real game.
 
 ## Acceptance test checklist (A1-A6): terminal version
