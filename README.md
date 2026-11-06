@@ -108,7 +108,7 @@ All sounds are original and made with code (`tools/make_sounds.py`), in the styl
 game consoles: square waves, triangle waves and noise. No sound files from the internet.
 
 - **Music:** a chill theme on the title screen and a calmer mystery theme while you play.
-- **Effects:** doors, locked doors, picking up items, the Lucky Whistle, Pombo's coo,
+- **Effects:** doors, locked doors, picking up items, the Lucky Whistle, Bernie's growl,
   cameras in the Press Room, the VAR Review beeps, kicking the ball, a goal cheer, menu
   blips and a soft blip while the text appears.
 - **Room sounds:** the crowd on the pitch and the shower in the referee's room.
@@ -148,13 +148,13 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
   linesman) wears black. The scoreboard says FCB 1 - 0 BVB.
 - **5 scenes:** VAR Booth (start), Referee's Dressing Room, Mascot Changing Room,
   Press Room, The Pitch.
-- **2 items:** the Lucky Whistle opens the Mascot Changing Room; Pombo the pigeon
+- **2 items:** the Lucky Whistle opens the Mascot Changing Room; Bernie the bear
   mascot gives you the USB Stick with the missing angle. Items are reusable and
   can only be collected once.
 - **3 hidden clues against Rex:** the Press Lanyard, the Betting Slip and Dave's
   statement. They are not items: the game remembers them secretly and never
   shows how many there are.
-- **The twist:** Pombo is really Dave, the missing VAR operator, and the TV pundit
+- **The twist:** Bernie is really Dave, the missing VAR operator, and the TV pundit
   Rex Smugworth pulled the camera cable because he bet on the away team.
   Finding this out is optional.
 - **The VAR Review:** plug the USB Stick into the VAR computer, find the exact
@@ -228,6 +228,6 @@ or delete `save_2d.json` first. A new game starts with the tutorial: press
 | **A1 Locked route** | Walk to the Mascot Room door (2nd door), `E` | "The door is locked..." You stay in the VAR Booth and the inventory bar is empty. |
 | **A2 Unlocked route** | Dressing Room door, `E`. Walk to the kit cabinet, `E` (open drawer), `E` (take whistle). Back door, `E`. Mascot Room door, `E` | The door opens and you are in the Mascot Changing Room. The Lucky Whistle is still in the inventory bar. |
 | **A3 No duplicate** | Take the whistle as in A2, press `E` at the cabinet again, then leave and come back to the Dressing Room | The drawer is open and empty, and there is nothing more to take. The whistle is in the bar only once. |
-| **A4 Resume** | Take the whistle, go to the Mascot Room, talk to Pombo (USB Stick), go to the Press Room and answer "No comment". `Escape`, *Back to the title screen*, close the window. Run `py game_2d.py` again and choose *Play* | You continue in the Press Room and the reporters do not ask again. The bar shows the whistle and the USB Stick. On the Pitch the referee takes your call. |
+| **A4 Resume** | Take the whistle, go to the Mascot Room, talk to Bernie (USB Stick), go to the Press Room and answer "No comment". `Escape`, *Back to the title screen*, close the window. Run `py game_2d.py` again and choose *Play* | You continue in the Press Room and the reporters do not ask again. The bar shows the whistle and the USB Stick. On the Pitch the referee takes your call. |
 | **A5 Two outcomes** | Game 1: Press Room, answer, Pitch, referee, **GOAL** gives **Clip of the Year**. Press `N`, `Y`. Game 2: get the whistle and the USB Stick, then use the VAR computer: `Enter` after the explanation, move to 1.2 s, `Enter`, put the line on defender number 4, `Enter`. Press Room, "No comment", Pitch, **GOAL** gives **Justice Served**. Close the window, run again, *Play* | Two different endings. Reopening a finished game shows the same ending again, with only `N` and `Q`. |
 | **A6 Restart safely** | Take the whistle. `Escape`, *Restart*, `N`. Then `Escape`, *Restart*, `Y` | After `N`: you are still in the Dressing Room with the whistle. After `Y`: you are back in the VAR Booth, the bar is empty, the timer is back at 5:00, and the Press Room asks its question again. |

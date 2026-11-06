@@ -212,10 +212,10 @@ def make_effects():
         return fade(mix(samples, noise(seconds, 0.03)), 0.01, 0.05)
     save("whistle", join(trill(0.22), silence(0.06), trill(0.55)))
 
-    # Pombo: a pigeon "coo-coo" (a low wobbly tone that slides down).
-    coo1 = fade(tone(380, 0.22, "sine", 0.3, slide_to=330, vibrato=0.03), 0.03, 0.08)
-    coo2 = fade(tone(340, 0.34, "sine", 0.3, slide_to=280, vibrato=0.03), 0.03, 0.12)
-    save("coo", join(coo1, silence(0.06), coo2))
+    # Bernie: a friendly bear growl (a low wobbly buzz that slides down).
+    growl1 = fade(tone(130, 0.22, "square", 0.22, duty=0.25, slide_to=105, vibrato=0.08), 0.03, 0.06)
+    growl2 = fade(tone(115, 0.42, "square", 0.25, duty=0.25, slide_to=75, vibrato=0.08), 0.03, 0.14)
+    save("growl", join(growl1, silence(0.04), growl2))
 
     # A camera: the click of the shutter and a little flash whine.
     click = decay(noise(0.03, 0.4), 80)

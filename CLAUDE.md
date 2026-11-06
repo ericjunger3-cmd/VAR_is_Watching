@@ -53,7 +53,7 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 
 ### The twist (optional to discover)
 
-- **Pombo is Dave**, the missing VAR operator from the sticky note, working a
+- **Bernie is Dave**, the missing VAR operator from the sticky note, working a
   second job as the mascot. He filmed the goal on his head-cam (the USB Stick)
   and saw a man in a shiny suit run out of the booth at 93:30.
 - **The pundit, Rex Smugworth, pulled the camera cable** because he bet 500 on
@@ -68,7 +68,7 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
    VAR computer for the **VAR Review** (needs the USB; one look only).
 2. **Referee's Dressing Room** – the **Lucky Whistle**.
 3. **Mascot Changing Room** – locked; needs the Lucky Whistle.
-   Pombo/Dave gives the **USB Stick** and his statement.
+   Bernie/Dave gives the **USB Stick** and his statement.
 4. **Press Room** – one answer only: **"Clearly a goal!"**, **"No comment"** or
    **expose Rex** (needs lanyard + slip + Dave). Betting Slip by the TV camera.
    Why the VAR goes there: Rex's TV channel has a deal with the league, so the

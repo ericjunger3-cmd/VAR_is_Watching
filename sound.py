@@ -12,7 +12,7 @@ SOUND_FOLDER = "sounds/"
 SETTINGS_FILE = "settings.json"
 
 # Short sounds (effects) and long sounds that repeat (the background of a room).
-EFFECTS = ["pickup", "door", "bonk", "blip", "confirm", "type", "whistle", "coo",
+EFFECTS = ["pickup", "door", "bonk", "blip", "confirm", "type", "whistle", "growl",
            "camera", "beep", "tick", "lock", "kick", "goal", "jingle_good", "jingle_bad"]
 AMBIENCE = ["crowd", "shower"]
 

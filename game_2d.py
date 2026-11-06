@@ -137,7 +137,7 @@ def find_markers(story, scene, progress, nearby, looked):
     # - the player is not standing there (then the "E" bubble shows instead),
     # - it is not a close-up you have already read (the sticky note),
     # - its "marker_after" choice is made, if it has one (the press answers
-    #   only get a "!" after talking to Pombo, so you collect clues first).
+    #   only get a "!" after talking to Bernie, so you collect clues first).
     markers = []
     actions = game.get_visible_actions(scene, progress["inventory"], progress["choices"])
     for action in actions:
@@ -255,10 +255,10 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
     # Remember a decision (press answer, Dave's statement ...).
     if "set_choice" in action:
         choices[action["set_choice"]] = action["value"]
-        # Talking to Pombo starts Dave's reveal (taking off the mask).
+        # Talking to Bernie starts Dave's reveal (taking off the mask).
         if action["set_choice"] == "dave":
             screen["reveal"] = 0
-            sound.play("coo")
+            sound.play("growl")
         # The press: cameras click. The drawer: it squeaks open.
         if action["set_choice"] == "press_answer":
             sound.play("camera")
@@ -1075,7 +1075,7 @@ def main():
         # The characters and objects that live in the rooms. Some use the
         # same letters with their own colours (e.g. the kits).
         "pictures": {
-            "pombo": sprites.make_sprite(sprites.POMBO),
+            "bernie": sprites.make_sprite(sprites.BERNIE, sprites.BERNIE_COLOURS),
             "referee": sprites.make_sprite(sprites.REFEREE, sprites.REFEREE_COLOURS),
             "striker": sprites.make_sprite(sprites.STRIKER, sprites.STRIKER_COLOURS),
             "captain": sprites.make_sprite(sprites.CAPTAIN, sprites.CAPTAIN_COLOURS),
@@ -1086,9 +1086,9 @@ def main():
             # Item pictures: the key is the item id from story.json.
             "whistle": sprites.make_sprite(sprites.WHISTLE),
             "usb": sprites.make_sprite(sprites.USB),
-            # Pombo in parts, and Dave's own face, for the reveal.
-            "pombo_head": sprites.make_sprite(sprites.POMBO_HEAD),
-            "pombo_body": sprites.make_sprite(sprites.POMBO_BODY),
+            # Bernie in parts, and Dave's own face, for the reveal.
+            "bernie_head": sprites.make_sprite(sprites.BERNIE_HEAD, sprites.BERNIE_COLOURS),
+            "bernie_body": sprites.make_sprite(sprites.BERNIE_BODY, sprites.BERNIE_COLOURS),
             "dave_head": sprites.make_sprite(sprites.DAVE_HEAD),
             "lanyard": sprites.make_sprite(sprites.LANYARD),
             "slip": sprites.make_sprite(sprites.SLIP),

@@ -574,7 +574,7 @@ def draw_menu_text(window, menu, fonts, scale):
 def draw_review_text(window, review, state, fonts, scale):
     # The words on the VAR monitor: the header, the time, the shirt
     # numbers, and the instructions for the current step.
-    header = fonts["title"].render("VAR REVIEW  -  POMBO'S HEAD-CAM", False, CREAM)
+    header = fonts["title"].render("VAR REVIEW  -  BERNIE'S HEAD-CAM", False, CREAM)
     window.blit(header, (24 * scale, 20 * scale))
     time = review_time(review, state)
     window.blit(fonts["small"].render("TIME " + str(time) + " s", False, (255, 220, 90)),

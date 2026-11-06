@@ -18,9 +18,9 @@
 
   "hints": [
     { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. Thrilling.", "done_when": "whistle", "room": "dressing_room" },
-    { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a pigeon. Live on my show. I'm crying.", "done_when": "dave", "room": "mascot_room" },
-    { "pundit": "A USB stick from a pigeon. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review", "room": "booth",
-      "if_clue": "lanyard", "pundit_if_clue": "A USB stick from a pigeon. Plug it into your VAR computer, genius. And that lanyard? Never seen it. Never." },
+    { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a bear. Live on my show. I'm crying.", "done_when": "dave", "room": "mascot_room" },
+    { "pundit": "A USB stick from a bear. Plug it into your VAR computer, genius. Also... anyone seen my lanyard? No reason.", "done_when": "review", "room": "booth",
+      "if_clue": "lanyard", "pundit_if_clue": "A USB stick from a bear. Plug it into your VAR computer, genius. And that lanyard? Never seen it. Never." },
     { "pundit": "Press Room next. One quote, rookie. And don't touch any crumpled paper by my camera. Totally normal paper.", "done_when": "press_answer", "room": "press_room" },
     { "pundit": "Pitch time! Tell the ref GOAL or OFFSIDE. It's offside, obviously. Trust me. I'm on TV.", "room": "pitch" }
   ],
@@ -37,20 +37,20 @@
         { "label": "Go to the Mascot Changing Room", "go_to": "mascot_room", "x": 316, "door_marker": [316, 104],
           "needs_item": "whistle",
           "blocked_text": "Locked. Sign: \"MASCOTS ONLY. Whistle for entry.\" The ref keeps a spare whistle in his room.",
-          "text": "You blow the Lucky Whistle. A pigeon coos. The door clicks open." },
+          "text": "You blow the Lucky Whistle. A bear growls. The door clicks open." },
         { "label": "Go to the Press Room", "go_to": "press_room", "x": 374, "door_marker": [374, 104],
           "text": "You follow the sound of camera shutters and bad decisions." },
         { "label": "Go to the Pitch", "go_to": "pitch", "x": 443, "door_marker": [443, 112],
           "text": "Floodlights. Sixty thousand heads turn. Your knees remember they are knees." },
         { "label": "Look at the sticky note", "x": 185, "marker": [190, 110],
-          "text": "Dave's note says: \"Back in 5 min - Dave. P.S. Angle cuts out? Ask Pombo, our mascot. He films EVERYTHING.\"",
-          "closeup": ["Back in 5 min", "- Dave", "P.S. Angle cuts out?", "Ask Pombo, our mascot.", "He films EVERYTHING."] },
+          "text": "Dave's note says: \"Back in 5 min - Dave. P.S. Angle cuts out? Ask Bernie, our mascot. He films EVERYTHING.\"",
+          "closeup": ["Back in 5 min", "- Dave", "P.S. Angle cuts out?", "Ask Bernie, our mascot.", "He films EVERYTHING."] },
         { "label": "Look behind the desk", "set_choice": "lanyard", "value": "found", "x": 30, "marker": [30, 145],
           "text": "The key camera's cable is yanked out of the wall. On purpose! Tangled in it: a \"PRESS - TV STUDIO\" lanyard." },
         { "label": "Plug the USB Stick into the VAR computer", "review": true, "set_choice": "review", "x": 104, "marker": [104, 154],
           "needs_item": "usb",
           "blocked_text": "Nice USB port. Shame you have nothing to plug in.",
-          "text": "You plug in the USB Stick. Pombo's head-cam footage fills the screen." }
+          "text": "You plug in the USB Stick. Bernie's head-cam footage fills the screen." }
       ]
     },
 
@@ -71,10 +71,10 @@
 
     "mascot_room": {
       "name": "Mascot Changing Room",
-      "text": "Feathers everywhere. Pombo the pigeon mascot sulks on a bench. He stood right by the corner flag when the goal went in.",
+      "text": "Fur everywhere. Bernie the bear mascot sulks on a bench. He stood right by the corner flag when the goal went in.",
       "actions": [
-        { "label": "Ask Pombo what he saw", "take_item": "usb", "set_choice": "dave", "value": "talked", "x": 345, "marker": [384, 127],
-          "text": "Pombo pulls off his head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you his head-cam USB: \"At 93:30 a shiny suit ran out of your booth.\"" },
+        { "label": "Ask Bernie what he saw", "take_item": "usb", "set_choice": "dave", "value": "talked", "x": 345, "marker": [384, 127],
+          "text": "Bernie pulls off his head. It's Dave, the missing VAR operator! \"Second job. Don't tell HR.\" He hands you his head-cam USB: \"At 93:30 a shiny suit ran out of your booth.\"" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 104],
           "text": "You leave Dave to put his head back on." }
       ]
@@ -92,7 +92,7 @@
         { "label": "Say: 'Rex Smugworth cut the camera feed. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "x": 330, "marker": [330, 130], "marker_after": "dave",
           "needs_choices": ["lanyard", "slip", "dave"], "hide_if_blocked": true,
           "blocked_text": "No proof, no accusation.",
-          "text": "\"Rex pulled the cable. Here's his lanyard, his betting slip and a pigeon witness.\" Every camera turns to the TV studio." },
+          "text": "\"Rex pulled the cable. Here's his lanyard, his betting slip and a bear witness.\" Every camera turns to the TV studio." },
         { "label": "Pick up the crumpled paper by the TV camera", "set_choice": "slip", "value": "found", "x": 436, "marker": [430, 188],
           "text": "A betting slip: \"500 pounds - AWAY WIN - late offside drama\". Signed: R. Smugworth. The pundit?!" },
         { "label": "Back to the VAR Booth", "go_to": "booth", "x": 40, "door_marker": [40, 104],
@@ -120,7 +120,7 @@
   },
 
   "review": {
-    "intro": "Pombo's head-cam footage runs for 3 seconds. Find the exact moment the ball leaves the passer's boot and lock it. Then draw the offside line: it goes on the second-last opponent (the goalkeeper counts as one), and level counts as onside. You only get one look.",
+    "intro": "Bernie's head-cam footage runs for 3 seconds. Find the exact moment the ball leaves the passer's boot and lock it. Then draw the offside line: it goes on the second-last opponent (the goalkeeper counts as one), and level counts as onside. You only get one look.",
     "rules": [
       "HOW OFFSIDE WORKS",
       "An attacker is OFFSIDE if he is closer to the goal than the second-last",
@@ -164,7 +164,7 @@
       "title": "Clip of the Year",
       "show_epilogue": true,
       "text": "You never studied the footage, so you make the call on pure vibes. GOAL! You happen to be right, but the broadcast cuts to your face at the exact moment you decide, and it is not a good face. By morning the clip has 40 million views and its own song. PUNDIT: Absolute cinema. That clip will outlive us all.",
-      "tip": "TIP: Check the footage first. Pombo the mascot has it."
+      "tip": "TIP: Check the footage first. Bernie the mascot has it."
     },
     "right_call_wrong_mouth": {
       "title": "Right Call, Wrong Mouth",
@@ -181,13 +181,13 @@
     "time_up": {
       "title": "The Stadium Went Home",
       "show_epilogue": true,
-      "text": "You took too long. After all that waiting, the referee shrugs, decides the goal with a coin toss and walks off. Half the stadium has already gone home; the other half is booing you personally. PUNDIT: That long for one decision? Even the pigeon left.",
+      "text": "You took too long. After all that waiting, the referee shrugs, decides the goal with a coin toss and walks off. Half the stadium has already gone home; the other half is booing you personally. PUNDIT: That long for one decision? Even the bear left.",
       "tip": "TIP: Rex on the TV always tells you the next step. Follow the \"!\" markers."
     },
     "var_is_watching": {
       "title": "VAR Is Watching",
       "show_epilogue": false,
-      "text": "You give the goal and the stadium explodes. On every TV in the country, Rex Smugworth freezes mid-grin as two stewards walk into his studio holding a lanyard and a betting slip. In the stands, a pigeon takes off its head and bows. The goal stands. Rex does not. PUNDIT: This is an outrage! I want my lawy-- [SIGNAL LOST]",
+      "text": "You give the goal and the stadium explodes. On every TV in the country, Rex Smugworth freezes mid-grin as two stewards walk into his studio holding a lanyard and a betting slip. In the stands, a bear takes off its head and bows. The goal stands. Rex does not. PUNDIT: This is an outrage! I want my lawy-- [SIGNAL LOST]",
       "tip": "PERFECT GAME: the right call, and Rex is exposed. You are a natural."
     }
   },
