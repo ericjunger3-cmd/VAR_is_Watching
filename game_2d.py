@@ -969,7 +969,7 @@ def main():
 
     # Everything we need for drawing, kept together in one dictionary,
     # so we don't have to pass ten things to every function.
-    standing = sprites.make_sprite(sprites.PLAYER)
+    standing = sprites.make_sprite(sprites.PLAYER, sprites.PLAYER_COLOURS)
     assets = {
         "window": window,
         # The small canvas for the rooms, and a see-through overlay for the
@@ -1011,7 +1011,7 @@ def main():
     }
 
     for frame in sprites.PLAYER_WALK:
-        assets["walking"].append(sprites.make_sprite(frame))
+        assets["walking"].append(sprites.make_sprite(frame, sprites.PLAYER_COLOURS))
 
     # The story from story.json, reused from the terminal game.
     story = game.load_story()

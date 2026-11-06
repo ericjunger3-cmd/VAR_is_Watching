@@ -50,10 +50,16 @@ CAPTAIN_COLOURS = {"h": (25, 20, 20), "H": (45, 35, 35), "j": (70, 60, 60),
 PUNDIT_COLOURS = {"h": (25, 20, 22), "H": (45, 38, 40), "j": (120, 110, 125)}
 LINESMAN_COLOURS = {"h": (160, 70, 30), "H": (210, 105, 45), "j": (240, 150, 80),
                     "B": (250, 215, 60), "b": (210, 170, 30)}
+# The player wears a Bayern-style kit: a red shirt instead of black,
+# white stripes instead of yellow, and red trousers instead of dark ones.
+PLAYER_COLOURS = {"b": (210, 20, 50), "B": (240, 65, 85), "k": (130, 10, 35),
+                  "Y": (245, 245, 250), "q": (255, 255, 255),
+                  "Z": (195, 18, 46), "z": (150, 12, 38)}
 
 # The player, standing and facing you: a junior VAR official with a
-# headset (the grey band over his hair), a black polo with yellow VAR
-# stripes and a VAR badge, a lanyard with an ID card, and a belt buckle.
+# headset (the grey band over his hair), a polo with VAR stripes and a
+# VAR badge, a lanyard with an ID card, and a belt buckle.
+# The shirt colours come from PLAYER_COLOURS (red and white).
 # Cute style: a big round head (more than half of the height) with big
 # shiny eyes, a little curl of hair on top, a small body and short legs.
 PLAYER = [
