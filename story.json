@@ -89,7 +89,12 @@
           "text": "\"No comment.\" Calm. Professional. Boring. The journalists sigh and put their phones away." },
         { "label": "Say: 'Rex Smugworth cut the camera feed. Here is the proof.'", "set_choice": "press_answer", "value": "expose", "x": 330, "marker": [330, 130], "marker_after": "dave",
           "needs_items": ["lanyard", "slip"], "needs_choice": "dave",
-          "blocked_text": "You can't accuse someone on live TV without proof. You need to know who was in the booth, why they did it, and a witness.",
+          "blocked_text": "You can't accuse someone on live TV without proof.",
+          "proof_list": [
+            { "id": "lanyard", "what": "Who was in the booth", "name": "the Press Lanyard" },
+            { "id": "slip", "what": "Why he did it", "name": "the Betting Slip" },
+            { "id": "dave", "what": "A witness", "name": "Dave's statement" }
+          ],
           "text": "\"Rex Smugworth pulled the camera cable. Here is his lanyard, his betting slip, and a witness in a pigeon costume.\" The room goes silent. Then every camera turns towards the TV studio." },
         { "label": "Pick up the crumpled paper by the TV camera", "take_item": "slip", "x": 436, "marker": [430, 188],
           "text": "It's a betting slip: \"500 pounds - AWAY WIN - late offside drama\". Signed: R. Smugworth. Wait... isn't that the pundit on TV?" },

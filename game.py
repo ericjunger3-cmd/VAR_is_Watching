@@ -122,19 +122,40 @@ def get_visible_actions(scene, inventory, choices):
     return visible
 
 
+def explain_blocked(action, inventory, choices):
+    # The text that explains why an action is blocked.
+    text = action["blocked_text"]
+    # Accusing Rex has a "proof_list": then we add a checklist that says
+    # how much proof you have. Found proof is named; missing proof is only
+    # "still missing", so the game does not spoil what you have to find.
+    if "proof_list" in action:
+        found = 0
+        details = ""
+        for proof in action["proof_list"]:
+            # A proof is an item (in the inventory) or a choice (talking to Dave).
+            if proof["id"] in inventory or proof["id"] in choices:
+                found = found + 1
+                details = details + " " + proof["what"] + ": " + proof["name"] + "."
+            else:
+                details = details + " " + proof["what"] + ": still missing."
+        total = len(action["proof_list"])
+        text = text + " Proof found: " + str(found) + " of " + str(total) + "." + details
+    return text
+
+
 def blocked_reason(action, inventory, choices):
     # If the action needs an item the player does not have, return the
     # explanation text. Otherwise return None, which means "not blocked".
     if "needs_item" in action and action["needs_item"] not in inventory:
-        return action["blocked_text"]
+        return explain_blocked(action, inventory, choices)
     # Some actions need several items: every one of them must be in the inventory.
     if "needs_items" in action:
         for item_id in action["needs_items"]:
             if item_id not in inventory:
-                return action["blocked_text"]
+                return explain_blocked(action, inventory, choices)
     # Same idea for a decision the player has not made yet.
     if "needs_choice" in action and action["needs_choice"] not in choices:
-        return action["blocked_text"]
+        return explain_blocked(action, inventory, choices)
     return None
 
 
