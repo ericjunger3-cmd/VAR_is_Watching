@@ -34,7 +34,15 @@ fans on the left half of the stands, away fans on the right (`fan_colour` in roo
 - His mood shows in his name, from `"pundit_moods"` by clue count:
   GIANNO INFANTINI, (nervous), (sweating), (panicking), (furious) (`pundit_line`).
   2D: his face changes too (5 faces, `make_pundit(mood)`).
-- 2D: a new line makes his speech box flash yellow and beep (`HINT_FLASH_FRAMES`).
+- Right after you find a clue he reacts to exactly that clue (`"clue_reactions"`
+  in story.json, `progress["last_clue"]`, `remember_clue`, `reaction_line`).
+  It only pops up briefly, because his main job is to say what to do next:
+  2D shows it for 5 seconds (`REACTION_FRAMES`, counted while no box is open,
+  `pundit_text_now`), then his hint is back; the terminal prints the reaction
+  once, above the hint.
+- 2D: a new line makes his speech box and TV light up with a thick yellow
+  frame and a soft glow, blinking for 3 seconds (`HINT_FLASH_FRAMES` = 90),
+  without a sound.
 - Clues are secret: no counter anywhere. Exposing Infantini stays hidden until all
   4 clues are found (`needs_choices` + `hide_if_blocked`).
 - Each hint has a `"room"`; `door_to_hint` finds the door on the way there
@@ -157,7 +165,7 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   steam, he crumples the slip and throws it away), **studio_arrested** (two
   serious police officers, `POLICE` + `POLICE_COLOURS`: checked cap band,
   hi-vis vest with "POLICE", walk in, handcuffs "CLICK!", they lead him away
-  with his head down, then TV static and "[SIGNAL LOST]").
+  with his head down, slowly, then TV static and "[SIGNAL LOST]").
 - The press pack (2D): after the ruling text, the press storms out of the
   tunnel on the left one after the other (`PRESS_PEOPLE`, `PRESS_DELAY`,
   `PRESS_RUN`), trampling and kicking up dust (`draw_press_dust`), then they
@@ -170,7 +178,7 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   comes, the striker walks to the corner flag and the captain to the goal
   (`player_step_aside`),
   and the captain's "OFFSIDE!" bubble goes away. `screen["press_rush"]` counts the frames
-  (`PRESS_RUSH_FRAMES` = 100), the screen shakes meanwhile, then the press
+  (`PRESS_RUSH_FRAMES` = 100), the screen shakes a little meanwhile, then the press
   questions open. The words PRESS / VAR are sharp text
   (`press_labels`, drawn in `draw_game`).
 - On the pitch the referee stands at x 264, left of where you stand to give

@@ -204,6 +204,23 @@ def test_pundit_hints(story):
     assert game.pundit_line(story, progress).startswith("GIANNO INFANTINI (nervous): ")
 
 
+def test_pundit_reacts_to_clues(story):
+    # Right after you find a clue, the pundit reacts to exactly that clue,
+    # and his hint (what to do next) stays the same. After the next action
+    # there is no reaction any more.
+    progress = game.new_progress(story)
+    assert game.reaction_line(story, progress) is None
+    hint = game.current_hint(story, progress)
+    bin_action = find_action(story, "dressing_room", "Look in the bin")
+    progress["choices"]["slip"] = "found"
+    game.remember_clue(story, progress, bin_action)
+    assert game.reaction_line(story, progress).endswith(story["clue_reactions"]["slip"])
+    assert game.current_hint(story, progress) == hint
+    door = find_action(story, "dressing_room", "Back to the VAR Booth")
+    game.remember_clue(story, progress, door)
+    assert game.reaction_line(story, progress) is None
+
+
 def test_door_to_hint(story):
     # The "!" door: from the booth the door to the hint's room, from any
     # other room the door back to the booth, and none in the hint's room.
@@ -234,7 +251,8 @@ def run_all_tests():
              test_a4_resume, test_a5_two_outcomes, test_a6_restart,
              test_offside_rule, test_expose_needs_all_clues, test_press_after_ruling,
              test_all_endings, test_old_save_still_works, test_clues_are_not_items,
-             test_pundit_hints, test_door_to_hint, test_ending_summary]
+             test_pundit_hints, test_pundit_reacts_to_clues, test_door_to_hint,
+             test_ending_summary]
     failed = 0
     for test in tests:
         # try / except: if an assert fails, we count it and keep going.

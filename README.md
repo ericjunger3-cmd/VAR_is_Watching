@@ -134,14 +134,18 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
   action). Each hint has a `"room"` in `story.json`; `door_to_hint` in `game.py`
   finds the door.
 - **The pundit gives the hints.** Gianno Infantini always says (rudely, but clearly)
-  what to do next, e.g. "Sticky note on your desk, rookie. Read it!". The hints are
+  what to do next, e.g. "Read the sticky note, rookie!". The hints are
   the `"hints"` list in `story.json`; the first one that is not done yet is shown.
   He even gives himself away (his press pass, "stay out of the server room").
+  Right after you find a clue he reacts to it, nervously ("A betting slip?
+  0:0, signed G.I.? Lots of people are called G.I."). The reaction only pops
+  up for a few seconds (2D) or once above his hint (terminal), then he tells
+  you again what to do next. The reactions are `"clue_reactions"` in `story.json`.
 - **He gets nervous.** With every clue against him his name changes:
   GIANNO INFANTINI, (nervous), (sweating), (panicking), (furious). In the 2D
   version his face also gets redder, sweatier and angrier.
-- **New hint signal (2D):** when he says something new, his speech box flashes
-  yellow and beeps.
+- **New hint signal (2D):** when he says something new, his speech box and his
+  TV light up with a thick yellow frame and blink for 3 seconds.
 - **Secret clues:** the game never shows how many clues exist or how many you
   found. The option to expose Infantini only appears once you have all of them.
 - **The truth at the end:** every ending shows the right call (GOAL, onside by
@@ -196,7 +200,7 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 
 1. **The press storms the pitch.** After your call the referee blows the final
    whistle, and a pack of reporters runs out of the tunnel on the left, one after
-   the other, trampling and kicking up dust while the screen shakes. Interviewers
+   the other, trampling and kicking up dust while the screen shakes a little. Interviewers
    with microphones stand right next to you, photographers behind them flash all
    the time. The red and the yellow player step aside. Then the press asks you
    their question (`draw_press_pack` in `rooms.py`).
@@ -221,15 +225,15 @@ The terminal version shows the same ending as text.
 ## Automatic tests
 
 `test_game.py` checks A1-A6 (and the offside rule, the clues for exposing Infantini,
-the press after the ruling, every ending, old save files, the pundit's hints,
-the "!" door and the ending summary) with the functions from `game.py`. It uses
+the press after the ruling, every ending, old save files, the pundit's hints and
+reactions, the "!" door and the ending summary) with the functions from `game.py`. It uses
 its own save file, so your saved game is never touched.
 
 ```
 py test_game.py
 ```
 
-It prints PASS or FAIL for every test and "15 of 15 tests passed." at the end.
+It prints PASS or FAIL for every test and "16 of 16 tests passed." at the end.
 The checklists below test the same scenarios by hand, in the real game.
 
 ## Acceptance test checklist (A1-A6): terminal version

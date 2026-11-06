@@ -115,9 +115,14 @@ def draw_dialogue_box(canvas, page, faded=False):
 def draw_pundit_tv(canvas, pundit_picture, lit=False):
     # A red retro TV with two antennas, the pundit on the screen,
     # two knobs, a "live" light, and his speech box with a little tail.
-    # lit=True draws a yellow glow around the speech box (a new hint).
+    # lit=True makes the speech box and the TV light up (a new line):
+    # a soft see-through yellow glow and a thick bright yellow frame.
     if lit:
-        pygame.draw.rect(canvas, (255, 215, 60), (SPEECH_X - 4, SPEECH_Y - 4, SPEECH_WIDTH + 8, SPEECH_HEIGHT + 8))
+        glow = pygame.Surface((SPEECH_WIDTH + 104, SPEECH_HEIGHT + 24), pygame.SRCALPHA)
+        glow.fill((255, 220, 60, 90))
+        canvas.blit(glow, (SPEECH_X - 10, SPEECH_Y - 10))
+        pygame.draw.rect(canvas, (255, 225, 60), (SPEECH_X - 5, SPEECH_Y - 5, SPEECH_WIDTH + 10, SPEECH_HEIGHT + 10))
+        pygame.draw.rect(canvas, (255, 225, 60), (TV_X - 4, TV_Y - 4, 82, 66))
     pygame.draw.line(canvas, OUTLINE, (TV_X + 26, TV_Y + 2), (TV_X + 16, TV_Y - 8), 2)
     pygame.draw.line(canvas, OUTLINE, (TV_X + 44, TV_Y + 2), (TV_X + 56, TV_Y - 8), 2)
     framed_box(canvas, TV_X, TV_Y, 74, 58, (230, 80, 70), (255, 130, 110), (180, 50, 50))

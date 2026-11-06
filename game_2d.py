@@ -42,8 +42,13 @@ DOOR_FRAMES = 16
 # so the player sees that a new scene begins: 60 frames = 2 seconds.
 ENDING_FRAMES = 60
 
+# How long the pundit's reaction to a clue you just found stays in his
+# speech box before his normal hint comes back: 150 frames = 5 seconds
+# (it only counts while no box is open, so you can read both).
+REACTION_FRAMES = 150
+
 # How many frames the pundit's speech box flashes when he has a new hint.
-HINT_FLASH_FRAMES = 60
+HINT_FLASH_FRAMES = 90
 
 # How long the press pack needs to run in after your call: 3.3 seconds
 # (the last one leaves the tunnel after 48 frames and runs for 45 more).
@@ -329,6 +334,12 @@ def do_action(action, progress, story, screen, fonts, player, player_width):
     screen["dialogue"] = pages
     screen["letters"] = 0
 
+    # Remember if this action found a clue: the pundit reacts to it for a
+    # few seconds (reaction_left counts the frames).
+    game.remember_clue(story, progress, action)
+    if progress["last_clue"] is not None:
+        screen["reaction_left"] = REACTION_FRAMES
+
     # The action was accepted, so save the progress right away.
     game.save_progress(progress, SAVE_FILE)
 
@@ -443,6 +454,9 @@ def handle_review_key(key, progress, story, screen, fonts):
             striker = game.value_at(review["tracks"]["striker"], time, 1)
             result = game.judge_offside(striker, state["line"] / 10)
             progress["choices"]["review"] = result
+            # The review is a new action: the pundit stops reacting to the
+            # last clue and goes back to his hints.
+            progress["last_clue"] = None
             game.save_progress(progress, SAVE_FILE)
             sound.play("lock")
             close_review(screen)
@@ -450,6 +464,16 @@ def handle_review_key(key, progress, story, screen, fonts):
                 say(screen, review["offside_text"], fonts)
             else:
                 say(screen, review["onside_text"], fonts)
+
+
+def pundit_text_now(story, progress, screen):
+    # What the pundit says right now: for a few seconds after you found a
+    # clue, his reaction to it; otherwise his hint (what to do next).
+    if screen["reaction_left"] > 0:
+        reaction = game.reaction_line(story, progress)
+        if reaction is not None:
+            return reaction
+    return game.pundit_line(story, progress)
 
 
 def open_press_questions(story, progress, screen):
@@ -597,6 +621,7 @@ def make_screen(dialogue):
         "closeup": None,    # the lines of the sticky note while it is open
         "menu": None,       # the open menu (press answers, GOAL / OFFSIDE)
         "press_next": False,  # True: open the press questions when the text is read
+        "reaction_left": 0,   # frames the pundit still reacts to the clue you found
         "press_rush": None,   # while the press pack runs in: how far (in frames)
         "review": None,     # the VAR Review while it is open
         "pause": None,      # the pause menu (Escape) while it is open
@@ -736,20 +761,22 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     # Because one canvas pixel is 2 window pixels, this lets the camera
     # move in smaller, smoother steps.
     offset = int(round(moving["camera"] * SCALE))
-    # While the press pack storms the pitch, the ground shakes: the
-    # picture jumps 3 window pixels left and right every other frame.
+    # While the press pack storms the pitch, the ground shakes a little:
+    # the picture moves 1 window pixel left and right every 4 frames.
     if screen["press_rush"] is not None:
-        if tick % 2 == 0:
-            offset = offset + 3
+        if (tick // 4) % 2 == 0:
+            offset = offset + 1
         else:
-            offset = offset - 3
+            offset = offset - 1
 
     # 1. The room and the player on the (wider) room canvas. The whole room
     #    is scaled up and placed so that the camera's part is in the window.
     # The press pack: None before your call, then the number of frames
     # since they started running (a big number once they are all there).
+    # (While you still read the referee's text, press_next is True: the
+    # press has not come out of the tunnel yet, so they are not drawn.)
     press = None
-    if "ruling" in progress["choices"]:
+    if "ruling" in progress["choices"] and not screen["press_next"]:
         press = 1000
         if screen["press_rush"] is not None:
             press = screen["press_rush"]
@@ -791,7 +818,7 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     # While the flash counts down, the speech box is lit every other
     # 8 frames: on, off, on, off ...
     flash = moving["hint_flash"]
-    lit = 0 < flash < HINT_FLASH_FRAMES and (flash // 8) % 2 == 0
+    lit = 0 < flash < HINT_FLASH_FRAMES and (flash // 10) % 2 == 0
     # His face shows how many clues against him the player has found.
     pundit_picture = assets["pundit"][game.count_clues(story, progress)]
     ui.draw_pundit_tv(overlay, pundit_picture, lit)
@@ -836,7 +863,7 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         if progress["scene"] == "pitch" and ball["celebrate"] > 0:
             pundit_text = story["ball_goal_pundit"]
         else:
-            pundit_text = game.pundit_line(story, progress)
+            pundit_text = pundit_text_now(story, progress, screen)
         ui.draw_pundit_text(window, pundit_text, fonts, SCALE)
     if len(screen["dialogue"]) > 0:
         ui.draw_dialogue_text(window, screen["dialogue"][0], screen["letters"], fonts, SCALE)
@@ -1175,13 +1202,16 @@ def play(assets, story, progress, screen, player):
         # A new pundit line (a new hint or a new mood): his speech box
         # flashes and beeps, so the player notices it. The flash waits
         # until every box is closed, so nobody misses it while reading.
-        line = game.pundit_line(story, progress)
+        # The pundit's reaction to a clue counts down (only while no box
+        # is open), then his normal hint comes back.
+        if screen["reaction_left"] > 0 and not box_is_open(screen):
+            screen["reaction_left"] = screen["reaction_left"] - 1
+
+        line = pundit_text_now(story, progress, screen)
         if line != moving["pundit_line"]:
             moving["pundit_line"] = line
             moving["hint_flash"] = HINT_FLASH_FRAMES
         if moving["hint_flash"] > 0 and not box_is_open(screen):
-            if moving["hint_flash"] == HINT_FLASH_FRAMES:
-                sound.play("beep")
             moving["hint_flash"] = moving["hint_flash"] - 1
 
         # The camera follows the player exactly: it keeps the player in the

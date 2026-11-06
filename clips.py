@@ -433,7 +433,11 @@ def police_positions(frame):
     # Where the two police officers stand (their middles) and how far
     # everybody has walked to the left. Used for the pictures and for the
     # word POLICE on their vests, so both always match.
-    away = int(330 * ease(frame, 65, 115))
+    # They walk out slowly and at the same speed (4 pixels every frame),
+    # from frame 62 to frame 137.
+    away = 0
+    if frame > 62:
+        away = min(300, (frame - 62) * 4)
     left_x = int(60 + 120 * ease(frame, 0, 45)) - away
     right_x = int(440 - 120 * ease(frame, 0, 45)) - away
     return left_x, right_x, away
@@ -449,7 +453,7 @@ def draw_studio_arrested(canvas, pictures, frame):
 
     # The officers bob a little while they walk.
     walk = 0
-    if frame < 45 or frame > 65:
+    if frame < 45 or frame > 62:
         walk = (frame // 5) % 2 * 2
     for x in [left_x, right_x]:
         rooms.draw_shadow(canvas, x - 26, FLOOR_Y + 1, 52)
@@ -472,9 +476,9 @@ def draw_studio_arrested(canvas, pictures, frame):
             pygame.draw.circle(canvas, OUTLINE, (ring_x, cuffs_y), 2)
         pygame.draw.line(canvas, (150, 155, 170), (cuffs_x + 5, cuffs_y), (cuffs_x + 11, cuffs_y), 2)
 
-    # TV static from frame 115: grey blocks in random brightness,
+    # TV static from frame 137: grey blocks in random brightness,
     # different every frame (so it flickers).
-    if frame >= 115:
+    if frame >= 137:
         for block_y in range(CLIP_TOP, CLIP_TOP + CLIP_HEIGHT, 4):
             for block_x in range(CLIP_LEFT, CLIP_LEFT + CLIP_WIDTH, 4):
                 grey = random.randint(30, 220)
@@ -552,7 +556,7 @@ def draw_studio_text(window, fonts, name, frame, score):
     # The text in the studio clips: the score and the show's name on the
     # big screen, "ON AIR", "CLICK!" for the handcuffs and "SIGNAL LOST"
     # for the static at the end. Then the film bars with the caption.
-    static = name == "studio_arrested" and frame >= 115
+    static = name == "studio_arrested" and frame >= 137
     if not static:
         big = fonts["title"]
         screen_text = big.render("FCB " + score + " BVB", False, WHITE)

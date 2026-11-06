@@ -733,8 +733,9 @@ DAVE_HEAD = [
 # Gianno Infantini, the TV guest expert (head and shoulders, shown in the TV):
 # a shiny bald head, friendly eyebrows, a closed-mouth smile, a dark navy
 # suit, a white shirt, a small gold pin on the lapel and a dark navy tie
-# that is much too short: its tip was cut off (the clue in the Server Room),
-# so the white shirt shows under its straight, cut end.
+# that is much too short: its tip was cut off (the clue in the Server Room).
+# His jacket is open, so the white shirt shows all the way down under the
+# frayed, cut end of the tie.
 PUNDIT = [
     "................................",
     "................................",
@@ -762,15 +763,15 @@ PUNDIT = [
     "............uWWllWWU............",
     ".........uuuUUWllWUUUUU.........",
     ".......uuuuUUUWllWUUUUUUU.......",
-    "......uuuuuUUUWWWWUUUUUUUU......",
-    ".....uuuuuuUUUUWWUUUUUUUUUU.....",
-    "....uuuuuuUUUUUUUUUUUUYUUUUU....",
-    "...uuuuuuuUUUUUUUUUUUUUUUUUUU...",
-    "..uuuuuuuuUUUUUUUUUUUUUUUUUUUU..",
-    ".uuuuuuuuuUUUUUUUUUUUUUUUUUUUUU.",
-    "uuuuuuuuuUUUUUUUUUUUUUUUUUUUUUUU",
-    "uuuuuuuuuUUUUUUUUUUUUUUUUUUUUUUU",
-    "uuuuuuuuuUUUUUUUUUUUUUUUUUUUUUUU",
+    "......uuuuuUUUWllWUUUUUUUU......",
+    ".....uuuuuuUUUWllWUUUUUUUUU.....",
+    "....uuuuuuUUUuWlWWuUUUUYUUUU....",
+    "...uuuuuuuUUUuWWWWuUUUUUUUUUU...",
+    "..uuuuuuuuUUUuWWWWuUUUUUUUUUUU..",
+    ".uuuuuuuuuUUUuWWWWuUUUUUUUUUUUU.",
+    "uuuuuuuuuUUUUuWWWWuUUUUUUUUUUUUU",
+    "uuuuuuuuuUUUUuWWWWuUUUUUUUUUUUUU",
+    "uuuuuuuuuUUUUuWWWWuUUUUUUUUUUUUU",
 ]
 
 # Infantini gets more nervous with every clue the player finds (0 to 4).
@@ -837,8 +838,8 @@ PUNDIT_MOOD_SKIN = [
     {},
     {"S": (250, 180, 150), "s": (214, 135, 105), "t": (255, 215, 195)},
     {"S": (245, 150, 125), "s": (205, 110, 90), "t": (255, 195, 175)},
-    {"S": (235, 110, 95), "s": (190, 75, 65), "t": (250, 165, 150)},
-    {"S": (220, 70, 60), "s": (170, 45, 40), "t": (240, 130, 115)},
+    {"S": (240, 130, 110), "s": (195, 90, 75), "t": (252, 180, 160)},
+    {"S": (232, 105, 88), "s": (180, 65, 55), "t": (245, 150, 135)},
 ]
 
 # Infantini's whole body, for the end clips in the TV studio. His head
@@ -849,12 +850,12 @@ PUNDIT_MOOD_SKIN = [
 INFANTINI_BODY = [
     "...........UUWWllWWUU...........",
     "......UUUUUUUUWllWUUUUuuuu......",
-    "......UUUUUUUUUWWUUUYUuuuu......",
-    "......SSUUUUUUUUUUUUUUuuSS......",
-    "......SSUUUUUUUUUUUUUUuuSS......",
-    "......SSUUUUUUUUUUUUUUuuSS......",
-    "......ssUUUUUUUUUUUUUUuuss......",
-    "........UUUUUUUUUUUUUUuu........",
+    "......UUUUUUUuWllWuUUYUuuuu.....",
+    "......SSUUUUUuWlWWuUUUuuSS......",
+    "......SSUUUUUuWWWWuUUUuuSS......",
+    "......SSUUUUUuWWWWuUUUuuSS......",
+    "......ssUUUUUuWWWWuUUUuuss......",
+    "........UUUUUuWWWWuUUUuu........",
     "........uuuuuuuuuuuuuuKK........",
     "........uuuuuuuKKuuuuuuK........",
     ".........uuuuuK..uuuuuK.........",

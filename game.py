@@ -25,7 +25,10 @@ def new_progress(story):
         # The stadium is waiting: the terminal game counts actions,
         # the 2D game counts seconds.
         "actions_left": story["action_limit"],
-        "seconds_left": story["time_limit_seconds"]
+        "seconds_left": story["time_limit_seconds"],
+        # The clue found with the last action (e.g. "slip"), or None.
+        # The pundit reacts to it until the next action.
+        "last_clue": None
     }
     return progress
 
@@ -129,6 +132,15 @@ def current_hint(story, progress):
     return hint["pundit"]
 
 
+def remember_clue(story, progress, action):
+    # After an accepted action: if it found one of the clues, remember
+    # which one (the pundit reacts to it). Otherwise forget the last one.
+    if "set_choice" in action and action["set_choice"] in story["clue_choices"]:
+        progress["last_clue"] = action["set_choice"]
+    else:
+        progress["last_clue"] = None
+
+
 def door_to_hint(story, progress):
     # The door the player should take next, to reach the room of the current
     # hint ("room" in story.json). From the booth it is the door to that room;
@@ -149,16 +161,29 @@ def door_to_hint(story, progress):
     return None
 
 
-def pundit_line(story, progress):
-    # The pundit always says (rudely, but clearly) what to do next.
+def pundit_name(story, progress):
     # The more clues against him the player has found, the more nervous
     # he gets: his name shows his mood, e.g. "GIANNO INFANTINI (sweating)".
     # 0 clues -> mood "" (index 0), 1 clue -> "nervous" (index 1), ...
     mood = story["pundit_moods"][count_clues(story, progress)]
-    name = "GIANNO INFANTINI"
-    if mood != "":
-        name = "GIANNO INFANTINI (" + mood + ")"
-    return name + ": " + current_hint(story, progress)
+    if mood == "":
+        return "GIANNO INFANTINI"
+    return "GIANNO INFANTINI (" + mood + ")"
+
+
+def pundit_line(story, progress):
+    # The pundit always says (rudely, but clearly) what to do next.
+    return pundit_name(story, progress) + ": " + current_hint(story, progress)
+
+
+def reaction_line(story, progress):
+    # Right after you found a clue the pundit reacts to exactly that clue
+    # (nervously). Returns his reaction, or None if there is nothing to
+    # react to. progress.get() gives None for old saves without "last_clue".
+    last_clue = progress.get("last_clue")
+    if last_clue is None or last_clue not in story["clue_reactions"]:
+        return None
+    return pundit_name(story, progress) + ": " + story["clue_reactions"][last_clue]
 
 
 def show_scene(story, scene_id, first_visit, pundit_text):
@@ -503,7 +528,13 @@ def play_game(story, progress):
         if first_visit:
             progress["visited"].append(progress["scene"])
         scene = story["scenes"][progress["scene"]]
-        show_scene(story, progress["scene"], first_visit, pundit_line(story, progress))
+        # The pundit's hint. Right after you found a clue, his reaction to
+        # it comes first (the terminal has room for both).
+        pundit_text = pundit_line(story, progress)
+        reaction = reaction_line(story, progress)
+        if reaction is not None:
+            pundit_text = reaction + "\n" + pundit_text
+        show_scene(story, progress["scene"], first_visit, pundit_text)
 
         # Only the visible actions get a number in the menu.
         actions = get_visible_actions(scene, inventory, choices)
@@ -588,6 +619,10 @@ def play_game(story, progress):
             save_progress(progress)
             show_ending(story, progress)
             return after_ending_menu(story, progress)
+
+        # Remember if this action found a clue, so the pundit can react
+        # to it. Any other action makes him go back to his hints.
+        remember_clue(story, progress, action)
 
         # The action was accepted, so save the progress right away.
         save_progress(progress)

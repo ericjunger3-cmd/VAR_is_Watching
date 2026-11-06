@@ -17,7 +17,7 @@
   "goal": "Your goal: give the referee the right call, GOAL or OFFSIDE. Gianno Infantini on the TV always tells you what to do next.",
 
   "hints": [
-    { "pundit": "Sticky note on your desk, rookie. Read it! Then find the mascot. His door needs the ref's whistle. And stay out of the server room. Nothing in there.", "done_when": "whistle", "room": "dressing_room", "skip_after": "ruling" },
+    { "pundit": "Read the sticky note, rookie! Then find the mascot. His door needs the ref's whistle. And stay out of the server room!", "done_when": "whistle", "room": "dressing_room", "skip_after": "ruling" },
     { "pundit": "Got a whistle? Blow it at the Mascot Room door and interview a bear. Live on my show. I'm crying.", "done_when": "dave", "room": "mascot_room", "skip_after": "ruling" },
     { "pundit": "A USB stick from a bear. Plug it into your VAR computer, genius. Also... anyone seen my press pass? No reason.", "done_when": "review", "room": "booth", "skip_after": "ruling",
       "if_clue": "press_pass", "pundit_if_clue": "A USB stick from a bear. Plug it into your VAR computer, genius. And that press pass? Never seen it. Never." },
@@ -25,6 +25,12 @@
     { "pundit": "Uh-oh, the press! Choose your words, rookie. Or don't. I'd prefer you don't.", "room": "pitch" }
   ],
   "pundit_moods": ["", "nervous", "sweating", "panicking", "furious"],
+  "clue_reactions": {
+    "press_pass": "My press pass?! In the VAR booth? I was never there. Somebody stole it.",
+    "slip": "A betting slip? 0:0, signed G.I.? Lots of people are called G.I. Gary Ian. Gina Irma. Throw it away!",
+    "tie": "Why are you staring at my tie? Short ties are in fashion. Very modern.",
+    "dave": "A bear saw a shiny suit? Bears can't see suits. Everybody knows that. Plug in your USB stick, rookie!"
+  },
   "ball_goal_pundit": "INFANTINI: Did the VAR official just score?! Somebody check the VAR! Oh wait... that's you. Doesn't count, rookie.",
 
   "scenes": {
