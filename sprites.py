@@ -51,7 +51,9 @@ CAPTAIN_COLOURS = {"h": (25, 20, 20), "H": (45, 35, 35), "j": (70, 60, 60),
                    "s": (170, 115, 80), "t": (225, 175, 135), "p": (200, 110, 100),
                    "Q": (140, 95, 65), "W": (35, 35, 40), "c": (20, 20, 25),
                    "Y": (35, 35, 40)}
-PUNDIT_COLOURS = {"h": (25, 20, 22), "H": (45, 38, 40), "j": (120, 110, 125)}
+# The pundit wears a dark navy suit ("u", "U") and a dark navy tie ("l").
+PUNDIT_COLOURS = {"h": (25, 20, 22), "H": (45, 38, 40), "j": (120, 110, 125),
+                  "u": (22, 26, 48), "U": (38, 45, 80), "l": (12, 15, 32)}
 # The linesman wears the same black shirt as the referee, so he does
 # not look like an away (yellow) player.
 LINESMAN_COLOURS = {"h": (160, 70, 30), "H": (210, 105, 45), "j": (240, 150, 80),
@@ -600,37 +602,38 @@ DAVE_HEAD = [
 ]
 
 # Rex Smugworth, the TV pundit (head and shoulders, shown in the TV):
-# slicked-back hair, one raised eyebrow, a huge grin, a blue suit and a red tie.
+# a shiny bald head, friendly eyebrows, a closed-mouth smile, a dark navy
+# suit, a white shirt, a dark navy tie and a small gold pin on the lapel.
 PUNDIT = [
     "................................",
     "................................",
-    "...........hhhhhhhhhh...........",
-    "........hhhHHjjHHHHHjjhh........",
-    "......hhHHjjHHHHjjHHHHjjhh......",
-    ".....hHHjjHHHHjjHHHHjjHHHHh.....",
-    "....hHHHHHHHHHHHHHHHHHHHHHHh....",
-    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
-    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
-    "...hHHHHHHHHHHHHHHHHHHHHHHHHh...",
-    "..hHHHHHHHHHHHHHHHHHHHHHHHHHHh..",
-    "..hHHHHHHHHHHHHHHHHHHHHHHHHHHh..",
-    "..hHSSSSSSSSSSSSSSSSSeeeSSHHHh..",
-    "..hHSSSSeeeSSSSSSSSSSSSSSSSSHh..",
+    "...........ssssssssss...........",
+    "........sssSttttSSSSSsss........",
+    "......ssSSStttSSSSSSSSSSss......",
+    ".....sSSSSttSSSSSSSSSSSSSSs.....",
+    "....sSSSSSSSSSSSSSSSSSSSSSSs....",
+    "...sSSSSSSSSSSSSSSSSSSSSSSSSs...",
+    "...sSSSSSSSSSSSSSSSSSSSSSSSSs...",
+    "...sSSSSSSSSSSSSSSSSSSSSSSSSs...",
+    "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
+    "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
+    "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
     "..sSSSSSeeeSSSSSSSSSSeeeSSSSSs..",
+    "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
     ".ssSSSSSEEESSSSSSSSSSEEESSSSSss.",
     ".ssSSSSSEiESSSSSSSSSSEiESSSSSss.",
     "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
-    "..sSSSSppSSSmmmmmmmmSSppSSSSSs..",
-    "....sSSSSSSSmTTTTTTmSSSSSSSs....",
-    ".......sSSSSSSSSmmSSSSSSs.......",
+    "..sSSSSSSSSmSSSSSSSSmSSSSSSSSs..",
+    "....sSSSSSSSmmmmmmmmSSSSSSSs....",
+    ".......sSSSSSSSSSSSSSSSSs.......",
     "..........ssssssssssss..........",
     "............WWSSSSWW............",
     "............uWWllWWU............",
     ".........uuuUUWllWUUUUU.........",
     ".......uuuuUUUUllUUUUUUUU.......",
-    "......uWuuuUUUUllUUUUUUUUU......",
-    ".....uuWuuuUUUUllllUUUUUUUU.....",
-    "....uuuuuuUUUUUllUUUUUUUUUUU....",
+    "......uuuuuUUUUllUUUUUUUUU......",
+    ".....uuuuuuUUUUllllUUUUUUUU.....",
+    "....uuuuuuUUUUUllUUUUUYUUUUU....",
     "...uuuuuuuUUUUUUUUUUUUUUUUUUU...",
     "..uuuuuuuuUUUUUUUUUUUUUUUUUUUU..",
     ".uuuuuuuuuUUUUUUUUUUUUUUUUUUUUU.",
