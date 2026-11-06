@@ -51,6 +51,12 @@ CAPTAIN_COLOURS = {"h": (25, 20, 20), "H": (45, 35, 35), "j": (70, 60, 60),
                    "s": (170, 115, 80), "t": (225, 175, 135), "p": (200, 110, 100),
                    "Q": (140, 95, 65), "W": (35, 35, 40), "c": (20, 20, 25),
                    "Y": (35, 35, 40)}
+# The police officers in the end clip (POLICE): a navy cap ("D", "F"),
+# a gold badge ("R") and dark trousers ("N", "M"). The vest stays hi-vis
+# yellow ("V", "y") and the checks are navy and white ("D", "W").
+POLICE_COLOURS = {"D": (30, 45, 110), "F": (20, 28, 70), "R": (240, 200, 60),
+                  "N": (30, 30, 45), "M": (20, 20, 30)}
+
 # Two more players for the end clips: the home passer (red kit like the
 # striker, but dark brown hair) and an away defender (yellow kit like the
 # captain, but light skin and red hair).
@@ -730,6 +736,76 @@ PUNDIT_MOOD_SKIN = [
     {"S": (220, 70, 60), "s": (170, 45, 40), "t": (240, 130, 115)},
 ]
 
+# Infantini's whole body, for the end clips in the TV studio. His head
+# comes from PUNDIT (rows 0 to 21, with the face of his mood), and these
+# rows are his body: navy suit ("U", "u"), white shirt and the cut-off
+# blue tie ("W", "l"), the gold pin ("Y"), hands ("S"), dark trousers
+# ("u", "K") and black shoes ("O").
+INFANTINI_BODY = [
+    "...........UUWWllWWUU...........",
+    "......UUUUUUUUWllWUUUUuuuu......",
+    "......UUUUUUUUUWWUUUYUuuuu......",
+    "......SSUUUUUUUUUUUUUUuuSS......",
+    "......SSUUUUUUUUUUUUUUuuSS......",
+    "......SSUUUUUUUUUUUUUUuuSS......",
+    "......ssUUUUUUUUUUUUUUuuss......",
+    "........UUUUUUUUUUUUUUuu........",
+    "........uuuuuuuuuuuuuuKK........",
+    "........uuuuuuuKKuuuuuuK........",
+    ".........uuuuuK..uuuuuK.........",
+    ".........uuuuuK..uuuuuK.........",
+    ".........uuuuuK..uuuuuK.........",
+    ".........uuuuuK..uuuuuK.........",
+    ".........OOOOOO..OOOOOO.........",
+    "........OxxOOOO..OOOOxxO........",
+]
+
+# A police officer for the end clip: a serious face (low, straight
+# eyebrows, a small straight mouth, no rosy cheeks), a police cap with a
+# blue-and-white checked band and a gold badge, a radio on the shoulder
+# and a hi-vis vest with checked stripes. The word POLICE is written on
+# the vest in the clip. The colours come from POLICE_COLOURS.
+POLICE = [
+    "................................",
+    "................................",
+    "...........DDDDDDDDDD...........",
+    "........DDDDDWWWDDDDDDDD........",
+    ".......DDDDDDWRWDDDDDDDFF.......",
+    ".....DDDDDDDWWWDDDDDDDDDFFF.....",
+    "....DDDDDDDDDDDDDDDDDDDDFFFF....",
+    "...DDDDDDDDDDDDDDDDDDDDDDFFFF...",
+    "...WDWDWDWDWDWDWDWDWDWDWDWDWD...",
+    ".FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.",
+    "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
+    "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
+    "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
+    "..hHSSSSeeeeSSSSSSSSeeeeSSSSHh..",
+    "..sSSSSSEEESSSSSSSSSSEEESSSSSs..",
+    ".ssSSSSSwEESSSSSSSSSSwEESSSSSss.",
+    ".ssSSSSSEEESSSSSSSSSSEEESSSSSss.",
+    "..sSSSSSEiESSSSSSSSSSEiESSSSSs..",
+    "..sSSSSSSSSSSSmmmmSSSSSSSSSSSs..",
+    "....sSSSSSSSSSSSSSSSSSSSSSSs....",
+    ".......sSSSSSSSSSSSSSSSSs.......",
+    "..........ssssssssssss..........",
+    "...........VVVVSSVVVV...........",
+    "......VVVVVVVVVVVVVVVVyyyy......",
+    "......VVVVVVVVVVVVkkVVyyyy......",
+    "......SSVVVVVVVVVVkGVVyySS......",
+    "......SSWDWDWDWDWDWDWDWDSS......",
+    "......SSVVVVVVVVVVVVVVyySS......",
+    "......ssDWDWDWDWDWDWDWDWss......",
+    "........VVVVVVVVVVVVVVyy........",
+    "........NNNNNNNNNNNNNNMM........",
+    "........NNNNNNNMMNNNNNNM........",
+    ".........NNNNNM..NNNNNM.........",
+    ".........NNNNNM..NNNNNM.........",
+    ".........NNNNNM..NNNNNM.........",
+    ".........NNNNNM..NNNNNM.........",
+    ".........OOOOOO..OOOOOO.........",
+    "........OxxOOOO..OOOOxxO........",
+]
+
 # The Lucky Whistle: silver, with a red cord.
 WHISTLE = [
     "..RRR...........",
@@ -869,17 +945,33 @@ def has_coloured_neighbour(surface, x, y):
     return False
 
 
-def make_pundit(mood):
-    # Make Infantini's picture for one mood (0 = calm ... 3 = panicking).
-    # 1. Copy his normal grid and swap in the rows that change for this mood.
+def pundit_rows(mood):
+    # Infantini's pixel grid for one mood (0 = calm ... 4 = furious):
+    # copy his normal grid and swap in the rows that change for this mood.
     rows = list(PUNDIT)
     changes = PUNDIT_MOOD_ROWS[mood]
     for row_number in changes:
         rows[row_number] = changes[row_number]
-    # 2. His suit colours, plus the redder skin for this mood.
+    return rows
+
+
+def pundit_colours(mood):
+    # His suit colours, plus the redder skin for this mood.
     colours = dict(PUNDIT_COLOURS)
     colours.update(PUNDIT_MOOD_SKIN[mood])
-    return make_sprite(rows, colours)
+    return colours
+
+
+def make_pundit(mood):
+    # Infantini on TV (head and shoulders) for one mood.
+    return make_sprite(pundit_rows(mood), pundit_colours(mood))
+
+
+def make_infantini(mood):
+    # Infantini's whole body for one mood: his head (the first 22 rows of
+    # the TV picture) on top of INFANTINI_BODY.
+    rows = pundit_rows(mood)[:22] + INFANTINI_BODY
+    return make_sprite(rows, pundit_colours(mood))
 
 
 def make_sprite(rows, colour_changes=None):

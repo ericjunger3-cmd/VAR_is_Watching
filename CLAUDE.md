@@ -149,6 +149,15 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   (`CLIP_LEFT`, `CLIP_TOP`, `CLIP_ZOOM`, `to_window`), with black film bars.
   Extra player pictures: "passer", "defender" and the sad away players
   without the raised arm (`CAPTAIN_ARM_DOWN`).
+  Clip 2 is in Infantini's TV studio ("studio_" + `studio_outcome`): he
+  stands there with his whole body (`make_infantini(mood)` = his TV head +
+  `INFANTINI_BODY`), drawn 2x bigger (`bigger`), next to a small desk, with
+  the final score on a big screen (`final_score`): **studio_wins** (he kisses
+  the slip, hearts, money rain), **studio_loses** (his face turns furious,
+  steam, he crumples the slip and throws it away), **studio_arrested** (two
+  serious police officers, `POLICE` + `POLICE_COLOURS`: checked cap band,
+  hi-vis vest with "POLICE", walk in, handcuffs "CLICK!", they lead him away
+  with his head down, then TV static and "[SIGNAL LOST]").
 - After the ruling the scoreboard shows FULL TIME and 1 - 0 (GOAL) or 0 - 0
   (OFFSIDE) (`draw_scoreboard_text`).
 - 2D pundit faces: `make_pundit(mood)` in sprites.py swaps rows

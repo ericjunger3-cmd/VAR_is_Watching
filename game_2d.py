@@ -49,7 +49,8 @@ HINT_FLASH_FRAMES = 60
 CLIP_CHANGE_FRAMES = 30
 
 # The sound at the start of each end clip.
-CLIP_SOUNDS = {"pitch_goal": "goal", "pitch_offside": "goal", "pitch_time_up": "whistle"}
+CLIP_SOUNDS = {"pitch_goal": "goal", "pitch_offside": "goal", "pitch_time_up": "whistle",
+               "studio_wins": "pickup", "studio_loses": "bonk", "studio_arrested": "lock"}
 
 # The room sounds that play in the background of some rooms.
 ROOM_SOUNDS = {"pitch": "crowd", "dressing_room": "shower"}
@@ -843,7 +844,7 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         name = screen["clips"][0]
         clips.draw_clip(canvas, assets["pictures"], name, screen["clip_frame"])
         clips.draw_clip_picture(window, canvas)
-        clips.draw_clip_text(window, fonts, name, screen["clip_frame"])
+        clips.draw_clip_text(window, fonts, name, screen["clip_frame"], clips.final_score(progress))
 
     # 7. The door animation, on top of everything.
     if screen["door"] is not None:
@@ -1044,7 +1045,8 @@ def play(assets, story, progress, screen, player):
         # player sees that a new scene begins. It runs only once.
         if progress["ending"] is not None and not screen["ending_circle"] and not text_box_is_open(screen):
             screen["ending_circle"] = True
-            screen["clips"] = [clips.pitch_clip_name(progress)]
+            # Two clips: first the pitch, then Infantini in the TV studio.
+            screen["clips"] = [clips.pitch_clip_name(progress), "studio_" + game.studio_outcome(progress)]
             screen["clip_frame"] = 0
             start_circle(screen, ENDING_FRAMES)
 
@@ -1222,6 +1224,7 @@ def main():
             "linesman": sprites.make_sprite(sprites.LINESMAN, sprites.LINESMAN_COLOURS),
             "ball": sprites.make_sprite(sprites.BALL),
             "steward": sprites.make_sprite(sprites.STEWARD),
+            "police": sprites.make_sprite(sprites.POLICE, sprites.POLICE_COLOURS),
             "padlock": sprites.make_sprite(sprites.PADLOCK),
             # Item pictures: the key is the item id from story.json.
             "whistle": sprites.make_sprite(sprites.WHISTLE),
@@ -1240,6 +1243,11 @@ def main():
 
     for frame in sprites.PLAYER_WALK:
         assets["walking"].append(sprites.make_sprite(frame, sprites.PLAYER_COLOURS))
+    # The end clips in the TV studio show Infantini's whole body, in his
+    # 5 moods (0 = calm ... 4 = furious).
+    assets["pictures"]["infantini"] = []
+    for mood in range(5):
+        assets["pictures"]["infantini"].append(sprites.make_infantini(mood))
 
     # The story from story.json, reused from the terminal game.
     story = game.load_story()
