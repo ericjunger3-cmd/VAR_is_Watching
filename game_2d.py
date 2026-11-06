@@ -679,7 +679,9 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
     # 8 frames: on, off, on, off ...
     flash = moving["hint_flash"]
     lit = 0 < flash < HINT_FLASH_FRAMES and (flash // 8) % 2 == 0
-    ui.draw_pundit_tv(overlay, assets["pundit"], lit)
+    # His face shows how many clues against him the player has found.
+    pundit_picture = assets["pundit"][game.count_clues(story, progress)]
+    ui.draw_pundit_tv(overlay, pundit_picture, lit)
     flying_item = None
     if screen["flying"] is not None:
         flying_item = screen["flying"]["item"]
@@ -1069,7 +1071,9 @@ def main():
         "standing": standing,
         # The four walking pictures (3/4 view), made one by one in a loop.
         "walking": [],
-        "pundit": sprites.make_sprite(sprites.PUNDIT, sprites.PUNDIT_COLOURS),
+        # Infantini in his 4 moods (0 = calm ... 3 = panicking), one per clue count.
+        "pundit": [sprites.make_pundit(0), sprites.make_pundit(1),
+                   sprites.make_pundit(2), sprites.make_pundit(3)],
         # The feet always touch the floor.
         "player_y": rooms.FLOOR_Y - standing.get_height(),
         # The characters and objects that live in the rooms. Some use the

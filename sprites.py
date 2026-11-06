@@ -642,6 +642,56 @@ PUNDIT = [
     "uuuuuuuuuUUUUUUUUUUUUUUUUUUUUUUU",
 ]
 
+# Infantini gets more nervous with every clue the player finds (0 to 3).
+# For each mood only some rows of PUNDIT change: the eyebrows, the mouth
+# and the sweat drops ("C", light blue). The row number is the key.
+# Mood 0: calm smile. 1: worried eyebrows, flat mouth.
+# 2: wobbly mouth and sweat drops. 3: angry eyebrows, gritted teeth, more sweat.
+PUNDIT_MOOD_ROWS = [
+    # mood 0 (calm): nothing changes
+    {
+    },
+    # mood 1 (nervous)
+    {
+        12: "..sSSSSSSSeSSSSSSSSSSeSSSSSSSs..",
+        13: "..sSSSSSeeSSSSSSSSSSSSeeSSSSSs..",
+        18: "..sSSSSSSSSSSSSSSSSSSSSSSSSSSs..",
+        19: "....sSSSSSSSSmmmmmmSSSSSSSSs....",
+    },
+    # mood 2 (sweating)
+    {
+        8: "...sSSCSSSSSSSSSSSSSSSSSSSSSs...",
+        9: "...sSSCSSSSSSSSSSSSSSSSSCSSSs...",
+        10: "..sSSSSSSSSSSSSSSSSSSSSSCSSSSs..",
+        12: "..sSSSSSSSeSSSSSSSSSSeSSSSSSSs..",
+        13: "..sSSSSSeeSSSSSSSSSSSSeeSSSSSs..",
+        18: "..sSSSSSSSSSSSmmSSmmSSSSSSSSSs..",
+        19: "....sSSSSSSSmmSSmmSSSSSSSSSs....",
+    },
+    # mood 3 (panicking and angry)
+    {
+        5: ".....sSSSSttSSSSSSSSCSSSSSs.....",
+        6: "....sSSSSSSSSSSSSSSSCSSSSSSs....",
+        8: "...sSSCSSSSSSSSSSSSSSSSSSSSSs...",
+        9: "...sSSCSSSSSSSSSSSSSSSSSCSSSs...",
+        10: "..sSSSSSSSSSSSSSSSSSSSSSCSSSSs..",
+        11: "..sSSSSSSSSSSSSSSSSSSSSSSSCSSs..",
+        12: "..sSSSSSSSSSSSSSSSSSSSSSSSCSSs..",
+        13: "..sSSSSSeSSSSSSSSSSSSSSeSSSSSs..",
+        14: "..sSSSSSSeeSSSSSSSSSSeeSSSSSSs..",
+        18: "..sSSSSSSSSSmmmmmmmmSSSSSSSSSs..",
+        19: "....sSSSSSSSmTTTTTTmSSSSSSSs....",
+    },
+]
+
+# His skin gets redder with every mood ("S" skin, "s" shadow, "t" shine).
+PUNDIT_MOOD_SKIN = [
+    {},
+    {"S": (250, 180, 150), "s": (214, 135, 105), "t": (255, 215, 195)},
+    {"S": (245, 150, 125), "s": (205, 110, 90), "t": (255, 195, 175)},
+    {"S": (235, 110, 95), "s": (190, 75, 65), "t": (250, 165, 150)},
+]
+
 # The Lucky Whistle: silver, with a red cord.
 WHISTLE = [
     "..RRR...........",
@@ -791,6 +841,19 @@ def has_coloured_neighbour(surface, x, y):
         if surface.get_at((nx, ny))[3] > 0:
             return True
     return False
+
+
+def make_pundit(mood):
+    # Make Infantini's picture for one mood (0 = calm ... 3 = panicking).
+    # 1. Copy his normal grid and swap in the rows that change for this mood.
+    rows = list(PUNDIT)
+    changes = PUNDIT_MOOD_ROWS[mood]
+    for row_number in changes:
+        rows[row_number] = changes[row_number]
+    # 2. His suit colours, plus the redder skin for this mood.
+    colours = dict(PUNDIT_COLOURS)
+    colours.update(PUNDIT_MOOD_SKIN[mood])
+    return make_sprite(rows, colours)
 
 
 def make_sprite(rows, colour_changes=None):
