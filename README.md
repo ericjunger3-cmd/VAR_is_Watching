@@ -65,6 +65,7 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `M` | mute / unmute all sound (works everywhere) |
 | `←` `→` on *Volume* | turn the volume down / up (title menu and pause menu) |
 | `Y` / `N` | answer a yes/no question |
+| `Space`, `Enter` or `E` during a cut scene | skip to the end of that cut scene |
 
 - **Title screen:** *Play* continues your saved game (or starts one),
   *New Game* starts again (asks first if there is a save), *Fullscreen* switches
@@ -76,6 +77,9 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
   locks the moment. Then `←` `→` move the offside line in 0.1 m steps, `Enter`
   locks it. `Escape` goes back one step (from the explanation or the first step
   it closes the review without deciding).
+- **The end:** after your answer to the press, two short cut scenes play (see
+  *The end in the 2D version* below), then the ending screen. `Space` skips a
+  cut scene.
 - **After an ending:** `N` = new game (asks first), `Q` = back to the title screen.
 - **Timer:** the "STADIUM WAITS" clock in the top left counts down from 5 minutes. It only
   runs while you walk around: it stops while a text, the sticky note, a menu, the VAR Review,
@@ -89,7 +93,8 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 |---|---|
 | `game.py` | the terminal game, and the game rules both versions use (saving, items, locks, endings) |
 | `game_2d.py` | the 2D game: the game loop, walking, keys, timer, title screen and pause menu |
-| `rooms.py` | draws the five rooms and the people in them |
+| `rooms.py` | draws the five rooms and the people in them, and the press pack that storms the pitch |
+| `clips.py` | the cut scenes at the end of the 2D game: on the pitch and in Infantini's TV studio |
 | `sprites.py` | the pixel art (player, characters, items) as grids of colours |
 | `ui.py` | the text box, the pundit's TV, close-ups, menus, the VAR Review screen and the inventory bar |
 | `story.json` | all the story content: scenes, actions, items, the pundit's hints and the endings (shared by both versions) |
@@ -109,8 +114,9 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 
 - **Music:** a chill theme on the title screen and a calmer mystery theme while you play.
 - **Effects:** doors, locked doors, picking up items, the Lucky Whistle, Bernie's growl,
-  cameras on the pitch, the VAR Review beeps, kicking the ball, a goal cheer, menu
-  blips and a soft blip while the text appears.
+  cameras on the pitch (clicking non-stop while the press storms in), the VAR Review
+  beeps, kicking the ball, a goal cheer, the referee's final whistle, menu blips and a
+  soft blip while the text appears. Each cut scene at the end starts with its own sound.
 - **Room sounds:** the crowd on the pitch and the shower in the referee's room.
 - **Endings:** a happy jingle for the good endings and a sad one for the bad endings.
 - **Volume:** a slider in the title menu and the pause menu (0 to 10), and `M` to mute.
@@ -143,9 +149,12 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 
 ## The game at a glance
 
-- **The teams:** the home side plays in red (Bayern style), the away side in
-  yellow and black (Dortmund style). The VAR team (you, the referee and the
-  linesman) wears black. The scoreboard says FCB 1 - 0 BVB.
+- **Who is who on the pitch:** the home side plays in red (Bayern style), the
+  away side in yellow and black (Dortmund style). The referee and the linesman
+  wear turquoise (the referee with a whistle, the linesman with his flag). You,
+  the VAR official, wear orange with "VAR" on your shirt. The press wears all
+  black with a blue press pass and "PRESS". The scoreboard says FCB 1 - 0 BVB,
+  and FULL TIME after your call (0 - 0 if you ruled OFFSIDE).
 - **The sabotage:** the offside camera's monitor hangs crooked and flickers. Its
   red cable (with an "OFFSIDE CAM" tag) runs into the Server Room, where someone
   cut it.
@@ -182,6 +191,32 @@ game consoles: square waves, triangle waves and noise. No sound files from the i
 - **Infantini in the studio:** after every ending you see what happens to him:
   he is **arrested** (you exposed him), he **wins** his bet (it ended 0:0) or
   he **loses** it (the goal counts).
+
+## The end in the 2D version
+
+1. **The press storms the pitch.** After your call the referee blows the final
+   whistle, and a pack of reporters runs out of the tunnel on the left, one after
+   the other, trampling and kicking up dust while the screen shakes. Interviewers
+   with microphones stand right next to you, photographers behind them flash all
+   the time. The red and the yellow player step aside. Then the press asks you
+   their question (`draw_press_pack` in `rooms.py`).
+2. **A slow circle** closes over the pitch: a new scene begins.
+3. **Cut scene 1, on the pitch** (5 seconds, `clips.py`):
+   - after GOAL: the red striker slides on his knees, the passer jumps, red and
+     white confetti falls, the yellow players hang their heads;
+   - after OFFSIDE: the yellow players jump for joy, the red striker kneels with
+     his hands on his head;
+   - when time ran out: the referee flips a coin, it lands on OFFSIDE, the
+     floodlights go out and Bernie walks home.
+4. **Cut scene 2, in Infantini's TV studio** (5 seconds):
+   - arrested: two police officers walk in, the handcuffs click, they lead him
+     away, then the TV picture turns to static: SIGNAL LOST;
+   - his bet wins: he kisses his betting slip, money rains down;
+   - his bet is lost: his face turns red, steam comes out, he crumples the slip.
+5. **The ending screen** with a short text, what happened to Infantini, the right
+   call and a tip.
+
+The terminal version shows the same ending as text.
 
 ## Automatic tests
 
@@ -239,5 +274,5 @@ or delete `save_2d.json` first. A new game starts with the tutorial: press
 | **A2 Unlocked route** | Dressing Room door, `E`. Walk to the kit cabinet, `E` (open drawer), `E` (take whistle). Back door, `E`. Mascot Room door, `E` | The door opens and you are in the Mascot Changing Room. The Lucky Whistle is still in the inventory bar. |
 | **A3 No duplicate** | Take the whistle as in A2, press `E` at the cabinet again, then leave and come back to the Dressing Room | The drawer is open and empty, and there is nothing more to take. The whistle is in the bar only once. |
 | **A4 Resume** | Take the whistle, go to the Mascot Room, talk to Bernie (USB Stick), go to the Pitch and tell the referee **GOAL**. When the press questions appear, close the window. Run `py game_2d.py` again and choose *Play* | You continue on the Pitch and the press questions open again (they cannot be closed). The bar shows the whistle and the USB Stick. |
-| **A5 Two outcomes** | Game 1: Pitch, referee, **GOAL**, "No comment" gives **Lucky Guess**. Press `N`, `Y`. Game 2: get the whistle and the USB Stick, then use the VAR computer: `Enter` after the explanation, move to 1.2 s, `Enter`, put the line on defender number 4, `Enter`. Pitch, **GOAL**, "No comment" gives **By the Book**. Close the window, run again, *Play* | Two different endings. Reopening a finished game shows the same ending again, with only `N` and `Q`. |
+| **A5 Two outcomes** | Game 1: Pitch, referee, **GOAL**, "No comment" gives **Lucky Guess**. Press `N`, `Y`. Game 2: get the whistle and the USB Stick, then use the VAR computer: `Enter` after the explanation, move to 1.2 s, `Enter`, put the line on defender number 4, `Enter`. Pitch, **GOAL**, "No comment" gives **By the Book**. Close the window, run again, *Play* | Two different endings (each after the press and the two cut scenes; `Space` skips a cut scene). Reopening a finished game shows the same ending again at once, with only `N` and `Q`. |
 | **A6 Restart safely** | Take the whistle. `Escape`, *Restart*, `N`. Then `Escape`, *Restart*, `Y` | After `N`: you are still in the Dressing Room with the whistle. After `Y`: you are back in the VAR Booth, the bar is empty, the timer is back at 5:00, and the Mascot Room door has its padlock again. |
