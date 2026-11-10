@@ -99,6 +99,7 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `ui.py` | the text box, the pundit's TV, close-ups, menus, the VAR Review screen and the inventory bar |
 | `story.json` | all the story content: scenes, actions, items, the pundit's hints and the endings (shared by both versions) |
 | `test_game.py` | automatic tests for the acceptance scenarios A1-A6 and the main rules: run `py test_game.py` |
+| `EXAM_NOTES.md` | exam cheat sheet: where each requirement is in the code, the key functions and typical questions |
 | `save.json` | terminal progress; created by the game and saved after every accepted action. A broken save file (empty or half written) is ignored: the game starts a new one instead of crashing |
 | `save_2d.json` | 2D progress, same format; saved after every accepted action |
 | `settings.json` | the 2D volume and mute setting (kept after a New Game) |
