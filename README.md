@@ -99,7 +99,7 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `ui.py` | the text box, the pundit's TV, close-ups, menus, the VAR Review screen and the inventory bar |
 | `story.json` | all the story content: scenes, actions, items, the pundit's hints and the endings (shared by both versions) |
 | `test_game.py` | automatic tests for the acceptance scenarios A1-A6 and the main rules: run `py test_game.py` |
-| `save.json` | terminal progress; created by the game and saved after every accepted action |
+| `save.json` | terminal progress; created by the game and saved after every accepted action. A broken save file (empty or half written) is ignored: the game starts a new one instead of crashing |
 | `save_2d.json` | 2D progress, same format; saved after every accepted action |
 | `settings.json` | the 2D volume and mute setting (kept after a New Game) |
 | `sound.py` | loads and plays the sounds and music of the 2D game; remembers the volume |
@@ -233,7 +233,7 @@ its own save file, so your saved game is never touched.
 py test_game.py
 ```
 
-It prints PASS or FAIL for every test and "16 of 16 tests passed." at the end.
+It prints PASS or FAIL for every test and "17 of 17 tests passed." at the end.
 The checklists below test the same scenarios by hand, in the real game.
 
 ## Acceptance test checklist (A1-A6): terminal version

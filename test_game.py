@@ -245,6 +245,18 @@ def test_ending_summary(story):
         assert summary[1] == story["endings"][ending_id]["tip"]
 
 
+def test_broken_save(story):
+    # A broken save file must not crash the game: load_progress treats it
+    # like "nothing saved" (None). We try an empty file, a half written
+    # file, and a file that is JSON but not a game save.
+    broken_files = ["", '{"scene": "booth", "invent', "[1, 2, 3]", '{"scene": "booth"}']
+    for text in broken_files:
+        with open(TEST_SAVE, "w", encoding="utf-8") as file:
+            file.write(text)
+        assert game.load_progress(TEST_SAVE) is None
+    os.remove(TEST_SAVE)
+
+
 def run_all_tests():
     story = game.load_story()
     tests = [test_a1_locked_route, test_a2_unlocked_route, test_a3_no_duplicate,
@@ -252,7 +264,7 @@ def run_all_tests():
              test_offside_rule, test_expose_needs_all_clues, test_press_after_ruling,
              test_all_endings, test_old_save_still_works, test_clues_are_not_items,
              test_pundit_hints, test_pundit_reacts_to_clues, test_door_to_hint,
-             test_ending_summary]
+             test_ending_summary, test_broken_save]
     failed = 0
     for test in tests:
         # try / except: if an assert fails, we count it and keep going.

@@ -55,18 +55,27 @@ def load_progress(file_name="save.json"):
     # If there is no save file yet, return None ("nothing saved").
     if not os.path.exists(file_name):
         return None
-    with open(file_name, "r", encoding="utf-8") as file:
-        progress = json.load(file)
-    # Save files from before "visited" existed do not have it yet.
-    if "visited" not in progress:
-        progress["visited"] = []
-    # In older versions the two clues were items. Move them to the choices,
-    # so old saves still work.
-    for clue in ["lanyard", "slip"]:
-        if clue in progress["inventory"]:
-            progress["inventory"].remove(clue)
-            progress["choices"][clue] = "found"
-    update_old_save(progress)
+    # A broken save file (empty, only half written, or not a game save at
+    # all) must not crash the game. We treat it like "nothing saved", so the
+    # player simply starts a new game, which writes a good file again.
+    # ValueError: the text is not valid JSON.
+    # KeyError, TypeError, AttributeError: it is JSON, but not a game save
+    # (e.g. "inventory" is missing, or the file holds a list).
+    try:
+        with open(file_name, "r", encoding="utf-8") as file:
+            progress = json.load(file)
+        # Save files from before "visited" existed do not have it yet.
+        if "visited" not in progress:
+            progress["visited"] = []
+        # In older versions the two clues were items. Move them to the choices,
+        # so old saves still work.
+        for clue in ["lanyard", "slip"]:
+            if clue in progress["inventory"]:
+                progress["inventory"].remove(clue)
+                progress["choices"][clue] = "found"
+        update_old_save(progress)
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return None
     return progress
 
 
