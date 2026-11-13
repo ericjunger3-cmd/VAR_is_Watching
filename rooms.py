@@ -93,6 +93,24 @@ def draw_marker(canvas, x, y, tick):
     pygame.draw.rect(canvas, YELLOW, (x - 1, top + 9, 3, 2))
 
 
+# Pictures that never change (walls, floors, the crowd) are drawn only once
+# and then remembered here: the key is a name, e.g. "booth_wall", the value
+# is the finished picture. Copying a finished picture is much faster than
+# drawing hundreds of small rectangles again in every frame (30 per second).
+SAVED_PICTURES = {}
+
+
+def draw_saved(canvas, name, draw_function):
+    # Draw something that never changes. The first time, draw_function draws
+    # it on an empty see-through picture as big as the room, and we remember
+    # that picture under its name. After that we only copy it onto the canvas.
+    if name not in SAVED_PICTURES:
+        picture = pygame.Surface((ROOM_WIDTH, CANVAS_HEIGHT), pygame.SRCALPHA)
+        draw_function(picture)
+        SAVED_PICTURES[name] = picture
+    canvas.blit(SAVED_PICTURES[name], (0, 0))
+
+
 def draw_wall(canvas):
     # Cream wallpaper with soft stripes and a darker strip at the top.
     canvas.fill((246, 224, 180))
@@ -649,8 +667,9 @@ RED_CABLE = [(236, 128), (236, 141), (40, 141)]
 
 def draw_booth(canvas, pictures, progress, tick):
     # Draw the whole VAR Booth, from the back to the front.
-    draw_wall(canvas)
-    draw_floor(canvas)
+    # The wall and the floor never change, so they are drawn only once.
+    draw_saved(canvas, "booth_wall", draw_wall)
+    draw_saved(canvas, "booth_floor", draw_floor)
 
     # The window, the monitors and the desk are drawn on a "subsurface":
     # a part of the canvas that starts BOOTH_SHIFT pixels to the right.
@@ -853,7 +872,7 @@ def draw_dark_band(canvas, y, height, alpha):
     canvas.blit(band, (0, y))
 
 
-def draw_dressing_room(canvas, pictures, progress, tick):
+def draw_tiled_walls(canvas):
     # Tiled walls: light tiles on top, darker tiles below, a white strip between.
     draw_wall_tiles(canvas, 0, 117, (175, 225, 235), (215, 244, 250), (145, 200, 215))
     draw_wall_tiles(canvas, 121, FLOOR_Y, (95, 165, 185), (130, 192, 208), (75, 140, 160))
@@ -864,6 +883,11 @@ def draw_dressing_room(canvas, pictures, progress, tick):
     draw_dark_band(canvas, 7, 6, 35)
     draw_dark_band(canvas, 180, 20, 30)
     draw_dark_band(canvas, 192, 8, 35)
+
+
+def draw_dressing_room(canvas, pictures, progress, tick):
+    # The tiled walls never change, so they are drawn only once.
+    draw_saved(canvas, "dressing_walls", draw_tiled_walls)
     # The ceiling.
     pygame.draw.rect(canvas, (215, 225, 235), (0, 0, ROOM_WIDTH, 6))
     pygame.draw.rect(canvas, OUTLINE, (0, 6, ROOM_WIDTH, 1))
@@ -1779,7 +1803,7 @@ def draw_pitch_background(canvas, flashing, tick, scoreboard=True):
     # scoreboard=False leaves the scoreboard out (for the title screen).
     draw_stadium(canvas, flashing, tick, scoreboard)
     draw_ad_boards(canvas, tick)
-    draw_grass(canvas)
+    draw_saved(canvas, "grass", draw_grass)
 
     # The tunnel back inside: stone blocks, a red top and a dark inside
     # that is even darker at the edges.
@@ -1907,15 +1931,7 @@ def draw_pitch_people(canvas, pictures, ball, tick, press):
     canvas.blit(ball_picture, (ball_x, FLOOR_Y - ball_picture.get_height() + 1))
 
 
-def draw_stadium(canvas, celebrating, tick, scoreboard=True):
-    # Sky, roof, two tiers of fans with the scoreboard, and floodlights.
-    # scoreboard=False leaves the scoreboard out (for the title screen).
-    draw_bands(canvas, [(100, 180, 245), (120, 195, 250), (145, 210, 255)], 0, 0, ROOM_WIDTH, 34)
-    # The clouds drift slowly; % 560 brings them back on the left side.
-    for start, cloud_y in [(40, 6), (250, 3), (400, 10)]:
-        cloud_x = (start + tick // 10) % 560 - 40
-        draw_cloud(canvas, cloud_x, cloud_y)
-
+def draw_upper_tier(canvas):
     # The roof.
     pygame.draw.rect(canvas, OUTLINE, (0, 33, ROOM_WIDTH, 9))
     pygame.draw.rect(canvas, (200, 205, 215), (0, 34, ROOM_WIDTH, 7))
@@ -1935,6 +1951,54 @@ def draw_stadium(canvas, celebrating, tick, scoreboard=True):
     draw_dark_band(canvas, 42, 30, 50)
     draw_dark_band(canvas, 42, 18, 40)
     draw_dark_band(canvas, 42, 8, 40)
+
+
+def draw_lower_tier(canvas, phase):
+    # A red banner between the tiers.
+    pygame.draw.rect(canvas, OUTLINE, (0, 92, ROOM_WIDTH, 3))
+    pygame.draw.rect(canvas, HOME_RED, (0, 95, ROOM_WIDTH, 7))
+    pygame.draw.rect(canvas, (255, 110, 100), (0, 95, ROOM_WIDTH, 1))
+    pygame.draw.rect(canvas, (180, 40, 40), (0, 101, ROOM_WIDTH, 1))
+    for x in range(0, ROOM_WIDTH, 40):
+        pygame.draw.rect(canvas, WHITE, (x + 6, 97, 22, 3))
+
+    # Lower tier: bigger fans, some with their arms up.
+    pygame.draw.rect(canvas, (70, 70, 95), (0, 102, ROOM_WIDTH, 46))
+    for fan_y in range(105, 146, 7):
+        for fan_x in range(2 + (fan_y // 7) % 2 * 4, ROOM_WIDTH, 8):
+            colour = fan_colour(fan_x, fan_x * 3 + fan_y)
+            pygame.draw.rect(canvas, SKIN, (fan_x + 1, fan_y, 3, 3))
+            pygame.draw.rect(canvas, colour, (fan_x, fan_y + 3, 5, 3))
+            pygame.draw.rect(canvas, darker(colour, 0.8), (fan_x + 3, fan_y + 3, 2, 3))
+            if (fan_x + fan_y) % 3 == 0:
+                # Fans with their arms up jump: half of them up, half down.
+                # phase (0 or 1) says which half is up right now.
+                jump = (fan_x // 8 + phase) % 2
+                pygame.draw.rect(canvas, SKIN, (fan_x - 1, fan_y - 2 - jump, 1, 3))
+                pygame.draw.rect(canvas, SKIN, (fan_x + 5, fan_y - 2 - jump, 1, 3))
+
+
+def draw_lower_tier_0(canvas):
+    # The lower tier in jump phase 0 (for draw_saved, which gives only the canvas).
+    draw_lower_tier(canvas, 0)
+
+
+def draw_lower_tier_1(canvas):
+    # The lower tier in jump phase 1.
+    draw_lower_tier(canvas, 1)
+
+
+def draw_stadium(canvas, celebrating, tick, scoreboard=True):
+    # Sky, roof, two tiers of fans with the scoreboard, and floodlights.
+    # scoreboard=False leaves the scoreboard out (for the title screen).
+    draw_bands(canvas, [(100, 180, 245), (120, 195, 250), (145, 210, 255)], 0, 0, ROOM_WIDTH, 34)
+    # The clouds drift slowly; % 560 brings them back on the left side.
+    for start, cloud_y in [(40, 6), (250, 3), (400, 10)]:
+        cloud_x = (start + tick // 10) % 560 - 40
+        draw_cloud(canvas, cloud_x, cloud_y)
+
+    # The roof and the upper tier never change, so they are drawn only once.
+    draw_saved(canvas, "upper_tier", draw_upper_tier)
 
     # Phone flashes in the crowd: every 7 frames one fan takes a photo.
     # The position comes from a calculation, so it looks random.
@@ -1960,28 +2024,13 @@ def draw_stadium(canvas, celebrating, tick, scoreboard=True):
         for dot_x in range(124, 216, 3):
             canvas.set_at((dot_x, 62), (60, 60, 75))                           # LED dots
 
-    # A red banner between the tiers.
-    pygame.draw.rect(canvas, OUTLINE, (0, 92, ROOM_WIDTH, 3))
-    pygame.draw.rect(canvas, HOME_RED, (0, 95, ROOM_WIDTH, 7))
-    pygame.draw.rect(canvas, (255, 110, 100), (0, 95, ROOM_WIDTH, 1))
-    pygame.draw.rect(canvas, (180, 40, 40), (0, 101, ROOM_WIDTH, 1))
-    for x in range(0, ROOM_WIDTH, 40):
-        pygame.draw.rect(canvas, WHITE, (x + 6, 97, 22, 3))
-
-    # Lower tier: bigger fans, some with their arms up.
-    pygame.draw.rect(canvas, (70, 70, 95), (0, 102, ROOM_WIDTH, 46))
-    for fan_y in range(105, 146, 7):
-        for fan_x in range(2 + (fan_y // 7) % 2 * 4, ROOM_WIDTH, 8):
-            colour = fan_colour(fan_x, fan_x * 3 + fan_y)
-            pygame.draw.rect(canvas, SKIN, (fan_x + 1, fan_y, 3, 3))
-            pygame.draw.rect(canvas, colour, (fan_x, fan_y + 3, 5, 3))
-            pygame.draw.rect(canvas, darker(colour, 0.8), (fan_x + 3, fan_y + 3, 2, 3))
-            if (fan_x + fan_y) % 3 == 0:
-                # Fans with their arms up jump: half of them up, half down,
-                # changing every 8 frames.
-                jump = (fan_x // 8 + tick // 8) % 2
-                pygame.draw.rect(canvas, SKIN, (fan_x - 1, fan_y - 2 - jump, 1, 3))
-                pygame.draw.rect(canvas, SKIN, (fan_x + 5, fan_y - 2 - jump, 1, 3))
+    # The banner and the lower tier. The fans with their arms up jump,
+    # changing every 8 frames, so there are only two different pictures:
+    # phase 0 and phase 1. Both are drawn once and then remembered.
+    if (tick // 8) % 2 == 0:
+        draw_saved(canvas, "lower_tier_0", draw_lower_tier_0)
+    else:
+        draw_saved(canvas, "lower_tier_1", draw_lower_tier_1)
 
     # Fans waving scarves above their heads: the scarf moves from left to
     # right and back. Red and white on the home side, yellow and black on

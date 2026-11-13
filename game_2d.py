@@ -682,6 +682,16 @@ if storage.IN_BROWSER:
     PAUSE_OPTIONS.remove("Fullscreen")
 
 
+def fit_to_browser():
+    # Web version only: ask the page to size the game to the browser window
+    # again, keeping its 16:9 shape (otherwise it can end up stretched when
+    # the page has just loaded). On a computer this does nothing.
+    if storage.IN_BROWSER:
+        import platform
+        platform.window.config.gui_divider = 1
+        platform.window.window_resize()
+
+
 def toggle_fullscreen():
     # Switch between window and fullscreen. In the browser we do nothing,
     # because there the browser itself switches to fullscreen with F11.
@@ -930,6 +940,7 @@ async def title_screen(assets, story):
     # It is an "async" function, so that it can pause after every frame
     # (await asyncio.sleep(0) below). The web version needs that.
     clock = pygame.time.Clock()
+    fit_to_browser()
     labels = ["Play", "New Game", "Volume", "Fullscreen", "Exit"]
     # A web page cannot close itself, and the browser does fullscreen with F11,
     # so the web version does not show these two options.
@@ -1030,6 +1041,7 @@ async def play(assets, story, progress, screen, player):
     # "quit" (the window was closed). The progress is saved after every
     # accepted action, so nothing is lost either way.
     clock = pygame.time.Clock()
+    fit_to_browser()
     fonts = assets["fonts"]
     player_width = assets["standing"].get_width()
     # Everything that moves on screen but is not part of the story:
