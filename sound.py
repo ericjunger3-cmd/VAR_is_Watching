@@ -64,7 +64,15 @@ def start():
     # (for example: no speakers), the game works without sound.
     load_settings()
     try:
-        pygame.mixer.init()
+        if storage.IN_BROWSER:
+            # In the browser the game sometimes needs a bit longer for a frame.
+            # With a small sound buffer the sound then runs out for a moment,
+            # which you hear as crackling. So the web version uses a bigger
+            # buffer (2048) and 22050 Hz, the rate our sounds are made in.
+            pygame.mixer.quit()
+            pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=2048)
+        else:
+            pygame.mixer.init()
         for name in EFFECTS + AMBIENCE:
             state["sounds"][name] = pygame.mixer.Sound(SOUND_FOLDER + name + SOUND_TYPE)
     except (pygame.error, FileNotFoundError):
