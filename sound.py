@@ -22,6 +22,8 @@ SETTINGS_FILE = "settings.json"
 EFFECTS = ["pickup", "door", "bonk", "blip", "confirm", "type", "whistle", "growl",
            "camera", "beep", "tick", "lock", "kick", "goal", "jingle_good", "jingle_bad"]
 AMBIENCE = ["crowd", "shower"]
+# The two songs: one for the title screen, one for the game.
+MUSIC = ["title_theme", "game_theme"]
 
 # How loud the music is compared to the effects (the music stays in the back).
 MUSIC_LEVEL = 0.55
@@ -36,6 +38,7 @@ state = {
     "ambience": None,     # the name of the room sound that is playing
     "sounds": {},         # name -> the loaded sound
     "channel": None,      # the channel that plays the room sound
+    "music_channel": None,  # the channel that plays the music
 }
 
 
@@ -73,14 +76,18 @@ def start():
             pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=2048)
         else:
             pygame.mixer.init()
-        for name in EFFECTS + AMBIENCE:
+        # The songs are loaded completely too, like the other sounds. (Playing
+        # them piece by piece while loading, with pygame.mixer.music, made the
+        # music crackle in the browser.)
+        for name in EFFECTS + AMBIENCE + MUSIC:
             state["sounds"][name] = pygame.mixer.Sound(SOUND_FOLDER + name + SOUND_TYPE)
     except (pygame.error, FileNotFoundError):
         return
-    # Channel 0 is kept free for the room sound (crowd, shower), so the
-    # effects never cut it off.
-    pygame.mixer.set_reserved(1)
+    # Channel 0 is kept free for the room sound (crowd, shower) and channel 1
+    # for the music, so the effects never cut them off.
+    pygame.mixer.set_reserved(2)
     state["channel"] = pygame.mixer.Channel(0)
+    state["music_channel"] = pygame.mixer.Channel(1)
     state["working"] = True
     apply_volume()
 
@@ -98,7 +105,7 @@ def apply_volume():
         return
     for name in EFFECTS:
         state["sounds"][name].set_volume(loudness())
-    pygame.mixer.music.set_volume(loudness() * MUSIC_LEVEL)
+    state["music_channel"].set_volume(loudness() * MUSIC_LEVEL)
     state["channel"].set_volume(loudness() * AMBIENCE_LEVEL)
 
 
@@ -113,20 +120,14 @@ def play_music(name):
     # changes, so the song does not start again from the beginning.
     if not state["working"] or state["music"] == name:
         return
-    # If the song cannot be played (this can happen in the browser), the
-    # game simply goes on without music instead of crashing.
-    try:
-        pygame.mixer.music.load(SOUND_FOLDER + name + SOUND_TYPE)
-        pygame.mixer.music.play(-1)
-    except pygame.error as error:
-        print("The music could not be played:", error)
-        return
+    # loops=-1 repeats the song forever, on its own channel.
+    state["music_channel"].play(state["sounds"][name], loops=-1)
     state["music"] = name
 
 
 def stop_music():
     if state["working"]:
-        pygame.mixer.music.stop()
+        state["music_channel"].stop()
         state["music"] = None
 
 
