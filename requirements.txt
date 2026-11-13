@@ -1,0 +1,6 @@
+# Packages for the 2D version (the terminal version needs nothing extra).
+# The versions are pinned, so everyone (and GitHub) uses exactly the same ones.
+pygame-ce==2.5.8
+
+# Only needed to build the web version yourself (GitHub does it automatically):
+pygbag==0.9.3

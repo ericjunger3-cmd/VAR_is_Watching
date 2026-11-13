@@ -193,6 +193,15 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   (`PUNDIT_MOOD_ROWS`) and skin colours (`PUNDIT_MOOD_SKIN`) per clue count.
 - `test_game.py` – automatic tests for A1-A6 and the main rules, plain asserts,
   no extra libraries: `py test_game.py`.
+- Web version (team project needs a public URL): pygbag builds the 2D game for the
+  browser, GitHub Actions (`.github/workflows/deploy.yml`) tests, builds and publishes
+  it on GitHub Pages after every push to main (https://ericjunger3-cmd.github.io/VAR_is_Watching/).
+  `main.py` starts it (`asyncio.run(main())`, must import pygame); `title_screen`, `play`
+  and `main` are async with `await asyncio.sleep(0)` per frame. `storage.py` saves to
+  files on a computer and to localStorage in the browser (`IN_BROWSER`). Sounds are .ogg
+  copies in the browser (`SOUND_TYPE`, `tools/make_ogg.py`); music may fail there and is
+  skipped. `make_font` uses pygame's own font x1.6 in the browser. No Fullscreen/Exit there.
+  Test locally: `py -m pygbag .` (from the parent folder: `py -m pygbag VAR_is_Watching`).
 - Run with `py game.py` / `py game_2d.py` (Python 3.15 on this PC; `python`
   points to the Microsoft Store alias).
 

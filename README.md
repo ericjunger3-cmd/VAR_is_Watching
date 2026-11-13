@@ -3,13 +3,24 @@
 A short comedy mystery game (about 10 minutes of play), in two versions:
 a **terminal version** where you type numbers, and a **2D pixel-art version**
 where you walk through the stadium. Both use the same story.
-Solo project for Nova SBE *Introduction to Programming*, based on the
-"Plot Twist" brief.
+Team project for Nova SBE *Introduction to Programming*. It started as a solo
+project from the "Plot Twist" brief and was extended by the team.
+
+**Play it in the browser:** https://ericjunger3-cmd.github.io/VAR_is_Watching/
+(the 2D version; the first start takes a few seconds to load)
 
 It is the 94th minute of a cup final. The home side scores, the away side
 claims offside, and the key VAR angle is missing. You are a junior VAR official
 on your first day. A smug TV guest expert, Gianno Infantini, comments on everything you do.
 Find the missing footage, survive the press, and make the call.
+
+## Team
+
+| Name | Student number |
+|---|---|
+| Eric Junger | 74702 |
+| Max Friedrich | 75436 |
+| Brian Riebandt | 71843 |
 
 ## How to run
 
@@ -24,9 +35,32 @@ py game.py
 **2D version** (needs the pygame-ce package, install it once):
 
 ```
-py -m pip install pygame-ce
+py -m pip install -r requirements.txt
 py game_2d.py
 ```
+
+**Tests:**
+
+```
+py test_game.py
+```
+
+**Web version (in the browser):** GitHub builds it automatically after every
+push to `main` and puts it online at the address above
+(`.github/workflows/deploy.yml`: run the tests, build with pygbag, publish on
+GitHub Pages). To try the web version on your own computer:
+
+```
+py -m pygbag --title "VAR Is Watching" .
+```
+
+Then open http://localhost:8000 and click into the game. The web version
+starts from `main.py`. In the browser the progress and the volume are saved in
+the browser's storage (localStorage) instead of files (`storage.py`), the
+sounds are `.ogg` copies of the `.wav` files (`tools/make_ogg.py`), pygame's
+own font replaces the Windows fonts, and there is no Fullscreen / Exit option
+(use the browser's F11 instead). The background music can be missing in the
+browser; the sound effects and the game itself are the same.
 
 (On Mac/Linux, or if `py` does not work: use `python` or `python3` instead of `py`.)
 
@@ -93,6 +127,10 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 |---|---|
 | `game.py` | the terminal game, and the game rules both versions use (saving, items, locks, endings) |
 | `game_2d.py` | the 2D game: the game loop, walking, keys, timer, title screen and pause menu |
+| `main.py` | the start file of the web version (pygbag always starts `main.py`); it starts the 2D game |
+| `storage.py` | saves and loads the progress and the volume: files on a computer, the browser's storage in the web version |
+| `requirements.txt` | the packages with their exact versions (pygame-ce, and pygbag for the web version) |
+| `.github/workflows/deploy.yml` | tells GitHub to test, build and publish the web version after every push to `main` |
 | `rooms.py` | draws the five rooms and the people in them, and the press pack that storms the pitch |
 | `clips.py` | the cut scenes at the end of the 2D game: on the pitch and in Infantini's TV studio |
 | `sprites.py` | the pixel art (player, characters, items) as grids of colours |
@@ -104,8 +142,9 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `save_2d.json` | 2D progress, same format; saved after every accepted action |
 | `settings.json` | the 2D volume and mute setting (kept after a New Game) |
 | `sound.py` | loads and plays the sounds and music of the 2D game; remembers the volume |
-| `sounds/` | all sound effects, room sounds and music as .wav files |
+| `sounds/` | all sound effects, room sounds and music as .wav files (and .ogg copies for the web version) |
 | `tools/make_sounds.py` | the tool that made the sounds (not part of the game): run `py tools/make_sounds.py` to make them again |
+| `tools/make_ogg.py` | makes the .ogg copies of the sounds for the web version (needs `py -m pip install soundfile`) |
 | `icon.png`, `var_is_watching.ico` | the game's logo: the window icon (png) and the desktop shortcut icon (ico) |
 
 ## Sound and music (2D version)

@@ -2,7 +2,7 @@
 # All the story text lives in story.json. This file contains the game logic.
 
 import json
-import os
+import storage
 
 
 def load_story():
@@ -47,13 +47,15 @@ def save_progress(progress, file_name="save.json"):
     # file_name="save.json" is a default: if no file name is given, save.json
     # is used. The 2D version passes "save_2d.json" instead.
     # indent=2 makes the file easy to read if you open it yourself.
-    with open(file_name, "w", encoding="utf-8") as file:
-        json.dump(progress, file, indent=2)
+    # json.dumps turns the dictionary into a text; storage.write_text saves it
+    # (as a file on a computer, in the browser's storage in the web version).
+    storage.write_text(file_name, json.dumps(progress, indent=2))
 
 
 def load_progress(file_name="save.json"):
     # If there is no save file yet, return None ("nothing saved").
-    if not os.path.exists(file_name):
+    text = storage.read_text(file_name)
+    if text is None:
         return None
     # A broken save file (empty, only half written, or not a game save at
     # all) must not crash the game. We treat it like "nothing saved", so the
@@ -62,8 +64,7 @@ def load_progress(file_name="save.json"):
     # KeyError, TypeError, AttributeError: it is JSON, but not a game save
     # (e.g. "inventory" is missing, or the file holds a list).
     try:
-        with open(file_name, "r", encoding="utf-8") as file:
-            progress = json.load(file)
+        progress = json.loads(text)
         # Save files from before "visited" existed do not have it yet.
         if "visited" not in progress:
             progress["visited"] = []

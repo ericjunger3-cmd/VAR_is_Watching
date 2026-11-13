@@ -2,8 +2,10 @@
 # sprites.py holds the pixel art, rooms.py draws the rooms,
 # and this file runs the game.
 
+import asyncio
 import pygame
 import game
+import storage
 import sprites
 import rooms
 import ui
@@ -675,6 +677,16 @@ def continue_game(story, fonts, player, progress, player_width):
 # ---------------------------------------------------------------- pause menu and yes/no box
 
 PAUSE_OPTIONS = ["Resume", "Tutorial", "Volume", "Fullscreen", "Restart", "Back to the title screen"]
+# In the browser the page itself does fullscreen (F11), so the option is not needed.
+if storage.IN_BROWSER:
+    PAUSE_OPTIONS.remove("Fullscreen")
+
+
+def toggle_fullscreen():
+    # Switch between window and fullscreen. In the browser we do nothing,
+    # because there the browser itself switches to fullscreen with F11.
+    if not storage.IN_BROWSER:
+        pygame.display.toggle_fullscreen()
 
 
 def fullscreen_label():
@@ -708,7 +720,7 @@ def handle_pause_key(key, screen):
         sound.play("confirm")
         if choice == "Fullscreen":
             # Switch, and keep the pause menu open (you see ON / OFF change).
-            pygame.display.toggle_fullscreen()
+            toggle_fullscreen()
             return None
         screen["pause"] = None
         if choice == "Tutorial":
@@ -912,11 +924,18 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
 
 # ---------------------------------------------------------------- the title screen
 
-def title_screen(assets, story):
+async def title_screen(assets, story):
     # Show the title screen until the player chooses something.
     # Returns "play", "new" or "exit".
+    # It is an "async" function, so that it can pause after every frame
+    # (await asyncio.sleep(0) below). The web version needs that.
     clock = pygame.time.Clock()
     labels = ["Play", "New Game", "Volume", "Fullscreen", "Exit"]
+    # A web page cannot close itself, and the browser does fullscreen with F11,
+    # so the web version does not show these two options.
+    if storage.IN_BROWSER:
+        labels.remove("Fullscreen")
+        labels.remove("Exit")
     selected = 0
     confirm = None      # the yes/no question, while it is open
     tick = 0    # the frame counter, for the animations
@@ -934,7 +953,7 @@ def title_screen(assets, story):
 
             # F11 switches between window and fullscreen, at any moment.
             if event.key == pygame.K_F11:
-                pygame.display.toggle_fullscreen()
+                toggle_fullscreen()
                 continue
             # M mutes and unmutes all sound, at any moment.
             if event.key == pygame.K_m:
@@ -966,7 +985,7 @@ def title_screen(assets, story):
                 if choice == "Exit":
                     return "exit"
                 if choice == "Fullscreen":
-                    pygame.display.toggle_fullscreen()
+                    toggle_fullscreen()
                 if choice == "New Game":
                     # A new game replaces a saved game, so ask first.
                     if has_save:
@@ -999,11 +1018,14 @@ def title_screen(assets, story):
             ui.draw_confirm_text(window, confirm, assets["fonts"], SCALE)
         pygame.display.flip()
         clock.tick(30)
+        # Give the browser a moment to show the frame (on a computer this
+        # does nothing you can notice).
+        await asyncio.sleep(0)
 
 
 # ---------------------------------------------------------------- playing
 
-def play(assets, story, progress, screen, player):
+async def play(assets, story, progress, screen, player):
     # The game loop. Returns "title" (back to the title screen) or
     # "quit" (the window was closed). The progress is saved after every
     # accepted action, so nothing is lost either way.
@@ -1040,7 +1062,7 @@ def play(assets, story, progress, screen, player):
 
             # F11 switches between window and fullscreen, at any moment.
             if event.key == pygame.K_F11:
-                pygame.display.toggle_fullscreen()
+                toggle_fullscreen()
                 continue
             # M mutes and unmutes all sound, at any moment.
             if event.key == pygame.K_m:
@@ -1233,11 +1255,25 @@ def play(assets, story, progress, screen, player):
         draw_game(assets, story, progress, screen, player, nearby, moving)
         pygame.display.flip()
         clock.tick(30)
+        # Give the browser a moment to show the frame (see title_screen).
+        await asyncio.sleep(0)
 
 
-def main():
+def make_font(name, size):
+    # Load a bold font. On a computer we use the Windows font (e.g. Consolas).
+    # The browser has no Windows fonts, so the web version uses pygame's own
+    # font. That one is smaller, so it gets 1.6 times the size: then the
+    # texts are about as wide and as tall as with Consolas.
+    if storage.IN_BROWSER:
+        return pygame.font.Font(None, round(size * 1.6))
+    return pygame.font.SysFont(name, size, bold=True)
+
+
+async def main():
     # A small sound buffer (512) makes the sounds play without delay.
-    pygame.mixer.pre_init(44100, -16, 2, 512)
+    # (Only on a computer: the browser sets up its sound system itself.)
+    if not storage.IN_BROWSER:
+        pygame.mixer.pre_init(44100, -16, 2, 512)
     pygame.init()
     sound.start()
     # The game's logo in the title bar and the taskbar (set it before
@@ -1252,16 +1288,16 @@ def main():
     # The fonts, kept together in one dictionary.
     # "inkfree" is a handwriting font that comes with Windows.
     fonts = {
-        "title": pygame.font.SysFont("consolas", 17, bold=True),
-        "text": pygame.font.SysFont("consolas", 17, bold=True),
-        "small": pygame.font.SysFont("consolas", 14, bold=True),
-        "big": pygame.font.SysFont("consolas", 34, bold=True),
-        "hand_big": pygame.font.SysFont("inkfree", 46, bold=True),
-        "hand": pygame.font.SysFont("inkfree", 28, bold=True),
-        "label": pygame.font.SysFont("consolas", 15, bold=True),
-        "label_small": pygame.font.SysFont("consolas", 11, bold=True),
-        "bubble": pygame.font.SysFont("consolas", 16, bold=True),
-        "tiny": pygame.font.SysFont("consolas", 11, bold=True),
+        "title": make_font("consolas", 17),
+        "text": make_font("consolas", 17),
+        "small": make_font("consolas", 14),
+        "big": make_font("consolas", 34),
+        "hand_big": make_font("inkfree", 46),
+        "hand": make_font("inkfree", 28),
+        "label": make_font("consolas", 15),
+        "label_small": make_font("consolas", 11),
+        "bubble": make_font("consolas", 16),
+        "tiny": make_font("consolas", 11),
     }
 
     # Everything we need for drawing, kept together in one dictionary,
@@ -1344,7 +1380,7 @@ def main():
 
     # Title screen -> game -> title screen ... until the player exits.
     while True:
-        choice = title_screen(assets, story)
+        choice = await title_screen(assets, story)
         if choice == "exit":
             break
         saved = game.load_progress(SAVE_FILE)
@@ -1356,12 +1392,14 @@ def main():
             screen = continue_game(story, fonts, player, progress, standing.get_width())
         else:
             progress, screen = new_game(story, fonts, player)
-        if play(assets, story, progress, screen, player) == "quit":
+        if await play(assets, story, progress, screen, player) == "quit":
             break
 
     pygame.quit()
 
 
 # Only start the game when this file is run directly (py game_2d.py).
+# main() is async, so asyncio.run starts it (the web version starts it
+# the same way, from main.py).
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -1,0 +1,59 @@
+# Puts the web version online on GitHub Pages, every time something is pushed
+# to main. GitHub runs these steps on its own computer:
+# 1. get the code, 2. run the tests, 3. build the web version with pygbag,
+# 4. publish it. If a test fails, nothing is published.
+
+name: Deploy web version
+
+on:
+  push:
+    branches: [main]
+  # Also allows starting it by hand on the "Actions" tab.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; a newer push replaces an older one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run the tests
+        run: python test_game.py
+
+      - name: Install pygbag
+        run: pip install pygbag==0.9.3
+
+      - name: Build the web version
+        run: python -m pygbag --build --title "VAR Is Watching" .
+
+      - name: Hand the website over to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish on GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

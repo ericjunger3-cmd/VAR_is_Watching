@@ -5,6 +5,7 @@
 # Every test uses "assert": if the check is False, the test fails.
 
 import os
+import sys
 import game
 
 # A separate save file, so the tests never touch your real save.json.
@@ -277,6 +278,10 @@ def run_all_tests():
             failed = failed + 1
     print()
     print(str(len(tests) - failed) + " of " + str(len(tests)) + " tests passed.")
+    # Exit code 1 tells GitHub (see .github/workflows/deploy.yml) that a test
+    # failed, so a broken version is not put online.
+    if failed > 0:
+        sys.exit(1)
 
 
 # Only run the tests when this file is run directly.

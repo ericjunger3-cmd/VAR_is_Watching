@@ -3,9 +3,16 @@
 # If the computer has no sound device, the game simply runs without sound.
 
 import json
+import storage
 import pygame
 
 SOUND_FOLDER = "sounds/"
+# Browsers cannot play our .wav files, so the web version uses .ogg copies
+# of the same sounds (made by tools/make_ogg.py).
+if storage.IN_BROWSER:
+    SOUND_TYPE = ".ogg"
+else:
+    SOUND_TYPE = ".wav"
 
 # The volume is remembered in its own small file (not in the save file),
 # so it stays the same after a New Game and after closing the game.
@@ -36,8 +43,10 @@ def load_settings():
     # Read the volume from last time. If there is no settings file yet
     # (first time playing) or it is broken, we keep the normal volume.
     try:
-        with open(SETTINGS_FILE) as file:
-            settings = json.load(file)
+        text = storage.read_text(SETTINGS_FILE)
+        if text is None:
+            return
+        settings = json.loads(text)
         state["volume"] = max(0, min(10, int(settings["volume"])))
         state["muted"] = settings["muted"] == True
     except (FileNotFoundError, ValueError, KeyError, TypeError):
@@ -47,8 +56,7 @@ def load_settings():
 def save_settings():
     # Write the volume to the settings file, so it is remembered next time.
     settings = {"volume": state["volume"], "muted": state["muted"]}
-    with open(SETTINGS_FILE, "w") as file:
-        json.dump(settings, file)
+    storage.write_text(SETTINGS_FILE, json.dumps(settings))
 
 
 def start():
@@ -58,7 +66,7 @@ def start():
     try:
         pygame.mixer.init()
         for name in EFFECTS + AMBIENCE:
-            state["sounds"][name] = pygame.mixer.Sound(SOUND_FOLDER + name + ".wav")
+            state["sounds"][name] = pygame.mixer.Sound(SOUND_FOLDER + name + SOUND_TYPE)
     except (pygame.error, FileNotFoundError):
         return
     # Channel 0 is kept free for the room sound (crowd, shower), so the
@@ -97,8 +105,13 @@ def play_music(name):
     # changes, so the song does not start again from the beginning.
     if not state["working"] or state["music"] == name:
         return
-    pygame.mixer.music.load(SOUND_FOLDER + name + ".wav")
-    pygame.mixer.music.play(-1)
+    # If the song cannot be played (this can happen in the browser), the
+    # game simply goes on without music instead of crashing.
+    try:
+        pygame.mixer.music.load(SOUND_FOLDER + name + SOUND_TYPE)
+        pygame.mixer.music.play(-1)
+    except pygame.error:
+        return
     state["music"] = name
 
 
