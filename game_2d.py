@@ -690,6 +690,10 @@ def fit_to_browser():
         import platform
         platform.window.config.gui_divider = 1
         platform.window.window_resize()
+        # The browser makes the game picture bigger to fit the window. Normally
+        # it smooths it, which makes pixels and letters blurry; "pixelated"
+        # keeps every pixel sharp, like on the computer.
+        platform.window.canvas.style.imageRendering = "pixelated"
 
 
 def toggle_fullscreen():

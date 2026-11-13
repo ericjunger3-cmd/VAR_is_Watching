@@ -59,8 +59,7 @@ starts from `main.py`. In the browser the progress and the volume are saved in
 the browser's storage (localStorage) instead of files (`storage.py`), the
 sounds are `.ogg` copies of the `.wav` files (`tools/make_ogg.py`), pygame's
 own font replaces the Windows fonts, and there is no Fullscreen / Exit option
-(use the browser's F11 instead). The background music can be missing in the
-browser; the sound effects and the game itself are the same.
+(use the browser's fullscreen instead).
 
 (On Mac/Linux, or if `py` does not work: use `python` or `python3` instead of `py`.)
 

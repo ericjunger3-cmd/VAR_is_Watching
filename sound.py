@@ -110,7 +110,8 @@ def play_music(name):
     try:
         pygame.mixer.music.load(SOUND_FOLDER + name + SOUND_TYPE)
         pygame.mixer.music.play(-1)
-    except pygame.error:
+    except pygame.error as error:
+        print("The music could not be played:", error)
         return
     state["music"] = name
 

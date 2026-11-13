@@ -11,21 +11,23 @@ import os
 import numpy
 import soundfile
 
+# The OGG encoder crashes if it gets a long sound in one piece (like the
+# 48 s title music), so we give it the samples in small blocks.
+BLOCK = 4096
+
 for name in sorted(os.listdir("sounds")):
     if name.endswith(".wav"):
         wav_path = "sounds/" + name
         ogg_path = "sounds/" + name[:-4] + ".ogg"
-        # Skip sounds whose .ogg copy is already newer than the .wav file.
-        # (The encoder sometimes stops after many files: then simply run
-        # the tool again, and it goes on where it stopped.)
-        if os.path.exists(ogg_path) and os.path.getmtime(ogg_path) >= os.path.getmtime(wav_path):
-            continue
-        # Read the samples of the .wav file and write them again as .ogg.
+        # Read the samples of the .wav file.
         samples, rate = soundfile.read(wav_path)
-        # The OGG encoder crashes on very short sounds (like the typing click),
-        # so a sound shorter than 0.1 s gets some silence (zeros) at the end.
+        # The encoder also has trouble with very short sounds (like the typing
+        # click), so a sound shorter than 0.1 s gets some silence at the end.
         shortest = rate // 10
         if len(samples) < shortest:
             samples = numpy.concatenate([samples, numpy.zeros(shortest - len(samples))])
-        soundfile.write(ogg_path, samples, rate, format="OGG", subtype="VORBIS")
+        # Write them again as .ogg, one block after the other.
+        with soundfile.SoundFile(ogg_path, "w", rate, 1, format="OGG", subtype="VORBIS") as ogg:
+            for start in range(0, len(samples), BLOCK):
+                ogg.write(samples[start:start + BLOCK])
         print("made " + ogg_path)
