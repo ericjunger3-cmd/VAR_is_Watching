@@ -543,7 +543,7 @@ STUDIO_LIGHTS = [30, 130, 350, 450]     # the x of the four floodlight masts
 STUDIO_LIGHT_TICKS = [10, 20, 30, 40]   # the frame when each light goes on
 STUDIO_LOGO_TICK = 52                   # the frame when the logo lights up
 STUDIO_TUNNEL_X = 40                    # where the developers come out
-STUDIO_DEV_X = [180, 270, 360]          # where each developer stops
+STUDIO_DEV_X = [150, 240, 330]          # where each developer stops (240 = the middle)
 # The frame when each one starts walking. Max (right) comes out first and
 # Eric (left) last, so nobody has to walk past someone who is already there.
 STUDIO_DEV_TICKS = [98, 82, 66]

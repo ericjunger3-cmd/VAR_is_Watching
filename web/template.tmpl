@@ -175,9 +175,10 @@ function show_infobox() {
     const w = infobox.offsetWidth;
     const h = infobox.offsetHeight;
 
-    // Center in viewport
+    // In the middle from left to right, and low on the page (at 75 % of the
+    // height), so it never covers the studio name or Infantini's lines.
     const left = (window.innerWidth - w) / 2;
-    const top = (window.innerHeight - h) / 2;
+    const top = window.innerHeight * 0.75 - h / 2;
 
     infobox.style.left = left + "px";
     infobox.style.top = top + "px";

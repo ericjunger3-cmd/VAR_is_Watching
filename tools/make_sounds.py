@@ -356,17 +356,44 @@ def cheer_track(seconds, fans):
     return track
 
 
-def make_crowd_sounds():
-    # The crowd on the pitch: lots of fans talking at once, made to repeat
-    # without a bump.
-    save("crowd", normalize(make_loop(crowd_track(10.5, 120)), 0.5))
-
-    # A goal: everybody cheers at once, then it slowly calms down.
-    cheer = cheer_track(3.5, 70)
-    for i in range(len(cheer)):
+def stadium_roar(seconds):
+    # The sound of a full stadium from far away: thousands of voices melt
+    # into one warm, even "roar". It is made of two noises: a deep one (very
+    # smooth) and a brighter one (a bit less smooth), mixed together.
+    # The roar swells up and down slowly, like a real crowd.
+    deep = noise(seconds, 1.0, 0.93)
+    bright = noise(seconds, 1.0, 0.75)
+    roar = []
+    for i in range(len(deep)):
         t = i / RATE
-        cheer[i] = cheer[i] * math.exp(-max(0.0, t - 1.4) * 1.2)
-    save("goal", normalize(cheer, 0.6))
+        swell = 0.8 + 0.12 * math.sin(2 * math.pi * t / 4.2) + 0.08 * math.sin(2 * math.pi * t / 2.6 + 1.0)
+        roar.append((deep[i] * 2.2 + bright[i] * 0.6) * swell)
+    return roar
+
+
+def make_crowd_sounds():
+    # The crowd on the pitch: the stadium roar, with a soft murmur of fans
+    # talking in it (made quieter and duller, so no single voice sticks out),
+    # made to repeat without a bump (one second fades into the start).
+    seconds = 11.0
+    murmur = soften(crowd_track(seconds, 60), 0.5)
+    murmur = normalize(murmur, 0.25)
+    roar = normalize(stadium_roar(seconds), 0.8)
+    crowd = mix(roar, murmur)
+    save("crowd", normalize(make_loop(crowd, 1.0), 0.45))
+
+    # A goal: the roar jumps up at once (everybody jumps up), the fans
+    # cheer and clap, then it slowly calms down again.
+    seconds = 3.5
+    roar = normalize(stadium_roar(seconds), 0.8)
+    cheer = normalize(soften(cheer_track(seconds, 70), 0.4), 0.35)
+    goal = mix(roar, cheer)
+    for i in range(len(goal)):
+        t = i / RATE
+        rise = min(1.0, t / 0.25)                     # up in a quarter second
+        calm = math.exp(-max(0.0, t - 1.2) * 0.9)     # then slowly down
+        goal[i] = goal[i] * (0.35 + 0.65 * rise) * calm
+    save("goal", normalize(fade(goal, 0.01, 0.4), 0.6))
 
 
 # ---------------------------------------------------------------- jingles
