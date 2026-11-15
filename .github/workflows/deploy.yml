@@ -40,7 +40,7 @@ jobs:
         run: pip install pygbag==0.9.3
 
       - name: Build the web version
-        run: python -m pygbag --build --title "VAR Is Watching" .
+        run: python -m pygbag --build --template web/template.tmpl --title "VAR Is Watching" .
 
       - name: Hand the website over to GitHub Pages
         uses: actions/upload-pages-artifact@v3

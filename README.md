@@ -16,6 +16,9 @@ Find the missing footage, survive the press, and make the call.
 
 ## Team
 
+We are **94th Minute Studios** (named after the minute the game takes place in).
+The game starts with a studio screen showing the three of us as pixel characters.
+
 | Name | Student number |
 |---|---|
 | Eric Junger | 74702 |
@@ -51,7 +54,7 @@ push to `main` and puts it online at the address above
 GitHub Pages). To try the web version on your own computer:
 
 ```
-py -m pygbag --title "VAR Is Watching" .
+py -m pygbag --template web/template.tmpl --title "VAR Is Watching" .
 ```
 
 Then open http://localhost:8000 and click into the game. The web version
@@ -59,7 +62,9 @@ starts from `main.py`. In the browser the progress and the volume are saved in
 the browser's storage (localStorage) instead of files (`storage.py`), the
 sounds are `.ogg` copies of the `.wav` files (`tools/make_ogg.py`), pygame's
 own font replaces the Windows fonts, and there is no Fullscreen / Exit option
-(use the browser's fullscreen instead).
+(use the browser's fullscreen instead). The loading page around the game is
+our own copy of pygbag's template (`web/template.tmpl`), with the studio name
+and a dark, gold look.
 
 (On Mac/Linux, or if `py` does not work: use `python` or `python3` instead of `py`.)
 
@@ -126,6 +131,7 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 |---|---|
 | `game.py` | the terminal game, and the game rules both versions use (saving, items, locks, endings) |
 | `game_2d.py` | the 2D game: the game loop, walking, keys, timer, title screen and pause menu |
+| `web/template.tmpl` | the web page around the web version (loading screen, "Click to kick off") |
 | `main.py` | the start file of the web version (pygbag always starts `main.py`); it starts the 2D game |
 | `storage.py` | saves and loads the progress and the volume: files on a computer, the browser's storage in the web version |
 | `requirements.txt` | the packages with their exact versions (pygame-ce, and pygbag for the web version) |

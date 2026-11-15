@@ -201,7 +201,11 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   files on a computer and to localStorage in the browser (`IN_BROWSER`). Sounds are .ogg
   copies in the browser (`SOUND_TYPE`, `tools/make_ogg.py`); the music is a normal Sound
   on its own channel (channel 1, ambience is 0), not pygame.mixer.music (that crackled in the browser). `make_font` uses pygame's own font x1.6 in the browser. No Fullscreen/Exit there.
-  Test locally: `py -m pygbag .` (from the parent folder: `py -m pygbag VAR_is_Watching`).
+  Test locally (from the parent folder): `py -m pygbag --template VAR_is_Watching/web/template.tmpl VAR_is_Watching`.
+  `web/template.tmpl` = our copy of pygbag's page (dark/gold loading page, studio name, "CLICK TO KICK OFF").
+- Studio screen (`studio_screen` in game_2d.py, `draw_studio_screen` in ui.py): the game starts with
+  "94TH MINUTE STUDIOS", the developers Eric, Brian and Max as pixel characters (`DEV_ERIC`,
+  `DEV_BRIAN`, `DEV_MAX` in sprites.py, made from the player grid) and "PRESS ENTER TO CONTINUE".
 - Run with `py game.py` / `py game_2d.py` (Python 3.15 on this PC; `python`
   points to the Microsoft Store alias).
 

@@ -7,6 +7,7 @@ import math
 import pygame
 import game
 import sprites
+import rooms
 from sprites import OUTLINE
 
 # The dialogue box at the bottom of the screen (canvas positions).
@@ -526,6 +527,54 @@ def draw_confirm_box(canvas):
 
 
 # ---------------------------------------------------------------- text (drawn on the window)
+
+# ---------------------------------------------------------------- the studio screen
+
+STUDIO_FLOOR = 196                 # where the three developers stand
+STUDIO_DEV_X = [140, 240, 340]     # the middle of each developer
+STUDIO_NAMES = ["ERIC", "BRIAN", "MAX"]
+
+
+def draw_studio_screen(canvas, developers, tick):
+    # The first screen of the game: our studio's name, the three
+    # developers in spotlights on a small stage, and "PRESS ENTER".
+    # developers holds their pictures (already 2x bigger).
+    canvas.fill((18, 18, 36))
+    # A dark blue sky that gets a bit lighter towards the stage.
+    for i in range(6):
+        pygame.draw.rect(canvas, (18 + i * 4, 18 + i * 4, 36 + i * 6), (0, 100 + i * 16, canvas.get_width(), 16))
+    # The stage: dark grass with a light edge, like the pitch at night.
+    pygame.draw.rect(canvas, (40, 110, 50), (0, STUDIO_FLOOR, canvas.get_width(), canvas.get_height()))
+    pygame.draw.rect(canvas, (90, 170, 90), (0, STUDIO_FLOOR, canvas.get_width(), 2))
+
+    # The name of the studio in pixel letters.
+    draw_centred_pixel_text(canvas, "94TH MINUTE", 18, 4, GOLD_ROWS)
+    draw_centred_pixel_text(canvas, "STUDIOS", 54, 2, CREAM_ROWS)
+
+    # Every developer stands in a spotlight and bobs a little (each one a
+    # bit later than the one before, so they do not move all at once).
+    for i in range(len(developers)):
+        picture = developers[i]
+        middle = STUDIO_DEV_X[i]
+        rooms.draw_light_cone(canvas, middle, 0, STUDIO_FLOOR, 10, 80)
+        rooms.draw_shadow(canvas, middle - 30, STUDIO_FLOOR + 2, 60)
+        lift = rooms.bob(tick, i * 7)
+        canvas.blit(picture, (middle - picture.get_width() // 2, STUDIO_FLOOR - picture.get_height() - lift))
+
+    # "PRESS ENTER TO CONTINUE" blinks: shown for 20 frames, hidden for 10.
+    if tick % 30 < 20:
+        draw_centred_pixel_text(canvas, "PRESS ENTER TO CONTINUE", 236, 1, GOLD_ROWS)
+
+
+def draw_studio_text(window, fonts, scale):
+    # The sharp text of the studio screen: the developers' names under
+    # their feet and the line under the studio name.
+    draw_centred_text(window, "proudly presents", fonts["small"], CREAM, 76 * scale)
+    for i in range(len(STUDIO_NAMES)):
+        name = fonts["label"].render(STUDIO_NAMES[i], False, CREAM)
+        x = STUDIO_DEV_X[i] * scale - name.get_width() // 2
+        window.blit(name, (x, (STUDIO_FLOOR + 10) * scale))
+
 
 def draw_centred_text(window, text, font, colour, y):
     # Write a text in the middle of the window, with a dark shadow

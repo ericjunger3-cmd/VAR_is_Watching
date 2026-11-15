@@ -936,6 +936,42 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
         ui.draw_door_transition(window, screen["door"])
 
 
+# ---------------------------------------------------------------- the studio screen
+
+async def studio_screen(assets):
+    # The very first screen: 94th Minute Studios and the three developers.
+    # It waits until the player presses Enter (or another key).
+    # Returns "exit" if the window was closed, otherwise "next".
+    clock = pygame.time.Clock()
+    fit_to_browser()
+    tick = 0
+    sound.play_music("title_theme")
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "exit"
+            if event.type == pygame.KEYDOWN:
+                # M mutes, F11 switches fullscreen; every other key goes on.
+                if event.key == pygame.K_m:
+                    sound.toggle_mute()
+                elif event.key == pygame.K_F11:
+                    toggle_fullscreen()
+                else:
+                    sound.play("confirm")
+                    return "next"
+
+        tick = tick + 1
+        canvas = assets["canvas"]
+        window = assets["window"]
+        view = canvas.subsurface((0, 0, rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT))
+        ui.draw_studio_screen(view, assets["developers"], tick)
+        window.blit(pygame.transform.scale(view, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
+        ui.draw_studio_text(window, assets["fonts"], SCALE)
+        pygame.display.flip()
+        clock.tick(30)
+        await asyncio.sleep(0)
+
+
 # ---------------------------------------------------------------- the title screen
 
 async def title_screen(assets, story):
@@ -1394,7 +1430,19 @@ async def main():
         "walk_timer": 0         # frames spent walking (for the animation)
     }
 
-    # Title screen -> game -> title screen ... until the player exits.
+    # The three developers for the studio screen, made 2x bigger.
+    assets["developers"] = []
+    for rows, colours in [(sprites.DEV_ERIC, sprites.ERIC_COLOURS),
+                          (sprites.DEV_BRIAN, sprites.BRIAN_COLOURS),
+                          (sprites.DEV_MAX, sprites.MAX_COLOURS)]:
+        picture = sprites.make_sprite(rows, colours)
+        assets["developers"].append(pygame.transform.scale(picture, (picture.get_width() * 2, picture.get_height() * 2)))
+
+    # First the studio screen, once. Then: title screen -> game -> title
+    # screen ... until the player exits.
+    if await studio_screen(assets) == "exit":
+        pygame.quit()
+        return
     while True:
         choice = await title_screen(assets, story)
         if choice == "exit":
