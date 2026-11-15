@@ -213,7 +213,7 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   `STUDIO_LIGHT_TICKS`), the "94TH MINUTE STUDIOS" logo flashes up with a cheer (`STUDIO_LOGO_TICK`),
   then Max, Brian and Eric walk out of the tunnel to their spots (`STUDIO_DEV_TICKS`, `developer_x`)
   and get a line-up name (#7 ERIC, #10 BRIAN, #9 MAX). Then "PRESS ENTER TO CONTINUE" (`STUDIO_END`);
-  a key during the intro skips to the end, Enter at the end plays the whistle. Pixel characters:
+  a key during the intro skips to the end, Enter at the end goes on quietly. Pixel characters:
   `DEV_ERIC`, `DEV_BRIAN`, `DEV_MAX` in sprites.py (made from the player grid).
   The web loading page shows rotating Infantini lines (`QUOTES` in web/template.tmpl).
 - Run with `py game.py` / `py game_2d.py` (Python 3.15 on this PC; `python`

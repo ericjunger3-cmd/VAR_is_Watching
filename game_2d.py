@@ -963,8 +963,7 @@ async def studio_screen(assets):
                 tick = ui.STUDIO_END
                 sound.set_ambience("crowd")
             else:
-                # The referee's whistle: kick-off!
-                sound.play("whistle")
+                # On to the title screen (quietly: no extra sound here).
                 return "next"
 
         tick = tick + 1
