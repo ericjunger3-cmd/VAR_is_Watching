@@ -131,6 +131,7 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 |---|---|
 | `game.py` | the terminal game, and the game rules both versions use (saving, items, locks, endings) |
 | `game_2d.py` | the 2D game: the game loop, walking, keys, timer, title screen and pause menu |
+| `pygbag.ini` | tells pygbag to leave the `tools` and `web` folders out of the web version |
 | `web/template.tmpl` | the web page around the web version (loading screen, "Click to kick off") |
 | `main.py` | the start file of the web version (pygbag always starts `main.py`); it starts the 2D game |
 | `storage.py` | saves and loads the progress and the volume: files on a computer, the browser's storage in the web version |

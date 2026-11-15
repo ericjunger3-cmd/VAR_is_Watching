@@ -205,7 +205,8 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   files on a computer and to localStorage in the browser (`IN_BROWSER`). Sounds are .ogg
   copies in the browser (`SOUND_TYPE`, `tools/make_ogg.py`); the music is a normal Sound
   on its own channel (channel 1, ambience is 0), not pygame.mixer.music (that crackled in the browser). `make_font` uses pygame's own font x1.6 in the browser. No Fullscreen/Exit there.
-  Test locally (from the parent folder): `py -m pygbag --template VAR_is_Watching/web/template.tmpl VAR_is_Watching`.
+  Test locally from the game folder (so `pygbag.ini` is found): `py -m pygbag --template web/template.tmpl .`.
+  `pygbag.ini` leaves `tools/` and `web/` out of the web build (pygbag refuses a .wav without an .ogg copy).
   `web/template.tmpl` = our copy of pygbag's page (dark/gold loading page, studio name, "CLICK TO KICK OFF").
 - Studio screen (`studio_screen` in game_2d.py, `draw_studio_screen` in ui.py), a little film
   driven only by `tick`: the stadium is dark, 4 floodlights switch on ("lock" sound,
