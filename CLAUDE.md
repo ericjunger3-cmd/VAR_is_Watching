@@ -203,9 +203,14 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   on its own channel (channel 1, ambience is 0), not pygame.mixer.music (that crackled in the browser). `make_font` uses pygame's own font x1.6 in the browser. No Fullscreen/Exit there.
   Test locally (from the parent folder): `py -m pygbag --template VAR_is_Watching/web/template.tmpl VAR_is_Watching`.
   `web/template.tmpl` = our copy of pygbag's page (dark/gold loading page, studio name, "CLICK TO KICK OFF").
-- Studio screen (`studio_screen` in game_2d.py, `draw_studio_screen` in ui.py): the game starts with
-  "94TH MINUTE STUDIOS", the developers Eric, Brian and Max as pixel characters (`DEV_ERIC`,
-  `DEV_BRIAN`, `DEV_MAX` in sprites.py, made from the player grid) and "PRESS ENTER TO CONTINUE".
+- Studio screen (`studio_screen` in game_2d.py, `draw_studio_screen` in ui.py), a little film
+  driven only by `tick`: the stadium is dark, 4 floodlights switch on ("lock" sound,
+  `STUDIO_LIGHT_TICKS`), the "94TH MINUTE STUDIOS" logo flashes up with a cheer (`STUDIO_LOGO_TICK`),
+  then Max, Brian and Eric walk out of the tunnel to their spots (`STUDIO_DEV_TICKS`, `developer_x`)
+  and get a line-up name (#7 ERIC, #10 BRIAN, #9 MAX). Then "PRESS ENTER TO CONTINUE" (`STUDIO_END`);
+  a key during the intro skips to the end, Enter at the end plays the whistle. Pixel characters:
+  `DEV_ERIC`, `DEV_BRIAN`, `DEV_MAX` in sprites.py (made from the player grid).
+  The web loading page shows rotating Infantini lines (`QUOTES` in web/template.tmpl).
 - Run with `py game.py` / `py game_2d.py` (Python 3.15 on this PC; `python`
   points to the Microsoft Store alias).
 

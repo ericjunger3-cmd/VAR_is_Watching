@@ -939,8 +939,9 @@ def draw_game(assets, story, progress, screen, player, nearby, moving):
 # ---------------------------------------------------------------- the studio screen
 
 async def studio_screen(assets):
-    # The very first screen: 94th Minute Studios and the three developers.
-    # It waits until the player presses Enter (or another key).
+    # The very first screen: 94th Minute Studios (see draw_studio_screen in
+    # ui.py for what happens when). A key press during the intro jumps to
+    # the end of it; Enter at the end goes on to the title screen.
     # Returns "exit" if the window was closed, otherwise "next".
     clock = pygame.time.Clock()
     fit_to_browser()
@@ -950,23 +951,38 @@ async def studio_screen(assets):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "exit"
-            if event.type == pygame.KEYDOWN:
-                # M mutes, F11 switches fullscreen; every other key goes on.
-                if event.key == pygame.K_m:
-                    sound.toggle_mute()
-                elif event.key == pygame.K_F11:
-                    toggle_fullscreen()
-                else:
-                    sound.play("confirm")
-                    return "next"
+            if event.type != pygame.KEYDOWN:
+                continue
+            # M mutes and F11 switches fullscreen, at any moment.
+            if event.key == pygame.K_m:
+                sound.toggle_mute()
+            elif event.key == pygame.K_F11:
+                toggle_fullscreen()
+            elif tick < ui.STUDIO_END:
+                # Skip the intro: everything is there at once.
+                tick = ui.STUDIO_END
+                sound.set_ambience("crowd")
+            else:
+                # The referee's whistle: kick-off!
+                sound.play("whistle")
+                return "next"
 
         tick = tick + 1
+        # The sounds of the intro, each at its own frame.
+        if tick in ui.STUDIO_LIGHT_TICKS:
+            sound.play("lock")              # "clack": a floodlight goes on
+        if tick == ui.STUDIO_LOGO_TICK:
+            sound.play("goal")              # the crowd cheers for the logo
+            sound.set_ambience("crowd")
+        if tick in ui.STUDIO_DEV_TICKS:
+            sound.play("kick")              # a developer walks out
+
         canvas = assets["canvas"]
         window = assets["window"]
         view = canvas.subsurface((0, 0, rooms.CANVAS_WIDTH, rooms.CANVAS_HEIGHT))
         ui.draw_studio_screen(view, assets["developers"], tick)
         window.blit(pygame.transform.scale(view, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
-        ui.draw_studio_text(window, assets["fonts"], SCALE)
+        ui.draw_studio_text(window, assets["fonts"], SCALE, tick)
         pygame.display.flip()
         clock.tick(30)
         await asyncio.sleep(0)

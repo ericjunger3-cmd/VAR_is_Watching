@@ -529,51 +529,148 @@ def draw_confirm_box(canvas):
 # ---------------------------------------------------------------- text (drawn on the window)
 
 # ---------------------------------------------------------------- the studio screen
+# The first screen of the game, like a little film (30 frames = 1 second):
+#   1. It is dark. The four floodlights switch on one after the other.
+#   2. The studio logo lights up and the crowd starts to cheer.
+#   3. The three developers walk out of the players' tunnel, one after the
+#      other, to their places. Each name appears like a team line-up.
+#   4. "PRESS ENTER TO CONTINUE" blinks.
+# Everything depends only on tick (the frame counter), so the same tick
+# always gives the same picture.
 
-STUDIO_FLOOR = 196                 # where the three developers stand
-STUDIO_DEV_X = [140, 240, 340]     # the middle of each developer
-STUDIO_NAMES = ["ERIC", "BRIAN", "MAX"]
+STUDIO_FLOOR = 196                      # where the developers stand
+STUDIO_LIGHTS = [30, 130, 350, 450]     # the x of the four floodlight masts
+STUDIO_LIGHT_TICKS = [10, 20, 30, 40]   # the frame when each light goes on
+STUDIO_LOGO_TICK = 52                   # the frame when the logo lights up
+STUDIO_TUNNEL_X = 40                    # where the developers come out
+STUDIO_DEV_X = [180, 270, 360]          # where each developer stops
+# The frame when each one starts walking. Max (right) comes out first and
+# Eric (left) last, so nobody has to walk past someone who is already there.
+STUDIO_DEV_TICKS = [98, 82, 66]
+STUDIO_WALK_SPEED = 4                   # pixels per frame
+STUDIO_NAMES = ["#7 ERIC", "#10 BRIAN", "#9 MAX"]
+# The frame when the last developer has arrived; then "PRESS ENTER" appears.
+STUDIO_END = 0
+for number in range(3):
+    arrival = STUDIO_DEV_TICKS[number] + (STUDIO_DEV_X[number] - STUDIO_TUNNEL_X) // STUDIO_WALK_SPEED
+    if arrival > STUDIO_END:
+        STUDIO_END = arrival
+
+
+def lights_on(tick):
+    # How many floodlights are already on (0 to 4).
+    count = 0
+    for light_tick in STUDIO_LIGHT_TICKS:
+        if tick >= light_tick:
+            count = count + 1
+    return count
+
+
+def developer_x(number, tick):
+    # Where developer number 0, 1 or 2 is right now, or None if he is still
+    # in the tunnel. He walks to the right until he reaches his place.
+    start = STUDIO_DEV_TICKS[number]
+    if tick < start:
+        return None
+    x = STUDIO_TUNNEL_X + (tick - start) * STUDIO_WALK_SPEED
+    return min(x, STUDIO_DEV_X[number])
+
+
+def draw_studio_stands(canvas):
+    # The stands full of fans (drawn only once, see rooms.draw_saved).
+    pygame.draw.rect(canvas, (40, 42, 62), (0, 70, canvas.get_width(), 90))
+    for fan_y in range(74, 156, 5):
+        for fan_x in range(2 + (fan_y // 5) % 2 * 3, canvas.get_width(), 6):
+            colour = rooms.fan_colour(fan_x, fan_x * 5 + fan_y)
+            pygame.draw.rect(canvas, colour, (fan_x, fan_y, 3, 3))
+    pygame.draw.rect(canvas, OUTLINE, (0, 158, canvas.get_width(), 2))
 
 
 def draw_studio_screen(canvas, developers, tick):
-    # The first screen of the game: our studio's name, the three
-    # developers in spotlights on a small stage, and "PRESS ENTER".
-    # developers holds their pictures (already 2x bigger).
-    canvas.fill((18, 18, 36))
-    # A dark blue sky that gets a bit lighter towards the stage.
-    for i in range(6):
-        pygame.draw.rect(canvas, (18 + i * 4, 18 + i * 4, 36 + i * 6), (0, 100 + i * 16, canvas.get_width(), 16))
-    # The stage: dark grass with a light edge, like the pitch at night.
-    pygame.draw.rect(canvas, (40, 110, 50), (0, STUDIO_FLOOR, canvas.get_width(), canvas.get_height()))
-    pygame.draw.rect(canvas, (90, 170, 90), (0, STUDIO_FLOOR, canvas.get_width(), 2))
+    # developers holds the three pictures (already 2x bigger).
+    width = canvas.get_width()
 
-    # The name of the studio in pixel letters.
-    draw_centred_pixel_text(canvas, "94TH MINUTE", 18, 4, GOLD_ROWS)
-    draw_centred_pixel_text(canvas, "STUDIOS", 54, 2, CREAM_ROWS)
+    # 1. The stadium: night sky, stands, grass with mowing stripes, tunnel.
+    canvas.fill((14, 16, 34))
+    rooms.draw_saved(canvas, "studio_stands", draw_studio_stands)
+    for x in range(0, width, 40):
+        if (x // 40) % 2 == 0:
+            grass = (50, 130, 60)
+        else:
+            grass = (60, 145, 70)
+        pygame.draw.rect(canvas, grass, (x, 160, 40, canvas.get_height() - 160))
+    pygame.draw.rect(canvas, (235, 235, 235), (0, STUDIO_FLOOR + 3, width, 2))
+    # The players' tunnel on the left: grey stone with a dark inside.
+    pygame.draw.rect(canvas, OUTLINE, (6, 128, 66, 70))
+    pygame.draw.rect(canvas, (130, 130, 145), (7, 129, 64, 69))
+    pygame.draw.rect(canvas, (25, 28, 40), (15, 137, 48, 61))
+    pygame.draw.rect(canvas, rooms.HOME_RED, (7, 129, 64, 6))
 
-    # Every developer stands in a spotlight and bobs a little (each one a
-    # bit later than the one before, so they do not move all at once).
+    # 2. The darkness: the more lights are on, the lighter the stadium.
+    count = lights_on(tick)
+    darkness = pygame.Surface((width, canvas.get_height()), pygame.SRCALPHA)
+    darkness.fill((0, 0, 10, 215 - count * 50))
+    canvas.blit(darkness, (0, 0))
+
+    # 3. The floodlight masts. A light that is on shines down on the grass.
+    for i in range(len(STUDIO_LIGHTS)):
+        x = STUDIO_LIGHTS[i]
+        pygame.draw.rect(canvas, (70, 70, 85), (x - 1, 22, 3, 50))           # the pole
+        if i < count:
+            rooms.draw_light_cone(canvas, x, 18, STUDIO_FLOOR, 16, 120)
+            head = (255, 250, 210)
+        else:
+            head = (60, 60, 75)
+        pygame.draw.rect(canvas, OUTLINE, (x - 12, 8, 25, 14))
+        pygame.draw.rect(canvas, head, (x - 11, 9, 23, 12))
+
+    # Phone flashes in the crowd once the stadium is lit.
+    if count >= 2 and tick % 5 < 2:
+        flash_x = (tick * 37) % width
+        flash_y = 76 + (tick * 13) % 78
+        pygame.draw.rect(canvas, (255, 255, 255), (flash_x, flash_y, 2, 2))
+
+    # 4. The logo lights up: a short white flash, then gold letters.
+    if tick >= STUDIO_LOGO_TICK:
+        if tick < STUDIO_LOGO_TICK + 3:
+            canvas.fill((255, 250, 230))
+        draw_centred_pixel_text(canvas, "94TH MINUTE", 26, 4, GOLD_ROWS)
+        draw_centred_pixel_text(canvas, "STUDIOS", 62, 2, CREAM_ROWS)
+
+    # 5. The developers walk out of the tunnel. While walking they bounce,
+    #    when they have arrived they only breathe slowly.
     for i in range(len(developers)):
+        x = developer_x(i, tick)
+        if x is None:
+            continue
         picture = developers[i]
-        middle = STUDIO_DEV_X[i]
-        rooms.draw_light_cone(canvas, middle, 0, STUDIO_FLOOR, 10, 80)
-        rooms.draw_shadow(canvas, middle - 30, STUDIO_FLOOR + 2, 60)
-        lift = rooms.bob(tick, i * 7)
-        canvas.blit(picture, (middle - picture.get_width() // 2, STUDIO_FLOOR - picture.get_height() - lift))
+        if x < STUDIO_DEV_X[i]:
+            lift = (tick // 3) % 2 * 3
+        else:
+            lift = rooms.bob(tick, i * 7)
+        rooms.draw_shadow(canvas, x - 28, STUDIO_FLOOR + 2, 56)
+        canvas.blit(picture, (x - picture.get_width() // 2, STUDIO_FLOOR - picture.get_height() - lift))
 
-    # "PRESS ENTER TO CONTINUE" blinks: shown for 20 frames, hidden for 10.
-    if tick % 30 < 20:
-        draw_centred_pixel_text(canvas, "PRESS ENTER TO CONTINUE", 236, 1, GOLD_ROWS)
+    # 6. "PRESS ENTER TO CONTINUE" blinks once everyone is there.
+    if tick >= STUDIO_END and tick % 30 < 20:
+        draw_centred_pixel_text(canvas, "PRESS ENTER TO CONTINUE", 238, 1, GOLD_ROWS)
 
 
-def draw_studio_text(window, fonts, scale):
-    # The sharp text of the studio screen: the developers' names under
-    # their feet and the line under the studio name.
-    draw_centred_text(window, "proudly presents", fonts["small"], CREAM, 76 * scale)
+def draw_studio_text(window, fonts, scale, tick):
+    # The sharp text: "proudly presents" under the logo, "LINE-UP" and the
+    # name of every developer who has reached his place.
+    if tick >= STUDIO_LOGO_TICK:
+        draw_centred_text(window, "proudly presents", fonts["small"], CREAM, 84 * scale)
+    if tick >= STUDIO_DEV_TICKS[0]:
+        draw_centred_text(window, "- LINE-UP -", fonts["label"], (255, 215, 90), (STUDIO_FLOOR + 10) * scale)
     for i in range(len(STUDIO_NAMES)):
-        name = fonts["label"].render(STUDIO_NAMES[i], False, CREAM)
-        x = STUDIO_DEV_X[i] * scale - name.get_width() // 2
-        window.blit(name, (x, (STUDIO_FLOOR + 10) * scale))
+        if developer_x(i, tick) == STUDIO_DEV_X[i]:
+            name = fonts["label"].render(STUDIO_NAMES[i], False, CREAM)
+            shadow = fonts["label"].render(STUDIO_NAMES[i], False, OUTLINE)
+            x = STUDIO_DEV_X[i] * scale - name.get_width() // 2
+            y = (STUDIO_FLOOR + 24) * scale
+            window.blit(shadow, (x + 2, y + 2))
+            window.blit(name, (x, y))
 
 
 def draw_centred_text(window, text, font, colour, y):

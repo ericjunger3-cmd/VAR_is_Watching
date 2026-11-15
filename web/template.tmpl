@@ -258,6 +258,15 @@ function show_infobox() {
             font-size: 10px;
         }
         #progress { accent-color: #ffd75a; }
+        #quote {
+            color: #fffaeb;
+            font-size: 11px;
+            line-height: 20px;
+            margin: 40px auto 0 auto;
+            max-width: 640px;
+            min-height: 40px;
+        }
+        #quote b { color: #ffd75a; font-weight: normal; }
 
         div.emscripten { text-align: center; }
         div.emscripten_border { border: 1px solid black; }
@@ -362,6 +371,7 @@ height="{{cookiecutter.height}}px"
         <div class="studio-name">94TH MINUTE STUDIOS</div>
         <div class="studio-small">proudly presents</div>
         <div class="game-name">VAR IS WATCHING</div>
+        <div id="quote"></div>
     </div>
 
     <div id="infobox">LOADING THE STADIUM ...</div>
@@ -485,6 +495,28 @@ frameborder="1"
     }
 
     </script>
+
+<script>
+    // While the game loads, Gianno Infantini (the TV expert from the game)
+    // says something cheeky. A new line every 3 seconds.
+    const QUOTES = [
+        "Loading... slower than a VAR check.",
+        "Grab a snack, rookie. This takes a while.",
+        "In my day we just trusted the referee.",
+        "Clearly offside. I have not even seen it yet.",
+        "Downloading the stadium. All 60,000 seats.",
+        "Do not touch any cables while you wait. No reason.",
+        "A bear as the mascot? Unbelievable. Absolutely unbelievable.",
+    ];
+    let quoteNumber = 0;
+    function nextQuote() {
+        const quote = document.getElementById("quote");
+        quote.innerHTML = "<b>GIANNO INFANTINI:</b><br>" + QUOTES[quoteNumber % QUOTES.length];
+        quoteNumber = quoteNumber + 1;
+    }
+    nextQuote();
+    setInterval(nextQuote, 3000);
+</script>
 
 </body>
 </html>
