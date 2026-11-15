@@ -149,13 +149,22 @@ At the start, if a saved game exists: `n` = new game (asks for confirmation),
 | `sound.py` | loads and plays the sounds and music of the 2D game; remembers the volume |
 | `sounds/` | all sound effects, room sounds and music as .wav files (and .ogg copies for the web version) |
 | `tools/make_sounds.py` | the tool that made the sounds (not part of the game): run `py tools/make_sounds.py` to make them again |
+| `tools/make_crowd.py` | makes the crowd and goal sounds from the real stadium recording in `tools/recordings/` (see the credit under *Sound and music*) |
 | `tools/make_ogg.py` | makes the .ogg copies of the sounds for the web version (needs `py -m pip install soundfile`) |
 | `icon.png`, `var_is_watching.ico` | the game's logo: the window icon (png) and the desktop shortcut icon (ico) |
 
 ## Sound and music (2D version)
 
-All sounds are original and made with code (`tools/make_sounds.py`), in the style of old
-game consoles: square waves, triangle waves and noise. No sound files from the internet.
+All sounds except the crowd are original and made with code (`tools/make_sounds.py`), in
+the style of old game consoles: square waves, triangle waves and noise.
+
+**Crowd sounds (credit):** the crowd on the pitch and the goal cheer (`sounds/crowd.*`,
+`sounds/goal.*`) are made from the recording
+[Arrowhead Stadium crowd noise](https://commons.wikimedia.org/wiki/File:Arrowhead_Stadium_crowd_noise.wav)
+by **Kj1595** (Wikimedia Commons), licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). We shortened, softened and
+looped it (`tools/make_crowd.py`); our changed versions have the same license. The original
+is in `tools/recordings/`.
 
 - **Music:** a chill theme on the title screen and a calmer mystery theme while you play.
 - **Effects:** doors, locked doors, picking up items, the Lucky Whistle, Bernie's growl,

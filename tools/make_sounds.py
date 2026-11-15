@@ -569,7 +569,8 @@ def make_game_theme():
 
 make_effects()
 make_ambience()
-make_crowd_sounds()
+# The crowd and the goal cheer now come from a real stadium recording
+# (see tools/make_crowd.py), so they are not made here any more.
 make_jingles()
 make_title_theme()
 make_game_theme()

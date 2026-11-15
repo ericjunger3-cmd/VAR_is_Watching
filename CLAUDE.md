@@ -134,6 +134,10 @@ short and funny. Old saves are updated on loading (`update_old_save`).
   are in `sounds/` and are made by `tools/make_sounds.py` (chiptune synthesis with
   math/wave/random only; a tool, not part of the game). Volume slider 0-10 + M mute,
   remembered in `settings.json` (separate from the save, so New Game keeps it).
+- Crowd + goal sounds come from a real recording ("Arrowhead Stadium crowd noise" by Kj1595,
+  Wikimedia Commons, CC BY-SA 4.0, credited in the README): `tools/make_crowd.py` turns
+  `tools/recordings/arrowhead_stadium_crowd_noise.wav` into `sounds/crowd.wav` (loop) and
+  `sounds/goal.wav`; `make_sounds.py` no longer makes them. Room sound volume `AMBIENCE_LEVEL` = 0.3.
 - `story.json` – all story content, shared by both versions.
 - `save.json` – terminal progress, **saved after every accepted action**.
   The 2D version saves to `save_2d.json` (same format).
