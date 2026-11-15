@@ -27,7 +27,8 @@ MUSIC = ["title_theme", "game_theme"]
 
 # How loud the music is compared to the effects (the music stays in the back).
 MUSIC_LEVEL = 0.55
-AMBIENCE_LEVEL = 0.7
+# The room sound (crowd, shower) stays quietly in the background.
+AMBIENCE_LEVEL = 0.3
 
 # Everything the sound part of the game remembers, in one dictionary.
 state = {
